@@ -20,6 +20,7 @@ CustomMouseArea {
     property bool dashboardShortcutActive
     property bool osdShortcutActive
     property bool utilitiesShortcutActive
+    property bool quicktogglesShortcutActive
 
     property bool draggingBar: false
 
@@ -82,6 +83,9 @@ CustomMouseArea {
 
             if (!utilitiesShortcutActive)
                 visibilities.utilities = false;
+
+            if (!quicktogglesShortcutActive)
+                visibilities.quicktoggles = false;
 
             if (!popouts.currentName.startsWith("traymenu"))
                 popouts.hasCurrent = false;
@@ -178,6 +182,17 @@ CustomMouseArea {
             utilitiesShortcutActive = false;
         }
 
+        // Show quicktoggles on hover (bottom-right area)
+        const showQuicktoggles = inBottomPanel(panels.quicktoggles, x, y) && inRightPanel(panels.quicktoggles, x, y);
+
+        // Always update visibility based on hover if not in shortcut mode
+        if (!quicktogglesShortcutActive) {
+            visibilities.quicktoggles = showQuicktoggles;
+        } else if (showQuicktoggles) {
+            // If hovering over quicktoggles area while in shortcut mode, transition to hover control
+            quicktogglesShortcutActive = false;
+        }
+
         // Show popouts on hover
         if (x < bar.implicitWidth)
             bar.checkPopout(y);
@@ -246,6 +261,19 @@ CustomMouseArea {
             } else {
                 // Utilities hidden, clear shortcut flag
                 root.utilitiesShortcutActive = false;
+            }
+        }
+
+        function onQuicktogglesChanged() {
+            if (root.visibilities.quicktoggles) {
+                // Quicktoggles became visible, immediately check if this should be shortcut mode
+                const inQuicktogglesArea = root.inBottomPanel(root.panels.quicktoggles, root.mouseX, root.mouseY) && root.inRightPanel(root.panels.quicktoggles, root.mouseX, root.mouseY);
+                if (!inQuicktogglesArea) {
+                    root.quicktogglesShortcutActive = true;
+                }
+            } else {
+                // Quicktoggles hidden, clear shortcut flag
+                root.quicktogglesShortcutActive = false;
             }
         }
     }

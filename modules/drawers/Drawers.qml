@@ -111,6 +111,7 @@ Variants {
                 property bool dashboard
                 property bool utilities
                 property bool clipboard
+                property bool quicktoggles
 
                 Component.onCompleted: Visibilities.screens[scope.modelData] = this
             }

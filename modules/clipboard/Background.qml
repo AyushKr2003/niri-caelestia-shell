@@ -16,38 +16,40 @@ ShapePath {
     strokeWidth: -1
     fillColor: Colours.palette.m3surface
 
-    // Draw from top-right going counter-clockwise
-    // Start: top edge, moving left
+    // Draw from top-right (startX: root.width, startY: 0)
+    // Going counter-clockwise
+    
+    // Top edge going left, past the panel to leave room for inner corner
     PathLine {
-        relativeX: -(root.wrapper.width - root.rounding)
+        relativeX: -(root.wrapper.width + root.rounding)
         relativeY: 0
     }
-    // Top-left corner (outer arc going down)
-    PathArc {
-        relativeX: -root.rounding
-        relativeY: root.roundingY
-        radiusX: root.rounding
-        radiusY: Math.min(root.rounding, root.wrapper.height)
-        direction: PathArc.Counterclockwise
-    }
-    // Left edge going down
-    PathLine {
-        relativeX: 0
-        relativeY: root.wrapper.height - root.roundingY * 2
-    }
-    // Bottom-left corner (outer arc going right)
+    // Top-left inner arc going down (connects to bar)
     PathArc {
         relativeX: root.rounding
         relativeY: root.roundingY
         radiusX: root.rounding
         radiusY: Math.min(root.rounding, root.wrapper.height)
     }
-    // Bottom edge going right
+    // Left edge going down
+    PathLine {
+        relativeX: 0
+        relativeY: root.wrapper.height - root.roundingY * 2
+    }
+    // Bottom-left outer arc going right
+    PathArc {
+        relativeX: root.rounding
+        relativeY: root.roundingY
+        radiusX: root.rounding
+        radiusY: Math.min(root.rounding, root.wrapper.height)
+        direction: PathArc.Counterclockwise
+    }
+    // Bottom edge going right, past the panel to leave room for inner corner
     PathLine {
         relativeX: root.wrapper.width - root.rounding * 2
         relativeY: 0
     }
-    // Bottom-right corner (inner arc - connects to border)
+    // Bottom-right inner arc going up (connects to right border)
     PathArc {
         relativeX: root.rounding
         relativeY: root.rounding

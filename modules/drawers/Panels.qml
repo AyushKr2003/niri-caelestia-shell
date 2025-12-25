@@ -7,6 +7,7 @@ import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
 import qs.modules.clipboard as Clipboard
+import qs.modules.quicktoggles as QuickToggles
 import Quickshell
 import QtQuick
 
@@ -25,6 +26,7 @@ Item {
     readonly property BarPopouts.Wrapper popouts: popouts
     readonly property Utilities.Wrapper utilities: utilities
     readonly property Clipboard.Wrapper clipboard: clipboard
+    readonly property QuickToggles.Wrapper quicktoggles: quicktoggles
 
     anchors.fill: parent
     anchors.margins: Config.border.thickness
@@ -113,6 +115,15 @@ Item {
         visibilities: root.visibilities
 
         anchors.top: parent.top
+        anchors.right: parent.right
+    }
+
+    QuickToggles.Wrapper {
+        id: quicktoggles
+
+        visibilities: root.visibilities
+
+        anchors.bottom: parent.bottom
         anchors.right: parent.right
     }
 }
