@@ -2,9 +2,9 @@
 
 <div align=center>
 
-![GitHub last commit](https://img.shields.io/github/last-commit/jutraim/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=9ccbfb)
-![GitHub Repo stars](https://img.shields.io/github/stars/jutraim/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=b9c8da)
-![GitHub repo size](https://img.shields.io/github/repo-size/jutraim/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=d3bfe6)
+![GitHub last commit](https://img.shields.io/github/last-commit/Ayushkr2003/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=9ccbfb)
+![GitHub Repo stars](https://img.shields.io/github/stars/Ayushkr2003/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=b9c8da)
+![GitHub repo size](https://img.shields.io/github/repo-size/Ayushkr2003/niri-caelestia-shell?style=for-the-badge&labelColor=101418&color=d3bfe6)
 
 </div>
 
@@ -19,19 +19,9 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 </div>
 
 > [!CAUTION]
-> This is my personal thingy and it's **STILL WORK IN PROGRESS.**
->
-> Due to civil unrest in my country I don't have much time to boot up my PC so I update slowly :/
+> I am still learning Quickshell and this is my first time working with it. I'm trying to learn and improve! 🚀
 >
 > This repo is **ONLY for the desktop shell** of the caelestia dots. For the default caelestia dots, head to [the main repo](https://github.com/caelestia-dots/caelestia) instead.
-
->[!WARNING]
-> **HELP REQUIRED!**
->
-> I **skipped** unneccesary commit from original shell named: "bar/workspaces: add special ws overlay" and "bar/workspaces: better scroll" because there is no special workspace in Niri.
->
-> Unfortunately, I **skipped** an important commit from original shell named: "bar: per-monitor workspaces option (#394)"
-> - **Reason:** I don't have multi monitor so I'm not sure if this actually works, I might break stuff :/. I need help implementing that feature :)
 
 
 
@@ -82,7 +72,7 @@ You need both runtime dependencies and development headers.
 <br>
 
 * All dependencies in plain text:
-   * `quickshell-git networkmanager fish glibc qt6-declarative gcc-libs cava libcava aubio libpipewire lm-sensors ddcutil brightnessctl material-symbols caskaydia-cove-nerd grim swappy app2unit libqalculate`
+   * `quickshell-git networkmanager fish glibc qt6-declarative gcc-libs cava libcava aubio libpipewire ddcutil brightnessctl  ttf-material-icons-git ttf-jetbrains-mono grim swappy app2unit libqalculate`
 
 > [!NOTE]
 >
@@ -113,7 +103,6 @@ You need both runtime dependencies and development headers.
 | [`libcava`](https://pipewire.org) | Visualizer backend |
 | [`aubio`](https://github.com/aubio/aubio) | Beat detector |
 | [`libpipewire`](https://pipewire.org) | Media backend |
-| [`lm-sensors`](https://github.com/lm-sensors/lm-sensors) | System usage monitoring |
 | [`ddcutil`](https://github.com/rockowitz/ddcutil) | Monitor brightness control |
 | [`brightnessctl`](https://github.com/Hummer12007/brightnessctl) | Brightness control |
 
@@ -121,8 +110,8 @@ You need both runtime dependencies and development headers.
 
 | Package | Usage |
 |---|---|
-| [`material-symbols`](https://fonts.google.com/icons) | Icon font |
-| [`caskaydia-cove-nerd`](https://www.nerdfonts.com/font-downloads) | Monospace font |
+| [`ttf-material-icons-git`](https://fonts.google.com/icons) | Icon font |
+| [`ttf-jetbrains-mono`](https://www.nerdfonts.com/font-downloads) | Monospace font |
 
 #### Screenshot & Utilities 🧰
 
@@ -165,7 +154,7 @@ Then simply build and install using `cmake`.
 
     ```sh
     cd $XDG_CONFIG_HOME/quickshell
-    git clone https://github.com/jutraim/niri-caelestia-shell
+    git clone https://github.com/Ayushkr2003/niri-caelestia-shell
     ```
 3. Build:
 
@@ -230,40 +219,132 @@ All IPC commands can be called via `quickshell -c niri-caelestia-shell ipc call 
 
 <br>
 
- The list of IPC commands can be shown via `qs -c shell ipc show`.
+ The list of IPC commands can be shown via `qs -c niri-caelestia-shell ipc show`.
 
 <br>
 
 <details><summary> <b> Ipc Commands </b></summary>
 
   ```sh
-  ❯ qs -c shell ipc show
+  ❯ qs -c niri-caelestia-shell ipc show
   target picker
-    function openFreeze(): void
     function open(): void
-  target drawers
-    function list(): string
-    function toggle(drawer: string): void
-  target lock
-    function unlock(): void
-    function isLocked(): bool
-    function lock(): void
+    function openFreeze(): void
+  target quicktoggles
+    function open(): void
+    function toggle(): void
+    function close(): void
+  target idleInhibitor
+    function toggle(): void
+    function enable(): void
+    function isEnabled(): bool
+    function disable(): void
   target wallpaper
     function get(): string
     function set(path: string): void
     function list(): string
-  target notifs
-    function clear(): void
+  target clipboard
+    function open(): void
+    function toggle(): void
+    function close(): void
+  target drawers
+    function toggle(drawer: string): void
+    function list(): string
+  target controlCenter
+    function open(): void
+  target lock
+    function isLocked(): bool
+    function lock(): void
+    function unlock(): void
   target mpris
-    function next(): void
-    function previous(): void
-    function getActive(prop: string): string
     function playPause(): void
     function pause(): void
-    function stop(): void
-    function list(): string
+    function getActive(prop: string): string
     function play(): void
+    function next(): void
+    function list(): string
+    function stop(): void
+    function previous(): void
+  target notifs
+    function clear(): void
+  target brightness
+    function setFor(query: string, value: string): string
+    function get(): real
+    function set(value: string): string
+    function getFor(query: string): real
   ```
+
+</details>
+
+<details><summary> <b> Example Niri config.kdl </b></summary>
+
+```kdl
+// Startup commands
+spawn-sh-at-startup "wl-paste --type text --watch cliphist store &"
+spawn-sh-at-startup "wl-paste --type image --watch cliphist store &"
+spawn-sh-at-startup "qs -c niri-caelestia-shell"
+
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    XDG_MENU_PREFIX "plasma-"  // Required for Dolphin file associations
+    QT_QPA_PLATFORM "wayland"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    QT_QPA_PLATFORMTHEME "kde"
+    QT_STYLE_OVERRIDE "Darkly"
+}
+
+binds {
+    // System
+    Mod+Tab repeat=false { toggle-overview; }
+    Mod+Shift+E { quit; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    
+    // Launcher
+    Mod+Space repeat=false { spawn-sh "qs -c niri-caelestia-shell ipc call drawers toggle launcher"; }
+    
+    // Clipboard
+    Mod+V repeat=false { spawn-sh "qs -c niri-caelestia-shell ipc call clipboard open"; } 
+    
+    // Lock screen
+    Mod+L { spawn-sh "qs -c niri-caelestia-shell ipc call lock lock"; }
+    
+    // Region/Screenshot tools
+    Mod+Shift+S { spawn-sh "qs -c niri-caelestia-shell ipc call picker open"; }
+    
+    // Applications (change "kitty" to your preferred terminal)
+    Mod+T { spawn "kitty"; }
+    Mod+Return { spawn "kitty"; }
+    Super+E { spawn "dolphin"; }
+    
+    // Window management
+    Mod+Q repeat=false { close-window; }
+    Mod+D { maximize-column; }
+    Mod+F { fullscreen-window; }
+    Mod+Alt+Space { toggle-window-floating; }
+
+    // Screenshots (native)
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+    
+    // ========================================================================
+    // HARDWARE KEYS - Audio, Brightness, Media
+    // ========================================================================
+    
+    // Volume (hardware keys)
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    // Brightness (hardware keys) - change eDP-1 to your monitor name by running "niri msg outputs"
+    XF86MonBrightnessUp { spawn-sh "qs -c niri-caelestia-shell ipc call brightness setFor eDP-1 +5%"; }
+    XF86MonBrightnessDown { spawn-sh "qs -c niri-caelestia-shell ipc call brightness setFor eDP-1 10%-"; }
+    
+    // Session/Power menu
+    Ctrl+Alt+Delete { spawn-sh "qs -c niri-caelestia-shell ipc call drawers toggle session"; }
+}
+```
 
 </details>
 
@@ -288,8 +369,9 @@ Config lives in:
         },
         "font": {
             "family": {
+                "clock": "Rubik",
                 "material": "Material Symbols Rounded",
-                "mono": "CaskaydiaCove NF",
+                "mono": "JetBrains Mono Nerd Font",
                 "sans": "Rubik"
             },
             "size": {
@@ -313,21 +395,63 @@ Config lives in:
     },
     "general": {
         "apps": {
-            "terminal": [
-                "foot"
+            "terminal": ["kitty"],
+            "audio": ["pavucontrol"],
+            "playback": ["mpv"],
+            "explorer": ["thunar"]
+        },
+        "battery": {
+            "warnLevels": [
+                {
+                    "level": 30,
+                    "title": "Low battery",
+                    "message": "You might want to plug in a charger",
+                    "icon": "battery_android_frame_2"
+                },
+                {
+                    "level": 20,
+                    "title": "Did you see the previous message?",
+                    "message": "You should probably plug in a charger <b>now</b>",
+                    "icon": "battery_android_frame_1"
+                },
+                {
+                    "level": 10,
+                    "title": "Critical battery level",
+                    "message": "PLUG THE CHARGER RIGHT NOW!!",
+                    "icon": "battery_android_alert",
+                    "critical": true
+                }
             ],
-            "audio": [
-                "pavucontrol"
+            "criticalLevel": 3
+        },
+        "idle": {
+            "lockBeforeSleep": true,
+            "inhibitWhenAudio": true,
+            "timeouts": [
+                {
+                    "timeout": 180,
+                    "idleAction": "lock"
+                },
+                {
+                    "timeout": 300,
+                    "idleAction": "dpms off",
+                    "returnAction": "dpms on"
+                },
+                {
+                    "timeout": 600,
+                    "idleAction": ["systemctl", "suspend-then-hibernate"]
+                }
             ]
         }
     },
     "background": {
         "desktopClock": {
-            "enabled": false
+            "enabled": true
         },
         "enabled": true,
         "visualiser": {
-            "enabled": true,
+            "blur": false,
+            "enabled": false,
             "autoHide": true,
             "rounding": 1,
             "spacing": 1
@@ -335,7 +459,7 @@ Config lives in:
     },
     "bar": {
         "clock": {
-            "showIcon": false
+            "showIcon": true
         },
         "dragThreshold": 20,
         "entries": [
@@ -374,49 +498,67 @@ Config lives in:
             {
                 "id": "power",
                 "enabled": true
-            },
-            {
-                "id": "idleInhibitor",
-                "enabled": false
             }
         ],
-        "persistent": false,
+        "persistent": true,
+        "popouts": {
+            "activeWindow": true,
+            "statusIcons": true,
+            "tray": true
+        },
+        "scrollActions": {
+            "brightness": true,
+            "workspaces": true,
+            "volume": true
+        },
         "showOnHover": true,
         "status": {
             "showAudio": false,
             "showBattery": true,
             "showBluetooth": true,
-            "showMicrophone": false,
             "showKbLayout": false,
-            "showNetwork": true
+            "showMicrophone": false,
+            "showNetwork": true,
+            "showLockStatus": true
         },
         "tray": {
-            "background": true,
-            "recolour": true
+            "background": false,
+            "compact": false,
+            "iconSubs": [],
+            "recolour": false
         },
         "workspaces": {
+            "label": "  ",
+            
+            
             "activeIndicator": true,
             "activeLabel": "󰮯",
             "activeTrail": false,
             "groupIconsByApp": true,
-            "groupingRespectsLayout": true,
+            "groupingRespectsLayout": false,
             "windowRighClickContext": true,
-            "label": "◦",
+            "label": "⊙",
             "occupiedBg": true,
-            "occupiedLabel": "⊙",
-            "showWindows": true,
+            "occupiedLabel": "󰮯",
+            "showWindows": false,
             "shown": 4,
-            "windowIconImage": true,
-            "focusedWindowBlob": true,
+            "windowIconImage": false,
+            "focusedWindowBlob": false,
             "windowIconGap": 0,
             "windowIconSize": 30
+        },
+        "excludedScreens": [""],
+        "activeWindow": {
+            "inverted": false
         }
     },
     "border": {
-        "rounding": 25,
+        "rounding": 10,
         "thickness": 10
     },
     "dashboard": {
+        "enabled": true,
+        "dragThreshold": 50,
         "mediaUpdateInterval": 500,
         "showOnHover": true
     },
@@ -445,55 +587,72 @@ Config lives in:
         "clearThreshold": 0.3,
         "defaultExpireTimeout": 5000,
         "expandThreshold": 20,
-        "expire": false
+        "openExpanded": false,
+        "expire": true
     },
     "osd": {
         "enabled": true,
         "enableBrightness": true,
-        "enableMicrophone": true,
+        "enableMicrophone": false,
         "hideDelay": 2000
     },
     "paths": {
         "mediaGif": "root:/assets/bongocat.gif",
         "sessionGif": "root:/assets/kurukuru.gif",
-        "wallpaperDir": "~/Pictures/Wallpapers"
+        "wallpaperDir": "~/Pictures/Wallpapers",
+        "wallpaper": "~/Pictures/Wallpapers/default.jpg"
     },
     "services": {
         "audioIncrement": 0.1,
+        "maxVolume": 1.0,
         "defaultPlayer": "Spotify",
         "gpuType": "",
-        "playerAliases": [
-            {
-                "from": "com.github.th_ch.youtube_music",
-                "to": "YT Music"
-            }
-        ],
-        "weatherLocation": "",
+        "playerAliases": [{ "from": "com.github.th_ch.youtube_music", "to": "YT Music" }],
+        "weatherLocation": "New York",
         "useFahrenheit": false,
-        "useTwelveHourClock": false,
+        "useTwelveHourClock": true,
         "smartScheme": true,
         "visualiserBars": 45
     },
     "session": {
         "dragThreshold": 30,
+        "enabled": true,
         "vimKeybinds": false,
         "commands": {
-            "logout": [
-                "loginctl",
-                "terminate-user",
-                ""
-            ],
-            "shutdown": [
-                "systemctl",
-                "poweroff"
-            ],
-            "hibernate": [
-                "systemctl",
-                "hibernate"
-            ],
-            "reboot": [
-                "systemctl",
-                "reboot"
+            "logout": ["loginctl", "terminate-user", ""],
+            "shutdown": ["systemctl", "poweroff"],
+            "hibernate": ["systemctl", "hibernate"],
+            "reboot": ["systemctl", "reboot"]
+        }
+    },
+    "sidebar": {
+        "dragThreshold": 80,
+        "enabled": true
+    },
+    "utilities": {
+        "enabled": true,
+        "maxToasts": 4,
+        "toasts": {
+            "audioInputChanged": true,
+            "audioOutputChanged": true,
+            "capsLockChanged": true,
+            "chargingChanged": true,
+            "configLoaded": true,
+            "dndChanged": true,
+            "gameModeChanged": true,
+            "kbLayoutChanged": true,
+            "numLockChanged": true,
+            "vpnChanged": true,
+            "nowPlaying": false
+        },
+        "vpn": {
+            "enabled": false,
+            "provider": [
+                {
+                    "name": "wireguard",
+                    "interface": "your-connection-name",
+                    "displayName": "Wireguard (Your VPN)"
+                }
             ]
         }
     }
@@ -562,6 +721,7 @@ A: Civil unrest in my country 😥
 
 * [Quickshell](https://github.com/quickshell/quickshell) – Core shell framework
 * [Caelestia](https://github.com/caelestia-shell/caelestia-shell) – Original project
+* [Niri-Caelestia-Shell by Ayushkr2003](https://github.com/Ayushkr2003/niri-caelestia-shell) – Niri adaptation this fork is based on
 * [Niri](https://github.com/YaLTeR/niri) – Window manager backend
 * All upstream contributors :)
 
@@ -569,4 +729,4 @@ A: Civil unrest in my country 😥
 
 ## 📈 Useless chart
 
-[![Star History Chart](https://api.star-history.com/svg?repos=jutraim/niri-caelestia-shell\&type=Date)](https://star-history.com/#jutraim/niri-caelestia-shell&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Ayushkr2003/niri-caelestia-shell\&type=Date)](https://star-history.com/#Ayushkr2003/niri-caelestia-shell&Date)
