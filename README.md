@@ -12,16 +12,34 @@
 > A **Quickshell-based desktop environment** forked from [Caelestia Shell](https://github.com/caelestia-shell/caelestia-shell), adapted to run with the **Niri window manager**.
 > This fork keeps the dashboard-based workflow while experimenting with new sidebar features and Niri.
 
-<div align=center>
+<!-- <div align=center>
 
 https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
+
+</div> -->
+
+<div align=center>
+
+| App Launcher | Clipboard |
+|:---:|:---:|
+| ![App Launcher](images/app_launcher.png) | ![Clipboard](images/clipboard.png) |
+
+| Quick Toggles | Weather |
+|:---:|:---:|
+| ![Quick Toggles](images/quicktoggles.png) | ![Weather](images/weather.png) |
+
+| Niri Things |
+|:---:|
+| ![Niri Things](images/niriThings.png) |
 
 </div>
 
 > [!CAUTION]
+> This is my personal fork and it's **STILL WORK IN PROGRESS**.
+>
 > I am still learning Quickshell and this is my first time working with it. I'm trying to learn and improve! 🚀
 >
-> This repo is **ONLY for the desktop shell** of the caelestia dots. For the default caelestia dots, head to [the main repo](https://github.com/caelestia-dots/caelestia) instead.
+> This repo is **ONLY for the desktop shell** of the Caelestia dots. For the default Caelestia dots, head to [the main repo](https://github.com/caelestia-dots/caelestia) instead.
 
 
 
@@ -721,7 +739,7 @@ A: Civil unrest in my country 😥
 
 * [Quickshell](https://github.com/quickshell/quickshell) – Core shell framework
 * [Caelestia](https://github.com/caelestia-shell/caelestia-shell) – Original project
-* [Niri-Caelestia-Shell by Ayushkr2003](https://github.com/Ayushkr2003/niri-caelestia-shell) – Niri adaptation this fork is based on
+* [Niri-Caelestia-Shell](https://github.com/jutraim/niri-caelestia-shell) – Niri adaptation this fork is based on
 * [Niri](https://github.com/YaLTeR/niri) – Window manager backend
 * All upstream contributors :)
 
