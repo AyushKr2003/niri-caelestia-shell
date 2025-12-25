@@ -123,6 +123,10 @@ Item {
                     }
 
                     Pane {
+                        sourceComponent: WeatherPanel {}
+                    }
+
+                    Pane {
                         sourceComponent: NiriThing {}
                     }
                 }

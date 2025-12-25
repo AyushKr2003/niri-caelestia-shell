@@ -8,6 +8,7 @@ import qs.services
 import qs.config
 import qs.utils
 import Quickshell
+import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import QtQuick
@@ -167,6 +168,214 @@ Item {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        /* WEATHER SECTION */
+        StyledRect {
+            id: weatherSection
+            Layout.fillWidth: true
+            implicitHeight: weatherLayout.implicitHeight + Appearance.padding.normal * 2
+            radius: Appearance.rounding.normal
+            color: Colours.tPalette.m3surfaceContainer
+
+            property bool editingLocation: root.visibilities.editingWeatherLocation
+
+            ColumnLayout {
+                id: weatherLayout
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Appearance.padding.normal
+                spacing: Appearance.spacing.small
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.spacing.normal
+
+                    // Weather icon
+                    MaterialIcon {
+                        text: Weather.icon
+                        font.pointSize: Appearance.font.size.extraLarge * 1.5
+                        color: Colours.palette.m3secondary
+                    }
+
+                    // Weather info
+                    ColumnLayout {
+                        spacing: 0
+
+                        StyledText {
+                            text: Weather.temp
+                            font.pointSize: Appearance.font.size.large
+                            font.weight: 700
+                            color: Colours.palette.m3onSurface
+                        }
+
+                        StyledText {
+                            text: Weather.description
+                            font.pointSize: Appearance.font.size.smaller
+                            color: Colours.palette.m3onSurfaceVariant
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    // Right side info
+                    ColumnLayout {
+                        spacing: 2
+
+                        RowLayout {
+                            spacing: Appearance.spacing.small
+                            Layout.alignment: Qt.AlignRight
+
+                            MaterialIcon {
+                                text: "water_drop"
+                                font.pointSize: Appearance.font.size.small
+                                color: Colours.palette.m3tertiary
+                            }
+                            StyledText {
+                                text: Weather.humidity + "%"
+                                font.pointSize: Appearance.font.size.smaller
+                                color: Colours.palette.m3onSurfaceVariant
+                            }
+                        }
+
+                        // City with edit button
+                        RowLayout {
+                            Layout.alignment: Qt.AlignRight
+                            spacing: Appearance.spacing.small
+
+                            StyledText {
+                                text: Weather.city || "Loading..."
+                                font.pointSize: Appearance.font.size.extraSmall
+                                color: Colours.palette.m3outline
+                                visible: !weatherSection.editingLocation
+                            }
+
+                            // Edit button
+                            StyledRect {
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                                radius: Appearance.rounding.small
+                                color: "transparent"
+                                visible: !weatherSection.editingLocation
+
+                                StateLayer {
+                                    radius: parent.radius
+                                    color: Colours.palette.m3primary
+
+                                    function onClicked(): void {
+                                        root.visibilities.editingWeatherLocation = true
+                                        locationInput.text = Config.services.weatherLocation || Weather.city || ""
+                                        locationInput.forceActiveFocus()
+                                    }
+                                }
+
+                                MaterialIcon {
+                                    anchors.centerIn: parent
+                                    text: "edit"
+                                    font.pointSize: Appearance.font.size.extraSmall
+                                    color: Colours.palette.m3outline
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Location edit field
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.spacing.small
+                    visible: weatherSection.editingLocation
+
+                    StyledRect {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 32
+                        radius: Appearance.rounding.small
+                        color: Colours.tPalette.m3surfaceContainerHigh
+
+                        StyledTextField {
+                            id: locationInput
+                            anchors.fill: parent
+                            anchors.leftMargin: Appearance.padding.small
+                            anchors.rightMargin: Appearance.padding.small
+                            placeholderText: qsTr("Enter city name...")
+                            verticalAlignment: Text.AlignVCenter
+
+                            Keys.onReturnPressed: saveLocation()
+                            Keys.onEnterPressed: saveLocation()
+                            Keys.onEscapePressed: {
+                                root.visibilities.editingWeatherLocation = false
+                            }
+
+                            function saveLocation(): void {
+                                if (text.trim() !== "") {
+                                    saveLocationProcess.command = ["sh", "-c", 
+                                        `sed -i 's/"weatherLocation": "[^"]*"/"weatherLocation": "${text.trim()}"/' '${Paths.config}/shell.json'`
+                                    ]
+                                    saveLocationProcess.running = true
+                                }
+                                root.visibilities.editingWeatherLocation = false
+                            }
+                        }
+                    }
+
+                    // Save button
+                    StyledRect {
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        radius: Appearance.rounding.small
+                        color: Colours.palette.m3primaryContainer
+
+                        StateLayer {
+                            radius: parent.radius
+                            color: Colours.palette.m3onPrimaryContainer
+
+                            function onClicked(): void {
+                                locationInput.saveLocation()
+                            }
+                        }
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "check"
+                            font.pointSize: Appearance.font.size.small
+                            color: Colours.palette.m3onPrimaryContainer
+                        }
+                    }
+
+                    // Cancel button
+                    StyledRect {
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        radius: Appearance.rounding.small
+                        color: Colours.tPalette.m3surfaceContainerHigh
+
+                        StateLayer {
+                            radius: parent.radius
+                            color: Colours.palette.m3onSurface
+
+                            function onClicked(): void {
+                                root.visibilities.editingWeatherLocation = false
+                            }
+                        }
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "close"
+                            font.pointSize: Appearance.font.size.small
+                            color: Colours.palette.m3onSurfaceVariant
+                        }
+                    }
+                }
+            }
+
+            Process {
+                id: saveLocationProcess
+                onExited: {
+                    // Reload weather after config is saved
+                    Weather.reload()
                 }
             }
         }
