@@ -29,7 +29,7 @@ Variants {
             screen: scope.modelData
             name: "drawers"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session || visibilities.clipboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             mask: Region {
                 x: bar.implicitWidth
@@ -110,6 +110,7 @@ Variants {
                 property bool launcher
                 property bool dashboard
                 property bool utilities
+                property bool clipboard
 
                 Component.onCompleted: Visibilities.screens[scope.modelData] = this
             }

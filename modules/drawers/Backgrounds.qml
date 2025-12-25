@@ -7,6 +7,7 @@ import qs.modules.launcher as Launcher
 import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
+import qs.modules.clipboard as Clipboard
 import QtQuick
 import QtQuick.Shapes
 
@@ -69,5 +70,12 @@ Shape {
 
         startX: root.width
         startY: root.height
+    }
+
+    Clipboard.Background {
+        wrapper: root.panels.clipboard
+
+        startX: root.width
+        startY: 0
     }
 }

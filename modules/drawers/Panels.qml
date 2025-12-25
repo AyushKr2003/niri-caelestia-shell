@@ -6,6 +6,7 @@ import qs.modules.launcher as Launcher
 import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
+import qs.modules.clipboard as Clipboard
 import Quickshell
 import QtQuick
 
@@ -23,6 +24,7 @@ Item {
     readonly property Dashboard.Wrapper dashboard: dashboard
     readonly property BarPopouts.Wrapper popouts: popouts
     readonly property Utilities.Wrapper utilities: utilities
+    readonly property Clipboard.Wrapper clipboard: clipboard
 
     anchors.fill: parent
     anchors.margins: Config.border.thickness
@@ -102,6 +104,15 @@ Item {
         visibility: root.visibilities.utilities
 
         anchors.bottom: parent.bottom
+        anchors.right: parent.right
+    }
+
+    Clipboard.Wrapper {
+        id: clipboard
+
+        visibilities: root.visibilities
+
+        anchors.top: parent.top
         anchors.right: parent.right
     }
 }

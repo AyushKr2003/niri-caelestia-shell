@@ -7,7 +7,7 @@ import "modules/drawers"
 import "modules/background"
 import "modules/areapicker"
 import "modules/lock"
-
+import "modules/clipboard" 
 // import "./modules/sidebarLeft/"
 // import "./modules/sidebarRight/"
 
@@ -22,7 +22,7 @@ ShellRoot {
     Lock {}
 
     Shortcuts {}
-
+    ClipboardPanel {}   
     // LazyLoader { active: enableSidebarLeft; component: SidebarLeft {} }
     // LazyLoader { active: enableSidebarRight; component: SidebarRight {} }
 }
