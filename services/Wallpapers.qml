@@ -10,26 +10,25 @@ import QtQuick
 Searcher {
     id: root
 
-    readonly property string currentNamePath: `${Paths.state}/wallpaper/path.txt`
-    readonly property list<string> smartArg: Config.services.smartScheme ? [] : ["--no-smart"]
+    readonly property string stateDir: `${Paths.state}/wallpaper`
+    readonly property string currentNamePath: `${stateDir}/path.txt`
 
     property bool showPreview: false
     readonly property string current: showPreview ? previewPath : actualCurrent
     property string previewPath
     property string actualCurrent
     property bool previewColourLock
+    property bool initialized: false
 
     function setWallpaper(path: string): void {
         actualCurrent = path;
-        Quickshell.execDetached(["caelestia", "wallpaper", "-f", path, ...smartArg]);
+        // Save to state file directly
+        saveWallpaperPath.running = true;
     }
 
     function preview(path: string): void {
         previewPath = path;
         showPreview = true;
-
-        if (Colours.scheme === "dynamic")
-            getPreviewColoursProc.running = true;
     }
 
     function stopPreview(): void {
@@ -38,11 +37,28 @@ Searcher {
             Colours.showPreview = false;
     }
 
+    function loadFromConfig(): void {
+        console.log("loadFromConfig called");
+        console.log("Config.paths.wallpaper:", Config.paths.wallpaper);
+        console.log("actualCurrent before:", actualCurrent);
+        if (!actualCurrent && Config.paths.wallpaper) {
+            actualCurrent = Paths.absolutePath(Config.paths.wallpaper);
+            console.log("actualCurrent after:", actualCurrent);
+        }
+    }
+
     list: wallpapers.entries
     useFuzzy: Config.launcher.useFuzzy.wallpapers
     extraOpts: useFuzzy ? ({}) : ({
             forward: false
         })
+
+    // Delayed load to ensure config is ready
+    Timer {
+        interval: 100
+        running: true
+        onTriggered: root.loadFromConfig()
+    }
 
     IpcHandler {
         target: "wallpaper"
@@ -60,13 +76,27 @@ Searcher {
         }
     }
 
+    // Create state directory and save wallpaper path
+    Process {
+        id: saveWallpaperPath
+
+        command: ["sh", "-c", `mkdir -p '${root.stateDir}' && printf '%s' '${root.actualCurrent}' > '${root.currentNamePath}'`]
+    }
+
     FileView {
+        id: stateFile
         path: root.currentNamePath
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
-            root.actualCurrent = text().trim();
+            const loadedPath = text().trim();
+            if (loadedPath) {
+                root.actualCurrent = loadedPath;
+            } else {
+                root.loadFromConfig();
+            }
             root.previewColourLock = false;
+            root.initialized = true;
         }
     }
 
@@ -76,17 +106,5 @@ Searcher {
         recursive: true
         path: Paths.wallsdir
         filter: FileSystemModel.Images
-    }
-
-    Process {
-        id: getPreviewColoursProc
-
-        command: ["caelestia", "wallpaper", "-p", root.previewPath, ...root.smartArg]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                Colours.load(text, true);
-                Colours.showPreview = true;
-            }
-        }
     }
 }

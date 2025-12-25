@@ -80,7 +80,7 @@ Shape {
         startY: 0
     }
 
-    QuickToggles.Background {
+    QuickToggles.QuickTogglesBackground {
         wrapper: root.panels.quicktoggles
 
         startX: root.width

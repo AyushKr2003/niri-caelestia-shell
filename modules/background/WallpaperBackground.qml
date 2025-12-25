@@ -12,6 +12,12 @@ Loader {
     asynchronous: true
     active: Config.background.enabled
 
+    Component.onCompleted: {
+        console.log("Background.qml loaded");
+        console.log("Config.background.enabled:", Config.background.enabled);
+        console.log("Loader active:", active);
+    }
+
     sourceComponent: Variants {
         model: Quickshell.screens
 

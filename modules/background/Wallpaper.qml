@@ -16,7 +16,27 @@ Item {
 
     anchors.fill: parent
 
+    Component.onCompleted: {
+        console.log("Wallpaper.qml - source:", source);
+        console.log("Wallpaper.qml - Wallpapers.current:", Wallpapers.current);
+        console.log("Wallpaper.qml - Wallpapers.actualCurrent:", Wallpapers.actualCurrent);
+    }
+
+    // Delayed initial load to ensure CachingImageManager is ready
+    Timer {
+        id: initialLoadTimer
+        interval: 200
+        running: root.source !== ""
+        onTriggered: {
+            console.log("Initial load timer triggered, source:", root.source);
+            if (root.source && one.status !== Image.Ready && two.status !== Image.Ready) {
+                one.path = root.source;
+            }
+        }
+    }
+
     onSourceChanged: {
+        console.log("Wallpaper.qml - source changed to:", source);
         if (!source)
             current = null;
         else if (current === one)
@@ -107,6 +127,7 @@ Item {
         id: img
 
         function update(): void {
+            console.log("Img.update() called, path:", path, "source:", root.source);
             if (path === root.source)
                 root.current = this;
             else
@@ -118,9 +139,13 @@ Item {
         opacity: 0
         scale: Wallpapers.showPreview ? 1 : 0.8
 
+        onPathChanged: console.log("Img path changed to:", path)
         onStatusChanged: {
-            if (status === Image.Ready)
+            console.log("Img status changed:", status, "Ready is:", Image.Ready);
+            if (status === Image.Ready) {
+                console.log("Image ready! Setting current");
                 root.current = this;
+            }
         }
 
         states: State {
