@@ -4,10 +4,12 @@ import qs.config
 import QtQuick
 import QtQuick.Layouts
 
-ColumnLayout {
+Item {
     id: root
-    // Layout.fillWidth: true
-    // Layout.fillHeight: true
+
+    // Comfortable width to fit 4 workspace buttons in single row
+    implicitWidth: 720
+    implicitHeight: content.implicitHeight + Appearance.padding.large * 2
 
     property var client: null
 
@@ -22,158 +24,272 @@ ColumnLayout {
         root.client = Niri.focusedWindow || Niri.lastFocusedWindow;
     }
 
-    // ***************************************************
-    CollapsibleSection {
-        id: moveWorkspaceDropdown // Give it an ID to reference its functions
-        Layout.preferredWidth: 800
-        title: qsTr("Move Window to Workspace")
-        GridLayout {
-            id: wsGrid
-            columns: 5
+    ColumnLayout {
+        id: content
 
-            Repeater {
-                model: Niri.getWorkspaceCount()
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Appearance.padding.large
+        spacing: Appearance.spacing.normal
 
-                Button {
-                    required property int index
-                    readonly property int wsId: Math.floor((Niri.focusedWorkspaceIndex) / 10) * 10 + index + 1
-                    readonly property bool isCurrent: (wsId - 1) % 10 === Niri.focusedWorkspaceIndex
+        // ***************************************************
+        // WORKSPACE SECTION
+        CollapsibleSection {
+            id: moveWorkspaceDropdown
+            Layout.fillWidth: true
+            title: qsTr("Move Window to Workspace")
 
-                    color: isCurrent ? Colours.palette.m3surfaceContainerHighest : Colours.palette.m3tertiaryContainer
-                    onColor: isCurrent ? Colours.palette.m3onSurface : Colours.palette.m3onTertiaryContainer
-                    text: (Niri.currentOutputWorkspaces[wsId - 1].name) || "Workspace: " + wsId
-                    disabled: isCurrent
+            RowLayout {
+                id: wsRow
+                spacing: Appearance.spacing.normal
 
-                    function onClicked(): void {
-                        Niri.moveWindowToWorkspace(wsId);
+                Repeater {
+                    model: Niri.getWorkspaceCount()
+
+                    WorkspaceButton {
+                        required property int index
+                        readonly property int wsId: Math.floor((Niri.focusedWorkspaceIndex) / 10) * 10 + index + 1
+                        readonly property bool isCurrent: (wsId - 1) % 10 === Niri.focusedWorkspaceIndex
+
+                        Layout.fillWidth: true
+                        active: isCurrent
+                        text: (Niri.currentOutputWorkspaces[wsId - 1]?.name) || "Workspace " + wsId
+                        disabled: isCurrent
+
+                        function onClicked(): void {
+                            Niri.moveWindowToWorkspace(wsId);
+                        }
                     }
                 }
             }
         }
-    }
 
-    CollapsibleSection {
-        id: utilities // Give it an ID to reference its functions
-        title: qsTr("Window Utilities")
-        backgroundMarginTop: 0
-        expanded: true
+        // ***************************************************
+        // UTILITIES SECTION
+        CollapsibleSection {
+            id: utilities
+            Layout.fillWidth: true
+            title: qsTr("Window Utilities")
+            backgroundMarginTop: 0
+            expanded: true
 
-        //  toggleWindowOpacity
-        //  expandColumnToAvailable
-        //  centerWindow
-        //  screenshotWindow
-        //  keyboardShortcutsInhibitWindow
-        //  toggleWindowedFullscreen
-        //  toggleFullscreen
-        //  toggleMaximize
+            //  toggleWindowOpacity
+            //  expandColumnToAvailable
+            //  centerWindow
+            //  screenshotWindow
+            //  keyboardShortcutsInhibitWindow
+            //  toggleWindowedFullscreen
+            //  toggleFullscreen
+            //  toggleMaximize
 
-        RowLayout {
-            ColumnLayout {
-                RowLayout {
-                    // toggleFullscreen - Button 3
-                    Button {
-                        color: Colours.palette.m3secondaryContainer
-                        onColor: Colours.palette.m3onSecondaryContainer
-                        text: qsTr("Toggle Fullscreen")
-                        icon: "fullscreen"
-                        function onClicked(): void {
-                            Niri.toggleFullscreen();
-                        }
+            GridLayout {
+                columns: 3
+                rowSpacing: Appearance.spacing.normal
+                columnSpacing: Appearance.spacing.normal
+                Layout.fillWidth: true
+
+                // Row 1: Main window controls
+                ActionButton {
+                    Layout.fillWidth: true
+                    icon: "fullscreen"
+                    text: qsTr("Fullscreen")
+                    function onClicked(): void {
+                        Niri.toggleFullscreen();
                     }
-
-                    // toggleWindowedFullscreen - Button 4
-                    Button {
-                        color: Colours.palette.m3secondaryContainer
-                        onColor: Colours.palette.m3onSecondaryContainer
-                        icon: "disabled_visible"
-                        text: qsTr("Toggle Fake Fullscreen")
-                        function onClicked(): void {
-                            Niri.toggleWindowedFullscreen();
-                        }
-                    }
-
-                    // expandColumnToAvailable - Button 6
-                    // Button {
-                    //     color: Colours.palette.m3secondaryContainer
-                    //     onColor: Colours.palette.m3onSecondaryContainer
-                    //     icon: "view_column"
-                    //     text: qsTr("Expand Column")
-                    //     function onClicked(): void {
-                    //         Niri.expandColumnToAvailable();
-                    //     }
-                    // }
                 }
-                // Center - Button 1
-                Button {
-                    color: Colours.palette.m3secondaryContainer
-                    onColor: Colours.palette.m3onSecondaryContainer
-                    text: qsTr("Center")
+
+                ActionButton {
+                    Layout.fillWidth: true
+                    icon: "fullscreen_exit"
+                    text: qsTr("Fake Fullscreen")
+                    function onClicked(): void {
+                        Niri.toggleWindowedFullscreen();
+                    }
+                }
+
+                ActionButton {
+                    Layout.fillWidth: true
                     icon: "center_focus_strong"
+                    text: qsTr("Center Window")
                     function onClicked(): void {
                         Niri.centerWindow();
                     }
                 }
-                // Inhibit Shortcuts - Button 2
-                Button {
-                    color: Colours.palette.m3secondaryContainer
-                    onColor: Colours.palette.m3onSecondaryContainer
-                    icon: "disabled_visible"
+
+                // Row 2: Secondary actions
+                ActionButton {
+                    Layout.fillWidth: true
+                    icon: "block"
                     text: qsTr("Inhibit Shortcuts")
                     function onClicked(): void {
                         Niri.keyboardShortcutsInhibitWindow();
                     }
                 }
-            }
 
-            // Screenshot - Button 3
-
-            Button {
-                Layout.fillHeight: true
-                color: Colours.palette.m3secondaryContainer
-                onColor: Colours.palette.m3onSecondaryContainer
-                text: qsTr("Screenshot Window")
-                icon: "photo_camera"
-                function onClicked(): void {
-                    Niri.screenshotWindow();
+                ActionButton {
+                    Layout.fillWidth: true
+                    Layout.columnSpan: 2
+                    icon: "photo_camera"
+                    text: qsTr("Screenshot Window")
+                    accent: true
+                    function onClicked(): void {
+                        Niri.screenshotWindow();
+                    }
                 }
-            }
 
-            // // toggleWindowOpacity - Button 5
-            // Button {
-            //     color: Colours.palette.m3secondaryContainer
-            //     onColor: Colours.palette.m3onSecondaryContainer
-            //     icon: "opacity"
-            //     text: qsTr("Toggle Opacity")
-            //     function onClicked(): void {
-            //         Niri.toggleWindowOpacity();
-            //     }
-            // }
+                // // expandColumnToAvailable - Button 6
+                // ActionButton {
+                //     Layout.fillWidth: true
+                //     icon: "view_column"
+                //     text: qsTr("Expand Column")
+                //     function onClicked(): void {
+                //         Niri.expandColumnToAvailable();
+                //     }
+                // }
+
+                // // toggleWindowOpacity - Button 5
+                // ActionButton {
+                //     Layout.fillWidth: true
+                //     icon: "opacity"
+                //     text: qsTr("Toggle Opacity")
+                //     function onClicked(): void {
+                //         Niri.toggleWindowOpacity();
+                //     }
+                // }
+            }
         }
+
+        // Rect {
+        //     Layout.row: 1
+        //     Layout.column: 4
+        //     Layout.preferredWidth: resources.implicitWidth
+        //     Layout.fillHeight: true
+        // }
+
+        // Rect {
+        //     Layout.row: 0
+        //     Layout.column: 5
+        //     Layout.rowSpan: 2
+        //     Layout.preferredWidth: media.implicitWidth
+        //     Layout.fillHeight: true
+        // }
     }
 
-    // Rect {
-    //     Layout.row: 1
-    //     Layout.column: 4
-    //     Layout.preferredWidth: resources.implicitWidth
-    //     Layout.fillHeight: true
-    // }
-
-    // Rect {
-    //     Layout.row: 0
-    //     Layout.column: 5
-    //     Layout.rowSpan: 2
-    //     Layout.preferredWidth: media.implicitWidth
-    //     Layout.fillHeight: true
-    // }
-
     // ***************************************************
+    // COMPONENTS
 
     component Rect: StyledRect {
         radius: Appearance.rounding.small
-        color: Colours.palette.m3surfaceContainerLow
+        color: Colours.tPalette.m3surfaceContainer
     }
 
-    // Your global Button component (if defined here)
+    // Workspace button - pill style for workspace selection
+    component WorkspaceButton: StyledRect {
+        id: wsBtn
+
+        property bool active: false
+        property alias disabled: stateLayer.disabled
+        property alias text: label.text
+
+        function onClicked(): void {}
+
+        radius: Appearance.rounding.full
+        color: active ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+
+        implicitHeight: label.implicitHeight + Appearance.padding.small * 2
+        implicitWidth: label.implicitWidth + Appearance.padding.normal * 2
+
+        Behavior on color {
+            CAnim {}
+        }
+
+        StateLayer {
+            id: stateLayer
+            radius: parent.radius
+            color: active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+
+            function onClicked(): void {
+                wsBtn.onClicked();
+            }
+        }
+
+        StyledText {
+            id: label
+            anchors.centerIn: parent
+            color: active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+            font.pointSize: Appearance.font.size.small
+            font.weight: active ? Font.Medium : Font.Normal
+
+            Behavior on color {
+                CAnim {}
+            }
+        }
+    }
+
+    // Action button - card style for utility actions
+    component ActionButton: StyledRect {
+        id: actionBtn
+
+        property alias disabled: actionStateLayer.disabled
+        property alias text: actionLabel.text
+        property alias icon: actionIcon.text
+        property bool accent: false
+
+        function onClicked(): void {}
+
+        radius: Appearance.rounding.small
+        color: accent ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
+
+        implicitHeight: contentCol.implicitHeight + Appearance.padding.normal * 2
+        implicitWidth: Math.max(contentCol.implicitWidth + Appearance.padding.normal * 2, 100)
+
+        Behavior on color {
+            CAnim {}
+        }
+
+        StateLayer {
+            id: actionStateLayer
+            radius: parent.radius
+            color: accent ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurface
+
+            function onClicked(): void {
+                actionBtn.onClicked();
+            }
+        }
+
+        Column {
+            id: contentCol
+            anchors.centerIn: parent
+            spacing: Appearance.spacing.smaller
+
+            MaterialIcon {
+                id: actionIcon
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: accent ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurface
+                font.pointSize: Appearance.font.size.large
+                text: "radio_button_unchecked"
+
+                Behavior on color {
+                    CAnim {}
+                }
+            }
+
+            StyledText {
+                id: actionLabel
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: accent ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurfaceVariant
+                font.pointSize: Appearance.font.size.smaller
+                horizontalAlignment: Text.AlignHCenter
+
+                Behavior on color {
+                    CAnim {}
+                }
+            }
+        }
+    }
+
+    // Legacy Button component (kept for compatibility)
     component Button: StyledRect {
         property color onColor: Colours.palette.m3onSurface
         property alias disabled: stateLayer.disabled
