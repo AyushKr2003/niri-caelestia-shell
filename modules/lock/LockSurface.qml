@@ -95,6 +95,12 @@ WlSessionLockSurface {
             to: 1
             duration: Appearance.anim.durations.large
         }
+        Anim {
+            target: wallpaperFallback
+            property: "opacity"
+            to: 0
+            duration: Appearance.anim.durations.large
+        }
         SequentialAnimation {
             ParallelAnimation {
                 Anim {
@@ -159,12 +165,50 @@ WlSessionLockSurface {
         }
     }
 
+    // Solid color fallback (lowest priority)
+    Rectangle {
+        id: solidFallback
+        anchors.fill: parent
+        color: Colours.palette.m3surface
+        z: 0
+    }
+
+    // Wallpaper fallback (medium priority)
+    Image {
+        id: wallpaperFallback
+        anchors.fill: parent
+        source: Wallpapers.current || Config.paths.wallpaper || ""
+        fillMode: Image.PreserveAspectCrop
+        opacity: 1
+        z: 1
+        
+        // Show solid color if wallpaper fails to load
+        visible: status === Image.Ready || status === Image.Loading
+        
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            blurEnabled: true
+            blur: 1
+            blurMax: 64
+            blurMultiplier: 1
+        }
+        
+        onStatusChanged: {
+            if (status === Image.Error) {
+                console.log("Wallpaper failed to load, falling back to solid color");
+            }
+        }
+    }
+
+    // Screen capture blur (highest priority)
     ScreencopyView {
         id: background
 
         anchors.fill: parent
         captureSource: root.screen
         opacity: 0
+        z: 2
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -185,6 +229,7 @@ WlSessionLockSurface {
         anchors.centerIn: parent
         implicitWidth: size
         implicitHeight: size
+        z: 3
 
         rotation: 180
         scale: 0
