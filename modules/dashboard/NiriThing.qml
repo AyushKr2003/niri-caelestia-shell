@@ -40,9 +40,12 @@ Item {
             Layout.fillWidth: true
             title: qsTr("Move Window to Workspace")
 
-            RowLayout {
-                id: wsRow
-                spacing: Appearance.spacing.normal
+            GridLayout {
+                id: wsGrid
+                columns: 4  // Maximum 4 workspaces per row
+                rowSpacing: Appearance.spacing.normal
+                columnSpacing: Appearance.spacing.normal
+                Layout.fillWidth: true
 
                 Repeater {
                     model: Niri.getWorkspaceCount()
