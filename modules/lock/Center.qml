@@ -7,6 +7,7 @@ import qs.services
 import qs.config
 import qs.utils
 import QtQuick
+import Quickshell.Io
 import QtQuick.Layouts
 
 ColumnLayout {
@@ -213,6 +214,34 @@ ColumnLayout {
         }
     }
 
+// --- Keyboard State Tracker ---
+    
+    property bool isCapsLock: false
+
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            capsLockCheck.running = true
+        }
+    }
+
+    Process {
+        id: capsLockCheck
+        // We use 'grep -l' to stop at the first match, ensuring we don't wait for all devices
+        // We use 'bash -c' to ensure the * wildcard expands correctly
+        command: ["bash", "-c", "grep -l '[1-9]' /sys/class/leds/*capslock*/brightness 2>/dev/null && echo true || echo false"]
+        stdout: function(output) {
+            const newState = output.trim().includes("true");
+            if (root.isCapsLock !== newState) {
+                console.log("[LockScreen] CapsLock changed:", newState);
+            }
+            root.isCapsLock = newState;
+        }
+    }
+
     Item {
         Layout.fillWidth: true
         Layout.topMargin: -Appearance.spacing.large
@@ -227,22 +256,17 @@ ColumnLayout {
             id: stateMessage
 
             readonly property string msg: {
-                if (Niri.kbLayout !== Niri.defaultKbLayout) {
-                    if (Niri.capsLock && Niri.numLock)
-                        return qsTr("Caps lock and Num lock are ON.\nKeyboard layout: %1").arg(Niri.kbLayoutFull);
-                    if (Niri.capsLock)
-                        return qsTr("Caps lock is ON. Kb layout: %1").arg(Niri.kbLayoutFull);
-                    if (Niri.numLock)
-                        return qsTr("Num lock is ON. Kb layout: %1").arg(Niri.kbLayoutFull);
-                    return qsTr("Keyboard layout: %1").arg(Niri.kbLayoutFull);
-                }
+                // Define a helper to safely get the layout name
+                // Use the full name if available, otherwise fallback to the short code (e.g., "us")
+                let layoutName = (Niri.kbLayoutFull ?? Niri.kbLayout)
 
-                if (Niri.capsLock && Niri.numLock)
-                    return qsTr("Caps lock and Num lock are ON.");
-                if (Niri.capsLock)
-                    return qsTr("Caps lock is ON.");
-                if (Niri.numLock)
-                    return qsTr("Num lock is ON.");
+                // 2. Build the message using our new root.isCapsLock
+                if (root.isCapsLock)
+                    return qsTr("Caps lock is ON. Kb layout: %1").arg(layoutName);
+                
+                // 3. Fallback to just layout if needed
+                if (Niri.kbLayout !== Niri.defaultKbLayout)
+                     return qsTr("Keyboard layout: %1").arg(layoutName);
 
                 return "";
             }
