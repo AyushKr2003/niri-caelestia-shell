@@ -21,9 +21,9 @@ Item {
     required property var wrapper
     required property PersistentProperties visibilities
 
-    readonly property int padding: Appearance.padding.large
+    readonly property int padding: Math.max(Appearance.padding.large, Config.border.rounding)
 
-    implicitWidth: 340
+    implicitWidth: 450
     implicitHeight: mainLayout.implicitHeight + padding * 2
 
     ColumnLayout {
@@ -33,6 +33,9 @@ Item {
         anchors.top: parent.top
         anchors.margins: root.padding
         spacing: Appearance.spacing.normal
+
+        anchors.leftMargin: root.padding * 2
+        anchors.rightMargin: 10
 
         /* NOTIFICATION HISTORY */
         StyledClippingRect {
@@ -115,7 +118,7 @@ Item {
                                 asynchronous: true
                                 source: `file://${Quickshell.shellDir}/assets/dino.png`
                                 fillMode: Image.PreserveAspectFit
-                                sourceSize.width: 120
+                                sourceSize.width: 280
 
                                 layer.enabled: true
                                 layer.effect: Colouriser {

@@ -56,13 +56,13 @@ ShapePath {
         relativeX: 0
         relativeY: root.wrapper.height - root.roundingY * 2
     }
-    // Bottom-left inner arc going right (connects to bar)
+    // Bottom-left outer arc going right
     PathArc {
-        relativeX: root.rounding
+        relativeX: -root.rounding
         relativeY: root.roundingY
         radiusX: root.rounding
-        radiusY: Math.max(root.rounding, root.wrapper.height)
-        direction: PathArc.Counterclockwise
+        radiusY: Math.min(root.rounding, root.wrapper.height)
+        direction: PathArc.Clockwise
     }
     // Bottom edge going right back to start, extend past panel for inner corner
     PathLine {
