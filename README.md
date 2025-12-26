@@ -9,15 +9,16 @@
 </div>
 
 
-> A **Quickshell-based desktop environment** forked from [Caelestia Shell](https://github.com/caelestia-shell/caelestia-shell), adapted to run with the **Niri window manager**.
+> A **Quickshell-based desktop environment** forked from [Caelestia Shell](https://github.com/caelestia-dots/shell), adapted to run with the **Niri window manager**.
 > This fork keeps the dashboard-based workflow while experimenting with new sidebar features and Niri.
 
-<!-- <div align=center>
+<div align=center>
 
 https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 
-</div> -->
+</div>
 
+<details><summary> <b> ScreenShorts </b></summary>
 <div align=center>
 
 | App Launcher | Clipboard |
@@ -33,7 +34,7 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 | ![Niri Things](images/niriThings.png) |
 
 </div>
-
+</details>
 > [!CAUTION]
 > This is my personal fork and it's **STILL WORK IN PROGRESS**.
 >
