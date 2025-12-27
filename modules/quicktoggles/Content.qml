@@ -444,6 +444,24 @@ Item {
                         active: IdleInhibitor.enabled
                         onClicked: IdleInhibitor.enabled = !IdleInhibitor.enabled
                     }
+
+                    // Settings Button
+                    ToggleButton {
+                        Layout.fillWidth: true
+                        icon: "settings"
+                        label: qsTr("Settings")
+                        active: false
+                        onClicked: {
+                            const panelsPopouts = root.wrapper && root.wrapper.parent ? root.wrapper.parent.popouts : null;
+                            if (panelsPopouts) {
+                                    panelsPopouts.detach("network");
+                            }
+                            // Close the quicktoggles panel after opening the ControlCenter popout
+                            if (root.visibilities) {
+                                root.visibilities.quicktoggles = false;
+                            }
+                        }
+                    }
                 }
             }
         }
