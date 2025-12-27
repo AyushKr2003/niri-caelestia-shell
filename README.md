@@ -18,8 +18,8 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 
 </div>
 
-<details><summary> <b> ScreenShorts </b></summary>
-<div align=center>
+
+<div align=center> <h2>  ScreenShorts </h2>
 
 | App Launcher | Clipboard |
 |:---:|:---:|
@@ -34,7 +34,7 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 | ![Niri Things](images/niriThings.png) |
 
 </div>
-</details>
+
 > [!CAUTION]
 > This is my personal fork and it's **STILL WORK IN PROGRESS**.
 >
