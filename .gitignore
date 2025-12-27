@@ -8,3 +8,4 @@
 .github/chatmodes/prompt-engineer.chatmode.md
 build/
 .cache/
+/modules/keybinds/keybinds.json
