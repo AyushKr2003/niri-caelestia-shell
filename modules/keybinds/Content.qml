@@ -75,7 +75,7 @@ Item {
         anchors.margins: root.padding
         spacing: Appearance.spacing.normal
 
-        anchors.leftMargin: root.padding * 2
+        anchors.leftMargin: root.padding
         anchors.rightMargin: 10
 
         /* HEADER */
