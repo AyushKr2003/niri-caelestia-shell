@@ -91,7 +91,7 @@ You need both runtime dependencies and development headers.
 <br>
 
 * All dependencies in plain text:
-   * `quickshell-git networkmanager fish glibc qt6-declarative gcc-libs cava libcava aubio libpipewire ddcutil brightnessctl  ttf-material-icons-git ttf-jetbrains-mono grim swappy app2unit libqalculate`
+   * `quickshell-git networkmanager fish glibc qt6-declarative gcc-libs cava libcava aubio libpipewire ddcutil brightnessctl  ttf-material-icons-git ttf-jetbrains-mono grim swappy app2unit libqalculate python-materialyoucolor`
 
 > [!NOTE]
 >
@@ -124,6 +124,7 @@ You need both runtime dependencies and development headers.
 | [`libpipewire`](https://pipewire.org) | Media backend |
 | [`ddcutil`](https://github.com/rockowitz/ddcutil) | Monitor brightness control |
 | [`brightnessctl`](https://github.com/Hummer12007/brightnessctl) | Brightness control |
+| [`materialyoucolor`](https://github.com/T-Dynamos/materialyoucolor-python) | Dynamic Color generation |
 
 #### Fonts 🔣
 

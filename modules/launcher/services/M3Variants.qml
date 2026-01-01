@@ -33,16 +33,22 @@ Searcher {
         function setVariant(variantName: string): void {
             try {
                 const currentState = JSON.parse(text());
+                const isDynamic = currentState.name === "dynamic";
                 currentState.variant = variantName;
 
                 // Save updated state
                 const jsonContent = JSON.stringify(currentState, null, 2);
-                const escapedJson = jsonContent.replace(/'/g, "'\\''");
+                const escapedJson = jsonContent.replace(/'/g, "'\\''")
                 schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
                 schemeStateWriter.running = true;
 
                 // Update the Schemes service current variant
                 Schemes.currentVariant = variantName;
+
+                // If using dynamic scheme, regenerate colors with new variant
+                if (isDynamic) {
+                    Schemes.regenerateDynamic();
+                }
             } catch (e) {
                 console.error("Failed to set variant:", e);
             }

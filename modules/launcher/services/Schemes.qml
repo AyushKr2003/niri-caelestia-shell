@@ -7,7 +7,6 @@ import qs.utils
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import Caelestia
 
 Searcher {
     id: root
@@ -19,6 +18,8 @@ Searcher {
     readonly property string schemesDataPath: Qt.resolvedUrl("scheme.json")
     // Path to store current scheme state
     readonly property string schemeStatePath: `${Paths.state}/scheme.json`
+    // Path to the Python script for generating dynamic schemes
+    readonly property string generateScriptPath: Qt.resolvedUrl("../../../scripts/generate_scheme.py")
 
     function transformSearch(search: string): string {
         return search.slice(`${Config.launcher.actionPrefix}scheme `.length);
@@ -35,8 +36,7 @@ Searcher {
     // Regenerate dynamic scheme from current wallpaper
     function regenerateDynamic(): void {
         if (root.currentScheme.startsWith("dynamic")) {
-            const flavour = root.currentScheme.split(" ")[1] || "tonalspot";
-            setScheme("dynamic", flavour);
+            setScheme("dynamic", "default");
         }
     }
 
@@ -45,22 +45,20 @@ Searcher {
         // Handle dynamic scheme generation
         if (name === "dynamic") {
             const wallpaper = Wallpapers.current;
+            console.log("Dynamic scheme: wallpaper =", wallpaper);
+            if (!wallpaper) {
+                console.warn("Cannot set dynamic scheme: no wallpaper set");
+                return;
+            }
             const mode = Colours.light ? "light" : "dark";
             const variant = root.currentVariant || "tonalspot";
+            console.log("Dynamic scheme: variant =", variant, "mode =", mode);
 
-            MaterialScheme.generateSchemeFromImage(wallpaper, variant, !Colours.light, function(colours) {
-                const stateData = {
-                    name: "dynamic",
-                    flavour: flavour,
-                    mode: mode,
-                    variant: variant,
-                    colours: colours
-                };
-
-                schemeStateWriter.write(JSON.stringify(stateData, null, 2));
-                root.currentScheme = `dynamic ${flavour}`;
-                Colours.load(JSON.stringify(stateData), false);
-            });
+            // Use Python script with materialyoucolor library
+            dynamicSchemeGenerator.wallpaper = wallpaper;
+            dynamicSchemeGenerator.variant = variant;
+            dynamicSchemeGenerator.mode = mode;
+            dynamicSchemeGenerator.run();
             return;
         }
 
@@ -122,20 +120,11 @@ Searcher {
                     for (const f of s)
                         flat.push(f);
 
-                // Add dynamic schemes
+                // Add dynamic scheme (single entry with default flavour)
+                // Variant is selected separately via M3Variants drawer
                 flat.push({
                     name: "dynamic",
-                    flavour: "tonalspot",
-                    colours: {}
-                });
-                flat.push({
-                    name: "dynamic",
-                    flavour: "vibrant",
-                    colours: {}
-                });
-                flat.push({
-                    name: "dynamic",
-                    flavour: "expressive",
+                    flavour: "default",
                     colours: {}
                 });
 
@@ -179,6 +168,51 @@ Searcher {
             const escapedJson = content.replace(/'/g, "'\\''");
             schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
             schemeStateWriter.running = true;
+        }
+    }
+
+    // Process for generating dynamic scheme from wallpaper using Python materialyoucolor
+    Process {
+        id: dynamicSchemeGenerator
+
+        property string wallpaper
+        property string variant
+        property string mode
+
+        running: false
+
+        function run(): void {
+            const scriptPath = generateScriptPath.toString().replace("file://", "");
+            command = ["python3", scriptPath, wallpaper, variant, mode];
+            console.log("Running dynamic scheme generator:", JSON.stringify(command));
+            running = true;
+        }
+
+        stdout: SplitParser {
+            onRead: data => {
+                console.log("Dynamic scheme generator stdout length:", data.length);
+                try {
+                    const colours = JSON.parse(data);
+                    console.log("Parsed colours, keys:", Object.keys(colours).length);
+                    const stateData = {
+                        name: "dynamic",
+                        flavour: "default",
+                        mode: dynamicSchemeGenerator.mode,
+                        variant: dynamicSchemeGenerator.variant,
+                        colours: colours
+                    };
+
+                    schemeStateWriter.write(JSON.stringify(stateData, null, 2));
+                    root.currentScheme = "dynamic default";
+                    Colours.load(JSON.stringify(stateData), false);
+                } catch (e) {
+                    console.error("Failed to parse dynamic scheme:", e, data);
+                }
+            }
+        }
+
+        stderr: SplitParser {
+            onRead: data => console.error("Dynamic scheme generator error:", data)
         }
     }
 

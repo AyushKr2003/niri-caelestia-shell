@@ -59,6 +59,7 @@ Singleton {
     function load(data: string, isPreview: bool): void {
         const colours = isPreview ? preview : current;
         const scheme = JSON.parse(data);
+        console.log("Colours.load called, isPreview:", isPreview, "scheme name:", scheme.name);
 
         if (!isPreview) {
             root.scheme = scheme.name;
@@ -68,11 +69,15 @@ Singleton {
             previewLight = scheme.mode === "light";
         }
 
+        let loadedCount = 0;
         for (const [name, colour] of Object.entries(scheme.colours)) {
             const propName = name.startsWith("term") ? name : `m3${name}`;
-            if (colours.hasOwnProperty(propName))
+            if (colours.hasOwnProperty(propName)) {
                 colours[propName] = `#${colour}`;
+                loadedCount++;
+            }
         }
+        console.log("Colours.load: loaded", loadedCount, "colors out of", Object.keys(scheme.colours).length);
     }
 
     // Set mode (light/dark) and save to state file
