@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import qs.config
 import qs.utils
+import qs.modules.launcher.services
 import Caelestia
 import Quickshell
 import Quickshell.Io
@@ -143,6 +144,9 @@ Singleton {
                 if (Wallpapers.current == current)
                     root.wallLuminance = l;
             });
+
+            // Regenerate dynamic scheme if currently active
+            Schemes.regenerateDynamic();
         }
     }
 

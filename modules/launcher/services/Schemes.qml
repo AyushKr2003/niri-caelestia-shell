@@ -7,6 +7,7 @@ import qs.utils
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import Caelestia
 
 Searcher {
     id: root
@@ -31,8 +32,38 @@ Searcher {
         schemeStateFile.reload();
     }
 
+    // Regenerate dynamic scheme from current wallpaper
+    function regenerateDynamic(): void {
+        if (root.currentScheme.startsWith("dynamic")) {
+            const flavour = root.currentScheme.split(" ")[1] || "tonalspot";
+            setScheme("dynamic", flavour);
+        }
+    }
+
     // Set a scheme by name and flavour
     function setScheme(name: string, flavour: string): void {
+        // Handle dynamic scheme generation
+        if (name === "dynamic") {
+            const wallpaper = Wallpapers.current;
+            const mode = Colours.light ? "light" : "dark";
+            const variant = root.currentVariant || "tonalspot";
+
+            MaterialScheme.generateSchemeFromImage(wallpaper, variant, !Colours.light, function(colours) {
+                const stateData = {
+                    name: "dynamic",
+                    flavour: flavour,
+                    mode: mode,
+                    variant: variant,
+                    colours: colours
+                };
+
+                schemeStateWriter.write(JSON.stringify(stateData, null, 2));
+                root.currentScheme = `dynamic ${flavour}`;
+                Colours.load(JSON.stringify(stateData), false);
+            });
+            return;
+        }
+
         const schemeData = schemesDataFile.json;
         if (!schemeData || !schemeData[name] || !schemeData[name][flavour]) {
             console.warn(`Scheme not found: ${name} ${flavour}`);
@@ -90,6 +121,23 @@ Searcher {
                 for (const s of list)
                     for (const f of s)
                         flat.push(f);
+
+                // Add dynamic schemes
+                flat.push({
+                    name: "dynamic",
+                    flavour: "tonalspot",
+                    colours: {}
+                });
+                flat.push({
+                    name: "dynamic",
+                    flavour: "vibrant",
+                    colours: {}
+                });
+                flat.push({
+                    name: "dynamic",
+                    flavour: "expressive",
+                    colours: {}
+                });
 
                 schemes.model = flat.sort((a, b) => (a.name + a.flavour).localeCompare((b.name + b.flavour)));
             } catch (e) {

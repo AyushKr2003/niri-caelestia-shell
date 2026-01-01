@@ -18,6 +18,7 @@ qt_add_qml_module(caelestia
         audiocollector.hpp audiocollector.cpp
         audioprovider.hpp audioprovider.cpp
         cavaprovider.hpp cavaprovider.cpp
+        materialscheme.hpp materialscheme.cpp
 )
 
 qt_query_qml_module(caelestia
