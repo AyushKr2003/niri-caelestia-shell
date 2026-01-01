@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Generate Material You color scheme from an image using materialyoucolor library.
-This matches exactly the implementation in caelestia-dots/cli.
-"""
 
 import json
 import sys

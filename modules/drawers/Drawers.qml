@@ -29,7 +29,7 @@ Variants {
             screen: scope.modelData
             name: "drawers"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session || visibilities.clipboard || visibilities.editingWeatherLocation ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session || visibilities.clipboard || visibilities.keybinds || visibilities.editingWeatherLocation ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             mask: Region {
                 x: bar.implicitWidth
@@ -112,6 +112,7 @@ Variants {
                 property bool utilities
                 property bool clipboard
                 property bool quicktoggles
+                property bool keybinds
                 property bool editingWeatherLocation
 
                 Component.onCompleted: Visibilities.screens[scope.modelData] = this

@@ -9,6 +9,7 @@ import "modules/areapicker"
 import "modules/lock"
 import "modules/clipboard"
 import "modules/quicktoggles"
+import "modules/keybinds"
 // import "./modules/sidebarLeft/"
 // import "./modules/sidebarRight/"
 
@@ -25,6 +26,7 @@ ShellRoot {
     Shortcuts {}
     ClipboardPanel {}
     QuickTogglesPanel {}
+    KeybindsPanel {}
     // LazyLoader { active: enableSidebarLeft; component: SidebarLeft {} }
     // LazyLoader { active: enableSidebarRight; component: SidebarRight {} }
 }
