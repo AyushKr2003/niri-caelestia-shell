@@ -1,7 +1,6 @@
 import qs.components
 import qs.services
 import qs.config
-import Quickshell
 import QtQuick
 import QtQuick.Shapes
 
@@ -16,58 +15,44 @@ ShapePath {
     strokeWidth: -1
     fillColor: Colours.palette.m3surface
 
-    // Draw from bottom-right (startX: root.width, startY: root.height)
-    // Going clockwise
-    
-    // Bottom-right inner arc going up (connects to bottom border)
+    // Bottom-right panel: starts at (root.width, root.height)
+    // Goes left along bottom edge
+    PathLine {
+        relativeX: -(root.wrapper.width + root.rounding)
+        relativeY: 0
+    }
+    // Outer arc curving up (curves away from screen corner)
+    PathArc {
+        relativeX: root.rounding
+        relativeY: -root.roundingY
+        radiusX: root.rounding
+        radiusY: Math.min(root.rounding, root.wrapper.height)
+        direction: PathArc.Counterclockwise
+    }
+    // Left edge going up
+    PathLine {
+        relativeX: 0
+        relativeY: -(root.wrapper.height - root.roundingY * 2)
+    }
+    // Outer arc curving right (curves away from screen corner)
+    PathArc {
+        relativeX: root.rounding
+        relativeY: -root.roundingY
+        radiusX: root.rounding
+        radiusY: Math.min(root.rounding, root.wrapper.height)
+    }
+    // Top edge going right
+    PathLine {
+        relativeX: root.wrapper.height > 0 ? root.wrapper.width - root.rounding * 2 : root.wrapper.width
+        relativeY: 0
+    }
+    // Inner arc connecting back to screen edge (bottom-right corner)
     PathArc {
         relativeX: root.rounding
         relativeY: -root.rounding
         radiusX: root.rounding
         radiusY: root.rounding
-    }
-    // Right edge going up
-    PathLine {
-        relativeX: 0
-        relativeY: -(root.wrapper.height - root.rounding * 2)
-    }
-    // Top-right inner arc going left (connects to right border)
-    PathArc {
-        relativeX: -root.rounding
-        relativeY: -root.rounding
-        radiusX: root.rounding
-        radiusY: root.rounding
-    }
-    // Top edge going left
-    PathLine {
-        relativeX: -(root.wrapper.width - root.rounding * 2)
-        relativeY: 0
-    }
-    // Top-left outer arc going down
-    PathArc {
-        relativeX: -root.rounding
-        relativeY: root.roundingY
-        radiusX: root.rounding
-        radiusY: Math.min(root.rounding, root.wrapper.height)
         direction: PathArc.Counterclockwise
-    }
-    // Left edge going down
-    PathLine {
-        relativeX: 0
-        relativeY: root.wrapper.height - root.roundingY * 2
-    }
-    // Bottom-left outer arc going right
-    PathArc {
-        relativeX: -root.rounding
-        relativeY: root.roundingY
-        radiusX: root.rounding
-        radiusY: Math.min(root.rounding, root.wrapper.height)
-        direction: PathArc.Clockwise
-    }
-    // Bottom edge going right back to start, extend past panel for inner corner
-    PathLine {
-        relativeX: root.wrapper.width - root.rounding
-        relativeY: 0
     }
 
     Behavior on fillColor {

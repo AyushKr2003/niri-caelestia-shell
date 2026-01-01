@@ -78,7 +78,7 @@ Shape {
         wrapper: root.panels.clipboard
 
         startX: root.width
-        startY: 0
+        startY: root.height
     }
 
     QuickToggles.QuickTogglesBackground {

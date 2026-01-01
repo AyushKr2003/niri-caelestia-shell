@@ -116,7 +116,7 @@ Item {
 
         visibilities: root.visibilities
 
-        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.right: parent.right
     }
 

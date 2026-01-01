@@ -34,8 +34,6 @@ Item {
         anchors.margins: root.padding
         spacing: Appearance.spacing.normal
 
-        anchors.leftMargin: root.padding * 2
-        anchors.rightMargin: 10
 
         /* NOTIFICATION HISTORY */
         StyledClippingRect {
