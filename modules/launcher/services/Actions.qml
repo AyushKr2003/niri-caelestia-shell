@@ -64,7 +64,15 @@ Searcher {
 
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
-                Quickshell.execDetached(["caelestia", "wallpaper", "-r"]);
+                // Get a random wallpaper from the Wallpapers service
+                const wallpaperList = Wallpapers.list;
+                if (wallpaperList && wallpaperList.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * wallpaperList.length);
+                    const randomWallpaper = wallpaperList[randomIndex];
+                    if (randomWallpaper && randomWallpaper.path) {
+                        Wallpapers.setWallpaper(randomWallpaper.path);
+                    }
+                }
             }
         },
         Action {

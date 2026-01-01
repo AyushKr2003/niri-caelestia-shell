@@ -74,15 +74,64 @@ Singleton {
         }
     }
 
+    // Set mode (light/dark) and save to state file
     function setMode(mode: string): void {
-        Quickshell.execDetached(["caelestia", "scheme", "set", "--notify", "-m", mode]);
+        schemeStateFile.setMode(mode);
+    }
+
+    // Save current scheme state to file
+    function saveSchemeState(name: string, flavour: string, mode: string, variant: string, colours: var): void {
+        const stateData = {
+            name: name,
+            flavour: flavour,
+            mode: mode,
+            variant: variant,
+            colours: colours
+        };
+
+        // Ensure directory exists and write file
+        const jsonContent = JSON.stringify(stateData, null, 2);
+        const escapedJson = jsonContent.replace(/'/g, "'\\''");
+        saveSchemeStateProcess.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
+        saveSchemeStateProcess.running = true;
     }
 
     FileView {
+        id: schemeStateFile
+
         path: `${Paths.state}/scheme.json`
         watchChanges: true
         onFileChanged: reload()
         onLoaded: root.load(text(), false)
+
+        // Helper to update the mode while preserving other state
+        function setMode(mode: string): void {
+            try {
+                const currentState = JSON.parse(text());
+                currentState.mode = mode;
+                root.saveSchemeState(
+                    currentState.name,
+                    currentState.flavour,
+                    mode,
+                    currentState.variant,
+                    currentState.colours
+                );
+                // Update local state
+                if (mode === "light") {
+                    root.currentLight = true;
+                } else {
+                    root.currentLight = false;
+                }
+            } catch (e) {
+                console.error("Failed to set mode:", e);
+            }
+        }
+    }
+
+    Process {
+        id: saveSchemeStateProcess
+
+        running: false
     }
 
     Connections {

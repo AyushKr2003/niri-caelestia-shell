@@ -1,6 +1,7 @@
 pragma Singleton
 
 import qs.modules.launcher
+import qs.services
 import qs.config
 import qs.utils
 import Quickshell
@@ -13,6 +14,11 @@ Searcher {
     property string currentScheme
     property string currentVariant
 
+    // Path to the schemes data JSON file (bundled with the shell)
+    readonly property string schemesDataPath: Qt.resolvedUrl("scheme.json")
+    // Path to store current scheme state
+    readonly property string schemeStatePath: `${Paths.state}/scheme.json`
+
     function transformSearch(search: string): string {
         return search.slice(`${Config.launcher.actionPrefix}scheme `.length);
     }
@@ -22,7 +28,34 @@ Searcher {
     }
 
     function reload(): void {
-        getCurrent.running = true;
+        schemeStateFile.reload();
+    }
+
+    // Set a scheme by name and flavour
+    function setScheme(name: string, flavour: string): void {
+        const schemeData = schemesDataFile.json;
+        if (!schemeData || !schemeData[name] || !schemeData[name][flavour]) {
+            console.warn(`Scheme not found: ${name} ${flavour}`);
+            return;
+        }
+
+        const colours = schemeData[name][flavour];
+        const mode = Colours.light ? "light" : "dark";
+
+        // Save to state file
+        const stateData = {
+            name: name,
+            flavour: flavour,
+            mode: mode,
+            variant: root.currentVariant || "tonalspot",
+            colours: colours
+        };
+
+        schemeStateWriter.write(JSON.stringify(stateData, null, 2));
+        root.currentScheme = `${name} ${flavour}`;
+
+        // Load the colours immediately
+        Colours.load(JSON.stringify(stateData), false);
     }
 
     list: schemes.instances
@@ -36,15 +69,18 @@ Searcher {
         Scheme {}
     }
 
-    Process {
-        id: getSchemes
+    // Load schemes from local JSON file
+    FileView {
+        id: schemesDataFile
 
-        running: true
-        command: ["caelestia", "scheme", "list"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const schemeData = JSON.parse(text);
-                const list = Object.entries(schemeData).map(([name, f]) => Object.entries(f).map(([flavour, colours]) => ({
+        property var json: null
+
+        path: Qt.resolvedUrl("scheme.json")
+
+        onLoaded: {
+            try {
+                json = JSON.parse(text());
+                const list = Object.entries(json).map(([name, f]) => Object.entries(f).map(([flavour, colours]) => ({
                                 name,
                                 flavour,
                                 colours
@@ -56,21 +92,45 @@ Searcher {
                         flat.push(f);
 
                 schemes.model = flat.sort((a, b) => (a.name + a.flavour).localeCompare((b.name + b.flavour)));
+            } catch (e) {
+                console.error("Failed to parse schemes data:", e);
             }
         }
     }
 
-    Process {
-        id: getCurrent
+    // Load current scheme state from state file
+    FileView {
+        id: schemeStateFile
 
-        running: true
-        command: ["caelestia", "scheme", "get", "-nfv"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const [name, flavour, variant] = text.trim().split("\n");
-                root.currentScheme = `${name} ${flavour}`;
-                root.currentVariant = variant;
+        path: root.schemeStatePath
+        watchChanges: true
+
+        onLoaded: {
+            try {
+                const state = JSON.parse(text());
+                root.currentScheme = `${state.name} ${state.flavour}`;
+                root.currentVariant = state.variant || "tonalspot";
+            } catch (e) {
+                // State file doesn't exist or is invalid, use defaults
+                root.currentScheme = "catppuccin mocha";
+                root.currentVariant = "tonalspot";
             }
+        }
+
+        onFileChanged: reload()
+    }
+
+    // Process for saving scheme state
+    Process {
+        id: schemeStateWriter
+
+        running: false
+
+        function write(content: string): void {
+            // Ensure directory exists
+            const escapedJson = content.replace(/'/g, "'\\''");
+            schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
+            schemeStateWriter.running = true;
         }
     }
 
@@ -82,7 +142,7 @@ Searcher {
 
         function onClicked(list: AppList): void {
             list.visibilities.launcher = false;
-            Quickshell.execDetached(["caelestia", "scheme", "set", "-n", name, "-f", flavour]);
+            root.setScheme(name, flavour);
         }
     }
 }

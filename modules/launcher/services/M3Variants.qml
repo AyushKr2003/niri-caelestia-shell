@@ -1,16 +1,58 @@
 pragma Singleton
 
 import qs.modules.launcher
+import qs.services
 import qs.config
 import qs.utils
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 Searcher {
     id: root
 
+    // Path to store current scheme state
+    readonly property string schemeStatePath: `${Paths.state}/scheme.json`
+
     function transformSearch(search: string): string {
         return search.slice(`${Config.launcher.actionPrefix}variant `.length);
+    }
+
+    // Set the variant and save to state file
+    function setVariant(variantName: string): void {
+        schemeStateFile.setVariant(variantName);
+    }
+
+    // Load current scheme state from state file
+    FileView {
+        id: schemeStateFile
+
+        path: root.schemeStatePath
+
+        // Helper to update the variant while preserving other state
+        function setVariant(variantName: string): void {
+            try {
+                const currentState = JSON.parse(text());
+                currentState.variant = variantName;
+
+                // Save updated state
+                const jsonContent = JSON.stringify(currentState, null, 2);
+                const escapedJson = jsonContent.replace(/'/g, "'\\''");
+                schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
+                schemeStateWriter.running = true;
+
+                // Update the Schemes service current variant
+                Schemes.currentVariant = variantName;
+            } catch (e) {
+                console.error("Failed to set variant:", e);
+            }
+        }
+    }
+
+    Process {
+        id: schemeStateWriter
+
+        running: false
     }
 
     list: [
@@ -79,7 +121,7 @@ Searcher {
 
         function onClicked(list: AppList): void {
             list.visibilities.launcher = false;
-            Quickshell.execDetached(["caelestia", "scheme", "set", "-v", variant]);
+            root.setVariant(variant);
         }
     }
 }
