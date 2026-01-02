@@ -1,0 +1,5 @@
+// Behavior components module
+module qs.components.behaviors
+OpacityBehavior 1.0 OpacityBehavior.qml
+SizeBehavior 1.0 SizeBehavior.qml
+PositionBehavior 1.0 PositionBehavior.qml
