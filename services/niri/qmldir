@@ -1,0 +1,6 @@
+module niri
+NiriCore 1.0 NiriCore.qml
+NiriWorkspaces 1.0 NiriWorkspaces.qml
+NiriWindows 1.0 NiriWindows.qml
+NiriOutputs 1.0 NiriOutputs.qml
+NiriKeyboard 1.0 NiriKeyboard.qml
