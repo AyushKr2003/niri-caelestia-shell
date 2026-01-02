@@ -49,7 +49,10 @@ ColumnLayout {
 
                     color: isCurrent ? Colours.tPalette.m3surfaceContainerHighest : Colours.palette.m3tertiaryContainer
                     onColor: isCurrent ? Colours.palette.m3onSurface : Colours.palette.m3onTertiaryContainer
-                    text: (Niri.currentOutputWorkspaces[wsId - 1].name) || wsId
+                    text: {
+                        const ws = Niri.currentOutputWorkspaces[wsId - 1];
+                        return ws?.name ?? String(wsId);
+                    }
                     disabled: isCurrent
 
                     function onClicked(): void {
@@ -130,8 +133,9 @@ ColumnLayout {
             // Layout.fillWidth: true
 
             Button {
-                color: Niri.focusedWindow.is_floating ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
-                onColor: Niri.focusedWindow.is_floating ? Colours.palette.m3onPrimary : Colours.palette.m3onSecondaryContainer
+                readonly property bool isFloating: Niri.focusedWindow?.is_floating ?? false
+                color: isFloating ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
+                onColor: isFloating ? Colours.palette.m3onPrimary : Colours.palette.m3onSecondaryContainer
                 text: root.client?.is_floating ? qsTr("Tile") : qsTr("Float")
                 icon: root.client?.is_floating ? "grid_view" : "picture_in_picture"
 

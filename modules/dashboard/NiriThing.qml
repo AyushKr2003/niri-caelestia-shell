@@ -54,10 +54,15 @@ Item {
                         required property int index
                         readonly property int wsId: Math.floor((Niri.focusedWorkspaceIndex) / 10) * 10 + index + 1
                         readonly property bool isCurrent: (wsId - 1) % 10 === Niri.focusedWorkspaceIndex
+                        readonly property int wsIndex: wsId - 1
 
                         Layout.fillWidth: true
                         active: isCurrent
-                        text: (Niri.currentOutputWorkspaces[wsId - 1]?.name) || "Workspace " + wsId
+                        text: {
+                            if (wsIndex < 0 || wsIndex >= Niri.currentOutputWorkspaces.length)
+                                return "Workspace " + wsId;
+                            return Niri.currentOutputWorkspaces[wsIndex]?.name ?? ("Workspace " + wsId);
+                        }
                         disabled: isCurrent
 
                         function onClicked(): void {

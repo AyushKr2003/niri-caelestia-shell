@@ -31,12 +31,20 @@ Item {
     property bool isWsFocused: root.activeWsId === root.ws
 
     property var wsWindows: {
-        const niriWorkspace = Niri.currentOutputWorkspaces[root.idx + root.groupOffset];
+        const wsIndex = root.idx + root.groupOffset;
+        if (wsIndex < 0 || wsIndex >= Niri.currentOutputWorkspaces.length)
+            return [];
+        const niriWorkspace = Niri.currentOutputWorkspaces[wsIndex];
+        if (!niriWorkspace)
+            return [];
         return Niri.getWindowsByWorkspaceId(niriWorkspace.id);
     }
 
     function updateGroupedWindowsModel() {
-        const niriWorkspace = Niri.currentOutputWorkspaces[root.idx + root.groupOffset];
+        const wsIndex = root.idx + root.groupOffset;
+        if (wsIndex < 0 || wsIndex >= Niri.currentOutputWorkspaces.length)
+            return;
+        const niriWorkspace = Niri.currentOutputWorkspaces[wsIndex];
         if (!niriWorkspace)
             return;
 

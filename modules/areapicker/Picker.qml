@@ -59,7 +59,7 @@ MouseArea {
         if (!window?.layout?.window_size) return null;
         
         const size = window.layout.window_size;
-        const pos = window.layout.pos_in_scrolling_layout || [0, 0];
+        const pos = window.layout.pos_in_scrolling_layout ?? [0, 0];
         
         // For Niri, we estimate window position based on layout
         // This is approximate since Niri uses scrolling layout
@@ -75,7 +75,7 @@ MouseArea {
         }
         
         const focusedPos = focusedWindow.layout.pos_in_scrolling_layout;
-        const focusedSize = focusedWindow.layout.window_size || [screen.width, screen.height];
+        const focusedSize = focusedWindow.layout.window_size ?? [screen.width, screen.height];
         
         // Calculate offset from focused window
         const colOffset = pos[0] - focusedPos[0];

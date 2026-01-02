@@ -17,7 +17,7 @@ StyledRect {
     readonly property var occupied: Niri.workspaceHasWindows
     readonly property int groupOffset: Math.floor((Niri.focusedWorkspaceIndex) / Config.bar.workspaces.shown) * Config.bar.workspaces.shown
 
-    readonly property int focusedWindowId: Niri.focusedWindow.id
+    readonly property int focusedWindowId: Niri.focusedWindow?.id ?? -1
 
     implicitHeight: layout.implicitHeight + Appearance.padding.small * 2
     implicitWidth: Config.bar.sizes.innerWidth

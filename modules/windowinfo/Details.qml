@@ -58,22 +58,22 @@ ColumnLayout {
 
     Detail {
         icon: "location_on"
-        property var adress: root.client?.layout.pos_in_scrolling_layout
+        property var adress: root.client?.layout?.pos_in_scrolling_layout ?? [-1, -1]
         text: qsTr("Address: %1, %2").arg(adress[0] ?? -1).arg(adress[1] ?? -1)
         color: Colours.palette.m3primary
     }
     Loader {
-        active: root.client?.is_floating
+        active: root.client?.is_floating ?? false
         sourceComponent: Detail {
             icon: "location_searching"
-            property var pos: root.client?.layout.tile_pos_in_workspace_view
+            property var pos: root.client?.layout?.tile_pos_in_workspace_view ?? [-1, -1]
             text: qsTr("Position: %1, %2").arg(pos[0] ?? -1).arg(pos[1] ?? -1)
         }
     }
 
     Detail {
         icon: "resize"
-        property var size: root.client?.layout.window_size
+        property var size: root.client?.layout?.window_size ?? [-1, -1]
         text: qsTr("Size: %1 x %2").arg(size[0] ?? -1).arg(size[1] ?? -1)
         color: Colours.palette.m3tertiary
     }
@@ -95,12 +95,16 @@ ColumnLayout {
     Detail {
         icon: "desktop_windows"
         text: {
+            if (!Niri.focusedMonitorName || !Niri.outputs)
+                return qsTr("Monitor: unknown");
             const mon = Niri.outputs[Niri.focusedMonitorName];
-            const modes = Niri.outputs[Niri.focusedMonitorName].modes[0];
-
-            if (mon)
-                return qsTr("Monitor: %1 (%3px x %4px) @(%2) #(%5)").arg(mon.name).arg(modes.refresh_rate).arg(modes.width).arg(modes.height).arg(mon.logical.scale);
-            return qsTr("Monitor: unknown");
+            if (!mon)
+                return qsTr("Monitor: unknown");
+            const modes = mon.modes?.[0];
+            if (!modes)
+                return qsTr("Monitor: %1").arg(mon.name ?? "unknown");
+            const scale = mon.logical?.scale ?? 1;
+            return qsTr("Monitor: %1 (%3px x %4px) @(%2) #(%5)").arg(mon.name ?? "unknown").arg(modes.refresh_rate ?? 0).arg(modes.width ?? 0).arg(modes.height ?? 0).arg(scale);
         }
     }
 
@@ -112,7 +116,7 @@ ColumnLayout {
 
     Detail {
         icon: "category"
-        text: qsTr("Initial class: %1").arg(root.client?.initialClass ?? "unknown")
+        text: qsTr("App ID: %1").arg(root.client?.app_id ?? "unknown")
     }
 
     Detail {
