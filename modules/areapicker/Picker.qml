@@ -15,8 +15,9 @@ MouseArea {
     required property LazyLoader loader
     required property ShellScreen screen
 
-    property int borderWidth
-    property int rounding
+    // Niri doesn't expose border/rounding config, use sensible defaults
+    property int borderWidth: 2
+    property int rounding: 8
 
     property bool onClient
 
@@ -36,24 +37,72 @@ MouseArea {
     property real sw: Math.abs(sx - ex)
     property real sh: Math.abs(sy - ey)
 
-    property list<var> clients: {
-        const ws = Hypr.activeToplevel?.workspace?.id ?? Hypr.activeWsId;
-        return Hypr.toplevels.values.filter(c => c.workspace?.id === ws).sort((a, b) => {
-            // Pinned first, then fullscreen, then floating, then any other
-            const ac = a.lastIpcObject;
-            const bc = b.lastIpcObject;
-            return (bc.pinned - ac.pinned) || ((bc.fullscreen !== 0) - (ac.fullscreen !== 0)) || (bc.floating - ac.floating);
+    // Get windows in current workspace using Niri service
+    property var clients: {
+        if (!Niri.niriAvailable) return [];
+        // Get windows filtered to current workspace
+        const wsWindows = Niri.getActiveWorkspaceWindows();
+        // Sort by layout position (column, then row)
+        return wsWindows.slice().sort((a, b) => {
+            const aPos = a.layout?.pos_in_scrolling_layout || [0, 0];
+            const bPos = b.layout?.pos_in_scrolling_layout || [0, 0];
+            // Sort by column first, then row
+            if (aPos[0] !== bPos[0]) return aPos[0] - bPos[0];
+            return aPos[1] - bPos[1];
         });
+    }
+
+    // Get window geometry from Niri's layout data
+    // Niri provides window_size in layout but not absolute position on screen
+    // We need to compute position based on the focused window and layout offsets
+    function getWindowGeometry(window) {
+        if (!window?.layout?.window_size) return null;
+        
+        const size = window.layout.window_size;
+        const pos = window.layout.pos_in_scrolling_layout || [0, 0];
+        
+        // For Niri, we estimate window position based on layout
+        // This is approximate since Niri uses scrolling layout
+        const focusedWindow = Niri.focusedWindow;
+        if (!focusedWindow?.layout?.pos_in_scrolling_layout) {
+            // Fallback: center the window
+            return {
+                x: (screen.width - size[0]) / 2,
+                y: (screen.height - size[1]) / 2,
+                w: size[0],
+                h: size[1]
+            };
+        }
+        
+        const focusedPos = focusedWindow.layout.pos_in_scrolling_layout;
+        const focusedSize = focusedWindow.layout.window_size || [screen.width, screen.height];
+        
+        // Calculate offset from focused window
+        const colOffset = pos[0] - focusedPos[0];
+        const rowOffset = pos[1] - focusedPos[1];
+        
+        // Estimate focused window's screen position (centered or left-aligned)
+        const focusedX = focusedSize[0] < screen.width ? (screen.width - focusedSize[0]) / 2 : 0;
+        const focusedY = focusedSize[1] < screen.height ? (screen.height - focusedSize[1]) / 2 : 0;
+        
+        return {
+            x: focusedX + (colOffset * size[0]),
+            y: focusedY + (rowOffset * size[1]),
+            w: size[0],
+            h: size[1]
+        };
     }
 
     function checkClientRects(x: real, y: real): void {
         for (const client of clients) {
-            let {
-                at: [cx, cy],
-                size: [cw, ch]
-            } = client.lastIpcObject;
-            cx -= screen.x;
-            cy -= screen.y;
+            const geom = getWindowGeometry(client);
+            if (!geom) continue;
+            
+            const cx = geom.x;
+            const cy = geom.y;
+            const cw = geom.w;
+            const ch = geom.h;
+            
             if (cx <= x && cy <= y && cx + cw >= x && cy + ch >= y) {
                 onClient = true;
                 sx = cx;
@@ -79,13 +128,19 @@ MouseArea {
 
         const c = clients[0];
         if (c) {
-            const cx = c.lastIpcObject.at[0] - screen.x;
-            const cy = c.lastIpcObject.at[1] - screen.y;
-            onClient = true;
-            sx = cx;
-            sy = cy;
-            ex = cx + c.lastIpcObject.size[0];
-            ey = cy + c.lastIpcObject.size[1];
+            const geom = getWindowGeometry(c);
+            if (geom) {
+                onClient = true;
+                sx = geom.x;
+                sy = geom.y;
+                ex = geom.x + geom.w;
+                ey = geom.y + geom.h;
+            } else {
+                sx = screen.width / 2 - 100;
+                sy = screen.height / 2 - 100;
+                ex = screen.width / 2 + 100;
+                ey = screen.height / 2 + 100;
+            }
         } else {
             sx = screen.width / 2 - 100;
             sy = screen.height / 2 - 100;
@@ -163,29 +218,18 @@ MouseArea {
         }
     }
 
+    // Listen for workspace changes via Niri service
     Connections {
-        target: Hypr
+        target: Niri
 
-        function onActiveWsIdChanged(): void {
+        function onFocusedWorkspaceIdChanged(): void {
             root.checkClientRects(root.mouseX, root.mouseY);
         }
     }
 
-    Process {
-        running: true
-        command: ["hyprctl", "-j", "getoption", "general:border_size"]
-        stdout: StdioCollector {
-            onStreamFinished: root.borderWidth = JSON.parse(text).int
-        }
-    }
-
-    Process {
-        running: true
-        command: ["hyprctl", "-j", "getoption", "decoration:rounding"]
-        stdout: StdioCollector {
-            onStreamFinished: root.rounding = JSON.parse(text).int
-        }
-    }
+    // Niri config loading via niri msg
+    // Note: Niri doesn't expose border/rounding config via IPC, using defaults above
+    // If you want to read from niri config file, you'd need to parse ~/.config/niri/config.kdl
 
     Loader {
         anchors.fill: parent
