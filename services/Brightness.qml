@@ -7,7 +7,8 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-//TODO FOR NIRI
+// Compositor-agnostic brightness service
+// Works with Niri, Hyprland, or any Wayland compositor
 
 Singleton {
     id: root
@@ -20,9 +21,28 @@ Singleton {
         return monitors.find(m => m.modelData === screen);
     }
 
+    // Get the currently focused/active monitor name
+    // Uses Niri service if available, falls back to first screen
+    function getActiveMonitorName(): string {
+        // Try Niri service first
+        if (typeof Niri !== "undefined" && Niri.niriAvailable && Niri.focusedMonitorName) {
+            return Niri.focusedMonitorName;
+        }
+        // Fallback: return first screen's name
+        if (monitors.length > 0) {
+            return monitors[0].modelData.name;
+        }
+        return "";
+    }
+
     function getMonitor(query: string): var {
         if (query === "active") {
-            return monitors.find(m => Hypr.monitorFor(m.modelData)?.focused);
+            const activeName = getActiveMonitorName();
+            if (activeName) {
+                return monitors.find(m => m.modelData.name === activeName);
+            }
+            // Ultimate fallback: first monitor
+            return monitors.length > 0 ? monitors[0] : null;
         }
 
         if (query.startsWith("model:")) {
@@ -35,11 +55,12 @@ Singleton {
             return monitors.find(m => m.modelData.serialNumber === serial);
         }
 
-        if (query.startsWith("id:")) {
-            const id = parseInt(query.slice(3), 10);
-            return monitors.find(m => Hypr.monitorFor(m.modelData)?.id === id);
+        if (query.startsWith("name:")) {
+            const name = query.slice(5);
+            return monitors.find(m => m.modelData.name === name);
         }
 
+        // Direct name match
         return monitors.find(m => m.modelData.name === query);
     }
 
@@ -74,6 +95,11 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: root.appleDisplayPresent = text.trim().length > 0
         }
+        onExited: (exitCode) => {
+            if (exitCode !== 0) {
+                root.appleDisplayPresent = false;
+            }
+        }
     }
 
     Process {
@@ -82,9 +108,14 @@ Singleton {
         command: ["ddcutil", "detect", "--brief"]
         stdout: StdioCollector {
             onStreamFinished: root.ddcMonitors = text.trim().split("\n\n").filter(d => d.startsWith("Display ")).map(d => ({
-                        busNum: d.match(/I2C bus:[ ]*\/dev\/i2c-([0-9]+)/)[1],
-                        connector: d.match(/DRM connector:\s+(.*)/)[1].replace(/^card\d+-/, "") // strip "card1-"
-                    }))
+                        busNum: d.match(/I2C bus:[ ]*\/dev\/i2c-([0-9]+)/)?.[1] ?? "",
+                        connector: d.match(/DRM connector:\s+(.*)/)?.[1]?.replace(/^card\d+-/, "") ?? "" // strip "card1-"
+                    })).filter(d => d.busNum && d.connector)
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0) {
+                console.log("Brightness: ddcutil detect exited with code", exitCode, "(DDC monitors unavailable)");
+            }
         }
     }
 
@@ -166,13 +197,30 @@ Singleton {
         readonly property Process initProc: Process {
             stdout: StdioCollector {
                 onStreamFinished: {
-                    if (monitor.isAppleDisplay) {
-                        const val = parseInt(text.trim());
-                        monitor.brightness = val / 101;
-                    } else {
-                        const [, , , cur, max] = text.split(" ");
-                        monitor.brightness = parseInt(cur) / parseInt(max);
+                    try {
+                        if (monitor.isAppleDisplay) {
+                            const val = parseInt(text.trim());
+                            monitor.brightness = isNaN(val) ? 0.5 : val / 101;
+                        } else {
+                            const parts = text.split(" ");
+                            if (parts.length >= 5) {
+                                const cur = parseInt(parts[3]);
+                                const max = parseInt(parts[4]);
+                                monitor.brightness = (isNaN(cur) || isNaN(max) || max === 0) ? 0.5 : cur / max;
+                            } else {
+                                monitor.brightness = 0.5;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Brightness: Failed to parse brightness value:", e);
+                        monitor.brightness = 0.5;
                     }
+                }
+            }
+            onExited: (exitCode) => {
+                if (exitCode !== 0) {
+                    console.log("Brightness: Failed to get brightness for", monitor.modelData?.name ?? "unknown");
+                    monitor.brightness = 0.5; // Default fallback
                 }
             }
         }

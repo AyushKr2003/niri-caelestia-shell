@@ -61,7 +61,8 @@ Singleton {
 
     // Keyboard layout
 
-    // TODO: Add capslock and numlock in the future
+    // Note: CapsLock/NumLock detection is now handled by LockStatus.qml
+    // using system-level /sys/class/leds/* paths for compositor-agnostic detection
 
     property var kbLayoutsArray: []
     property bool capsLock: false

@@ -14,25 +14,8 @@ RowLayout {
 
     spacing: Appearance.padding.small / 2
 
-    Loader {
-        active: root.client?.is_floating
-        asynchronous: true
-        visible: active
-
-        sourceComponent: StyledRadialButton {
-            basecolor: Colours.palette.m3secondaryContainer
-            color: Colours.palette.m3onSecondaryContainer
-            disabled: !root.client
-
-            implicitSize: root.implicitSize
-
-            icon: "push_pin"
-            function onClicked(): void {
-                // TODO Add a way to pin in Niri.
-                Niri.dispatch(`pin address:0x${root.client?.address}`);
-            }
-        }
-    }
+    // Pin feature removed - Niri doesn't support window pinning
+    // TODO: Implement alternative if Niri adds pin support in future
 
     StyledRadialButton {
         disabled: !root.client

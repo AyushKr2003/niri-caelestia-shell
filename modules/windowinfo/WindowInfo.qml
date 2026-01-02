@@ -2,7 +2,6 @@ import qs.components
 import qs.services
 import qs.config
 import Quickshell
-import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 import "ProcessList"
@@ -11,7 +10,8 @@ Item {
     id: root
 
     required property ShellScreen screen
-    required property HyprlandToplevel client
+    // Client is now dynamically fetched from Niri service in Details.qml
+    property var client: null
 
     implicitWidth: child.implicitWidth
     implicitHeight: screen.height * Config.winfo.sizes.heightMult

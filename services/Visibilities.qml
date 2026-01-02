@@ -12,6 +12,26 @@ Singleton {
     }
 
     function getForActive(): PersistentProperties {
-        return Object.entries(screens).find(s => s[0].slice(s[0].indexOf('"') + 1, s[0].lastIndexOf('"')) === Niri.focusedMonitorName)[1];
+        const targetName = Niri.focusedMonitorName;
+        if (!targetName) return null;
+        
+        // Iterate through entries safely without brittle string parsing
+        for (const [key, value] of Object.entries(screens)) {
+            // Extract the monitor name from the key more robustly
+            // Keys can be in format: "[object Object]" or actual strings
+            let monitorName = key;
+            
+            // If key contains quotes, extract the content between them
+            const firstQuote = key.indexOf('"');
+            const lastQuote = key.lastIndexOf('"');
+            if (firstQuote !== -1 && lastQuote > firstQuote) {
+                monitorName = key.slice(firstQuote + 1, lastQuote);
+            }
+            
+            if (monitorName === targetName) {
+                return value;
+            }
+        }
+        return null;
     }
 }

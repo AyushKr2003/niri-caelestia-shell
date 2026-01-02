@@ -6,7 +6,6 @@ import qs.config
 import qs.utils
 import qs.services
 import Quickshell
-import Quickshell.Hyprland
 import QtQuick
 import Caelestia
 
@@ -122,11 +121,9 @@ Item {
         }
     ]
 
-    HyprlandFocusGrab {
-        active: !Config.dashboard.showOnHover && root.visibilities.dashboard && Config.dashboard.enabled
-        windows: [QsWindow.window]
-        onCleared: root.visibilities.dashboard = false
-    }
+    // FocusGrab removed - HyprlandFocusGrab is Hyprland-specific
+    // Click-outside-to-close is handled by checking visibility state changes
+    // TODO: Implement compositor-agnostic focus grab if needed
 
     Loader {
         id: content

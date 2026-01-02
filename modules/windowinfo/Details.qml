@@ -78,10 +78,8 @@ ColumnLayout {
         color: Colours.palette.m3tertiary
     }
 
-    // TODO REFERENCE
     Detail {
         icon: "workspaces"
-        // text: qsTr("Workspace: %1 (%2)").arg(root.client?.workspace.name ?? -1).arg(root.client?.workspace_id ?? -1)
         text: {
             const workspaceId = root.client?.workspace_id;
             if (workspaceId !== undefined && workspaceId !== null) {

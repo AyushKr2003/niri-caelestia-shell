@@ -140,27 +140,8 @@ ColumnLayout {
                 }
             }
 
-            Loader {
-                active: root.client?.is_floating
-                asynchronous: true
-                Layout.fillWidth: active
-                visible: active
-                // Layout.leftMargin: active ? 0 : -parent.spacing * 2
-                // Layout.rightMargin: active ? 0 : -parent.spacing * 2
-
-                sourceComponent: Button {
-                    color: Colours.palette.m3secondaryContainer
-                    onColor: Colours.palette.m3onSecondaryContainer
-                    text: root.client?.pinned ? qsTr("Unpin") : qsTr("Pin")
-                    icon: root.client?.pinned ? "push_pin" : "push_pin"
-
-                    // TODO Add a way to pin stuff in Niri
-
-                    function onClicked(): void {
-                        Niri.dispatch(`pin address:0x${root.client?.address}`);
-                    }
-                }
-            }
+            // Pin feature removed - Niri doesn't support window pinning
+            // TODO: Implement alternative if Niri adds pin support in future
 
             Button {
                 color: Colours.palette.m3secondaryContainer

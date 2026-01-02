@@ -55,11 +55,7 @@ Item {
 
     Keys.onEscapePressed: close()
 
-    // HyprlandFocusGrab {
-    //     active: root.isDetached
-    //     windows: [QsWindow.window]
-    //     onCleared: root.close()
-    // }
+    // TODO: Implement focus grab for Niri when available
 
     Binding {
         when: root.isDetached
@@ -89,7 +85,7 @@ Item {
 
         sourceComponent: WindowInfo {
             screen: root.screen
-            client: Niri.activeToplevel
+            // Client is now dynamically fetched from Niri service in Details.qml
         }
     }
 

@@ -7,9 +7,7 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 
-// import QtQuick.Controls
-// import qs.widgets
-// import qs.modules.windowinfo // TODO Niri for details.
+// WindowInfo module is available via wrapper.detach("winfo")
 
 Item {
     id: root

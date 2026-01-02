@@ -32,11 +32,15 @@ Singleton {
         } 
         else if (!loc || timer.elapsed() > 900) {
             Requests.get("https://ipinfo.io/json", text => {
-                const response = JSON.parse(text);
-                if (response.loc) {
-                    loc = response.loc;
-                    city = response.city ?? "";
-                    timer.restart();
+                try {
+                    const response = JSON.parse(text);
+                    if (response.loc) {
+                        loc = response.loc;
+                        city = response.city ?? "";
+                        timer.restart();
+                    }
+                } catch (e) {
+                    console.warn("Weather: Failed to parse location response:", e);
                 }
             });
         }
@@ -48,16 +52,20 @@ Singleton {
             + "&count=1&language=en&format=json";
 
         Requests.get(url, text => {
-            const json = JSON.parse(text);
-            if (json.results && json.results.length > 0) {
-                const result = json.results[0];
-                loc = result.latitude + "," + result.longitude;
-                city = result.name;
-                console.log("Geocoding success: " + cityName + " -> " + loc);
-            } else {
-                console.error("Geocoding failed for: " + cityName);
-                loc = ""; 
-                reload(); 
+            try {
+                const json = JSON.parse(text);
+                if (json.results && json.results.length > 0) {
+                    const result = json.results[0];
+                    loc = result.latitude + "," + result.longitude;
+                    city = result.name;
+                    console.log("Geocoding success: " + cityName + " -> " + loc);
+                } else {
+                    console.error("Geocoding failed for: " + cityName);
+                    loc = ""; 
+                    reload(); 
+                }
+            } catch (e) {
+                console.warn("Weather: Failed to parse geocoding response:", e);
             }
         });
     }
@@ -71,36 +79,40 @@ Singleton {
         if (url === "") return;
 
         Requests.get(url, text => {
-            const json = JSON.parse(text);
-            if (!json.current || !json.daily) return;
+            try {
+                const json = JSON.parse(text);
+                if (!json.current || !json.daily) return;
 
-            cc = {
-                "weatherCode": String(json.current.weather_code),
-                "weatherDesc": [{ "value": getWeatherCondition(String(json.current.weather_code))}],
-                "temp_C": Math.round(json.current.temperature_2m),
-                "temp_F": Math.round(json.current.temperature_2m * 9/5 + 32),
-                "FeelsLikeC": Math.round(json.current.apparent_temperature),
-                "FeelsLikeF": Math.round(json.current.apparent_temperature * 9/5 + 32),
-                "humidity": json.current.relative_humidity_2m,
-                "windSpeed": json.current.wind_speed_10m,
-                "isDay": json.current.is_day,
-                "sunrise": json.daily.sunrise[0].split("T")[1],
-                "sunset": json.daily.sunset[0].split("T")[1]
-            };
+                cc = {
+                    "weatherCode": String(json.current.weather_code),
+                    "weatherDesc": [{ "value": getWeatherCondition(String(json.current.weather_code))}],
+                    "temp_C": Math.round(json.current.temperature_2m),
+                    "temp_F": Math.round(json.current.temperature_2m * 9/5 + 32),
+                    "FeelsLikeC": Math.round(json.current.apparent_temperature),
+                    "FeelsLikeF": Math.round(json.current.apparent_temperature * 9/5 + 32),
+                    "humidity": json.current.relative_humidity_2m,
+                    "windSpeed": json.current.wind_speed_10m,
+                    "isDay": json.current.is_day,
+                    "sunrise": json.daily.sunrise[0].split("T")[1],
+                    "sunset": json.daily.sunset[0].split("T")[1]
+                };
 
-            let forecastList = []
-            for (let i = 0; i < json.daily.time.length; i++) {
-                forecastList.push({
-                    "date": json.daily.time[i],
-                    "maxTempC": Math.round(json.daily.temperature_2m_max[i]),
-                    "maxTempF": Math.round(json.daily.temperature_2m_max[i] * 9/5 + 32),
-                    "minTempC": Math.round(json.daily.temperature_2m_min[i]),
-                    "minTempF": Math.round(json.daily.temperature_2m_min[i] * 9/5 + 32),
-                    "weatherCode": String(json.daily.weather_code[i]),
-                    "icon": Icons.getWeatherIcon(String(json.daily.weather_code[i]))
-                });
+                let forecastList = []
+                for (let i = 0; i < json.daily.time.length; i++) {
+                    forecastList.push({
+                        "date": json.daily.time[i],
+                        "maxTempC": Math.round(json.daily.temperature_2m_max[i]),
+                        "maxTempF": Math.round(json.daily.temperature_2m_max[i] * 9/5 + 32),
+                        "minTempC": Math.round(json.daily.temperature_2m_min[i]),
+                        "minTempF": Math.round(json.daily.temperature_2m_min[i] * 9/5 + 32),
+                        "weatherCode": String(json.daily.weather_code[i]),
+                        "icon": Icons.getWeatherIcon(String(json.daily.weather_code[i]))
+                    });
+                }
+                forecast = forecastList;
+            } catch (e) {
+                console.warn("Weather: Failed to parse weather data:", e);
             }
-            forecast = forecastList;
         });
     }
 

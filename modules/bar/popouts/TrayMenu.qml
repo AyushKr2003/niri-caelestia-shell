@@ -5,7 +5,6 @@ import qs.services
 import qs.config
 import Quickshell
 import Quickshell.Widgets
-import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Controls
 
@@ -27,11 +26,9 @@ StackView {
     popEnter: NoAnim {}
     popExit: NoAnim {}
 
-    HyprlandFocusGrab {
-        active: true
-        windows: [QsWindow.window]
-        onCleared: root.popouts.hasCurrent = false
-    }
+    // FocusGrab removed - HyprlandFocusGrab is Hyprland-specific
+    // Menu closing is handled by the popouts state management
+    // TODO: Implement compositor-agnostic focus grab if needed
 
     component NoAnim: Transition {
         NumberAnimation {

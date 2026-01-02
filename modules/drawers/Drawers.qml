@@ -62,14 +62,7 @@ Variants {
                 }
             }
 
-            // HyprlandFocusGrab {
-            //     active: (visibilities.launcher && Config.launcher.enabled) || (visibilities.session && Config.session.enabled)
-            //     windows: [win]
-            //     onCleared: {
-            //         visibilities.launcher = false;
-            //         visibilities.session = false;
-            //     }
-            // }
+            // TODO: Implement focus grab for Niri when available
 
             StyledRect {
                 anchors.fill: parent
