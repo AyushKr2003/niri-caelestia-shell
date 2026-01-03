@@ -1,0 +1,9 @@
+module qs.modules.configeditor
+
+singleton ConfigEditor ConfigEditor.qml
+singleton ConfigParser ConfigParser.qml
+
+ConfigEditorWindow ConfigEditorWindow.qml
+ConfigPane ConfigPane.qml
+NavRail NavRail.qml
+WindowFactory WindowFactory.qml

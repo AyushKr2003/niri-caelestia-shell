@@ -1,0 +1,8 @@
+module qs.modules.configeditor.items
+
+BaseConfigItem BaseConfigItem.qml
+BoolConfigItem BoolConfigItem.qml
+NumberConfigItem NumberConfigItem.qml
+StringConfigItem StringConfigItem.qml
+ObjectHeader ObjectHeader.qml
+PropertyEditor PropertyEditor.qml

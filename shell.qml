@@ -10,6 +10,7 @@ import "modules/lock"
 import "modules/clipboard"
 import "modules/quicktoggles"
 import "modules/keybinds"
+import "modules/configeditor"
 // import "./modules/sidebarLeft/"
 // import "./modules/sidebarRight/"
 
@@ -22,6 +23,7 @@ ShellRoot {
     Drawers {}
     AreaPicker {}
     Lock {}
+    WindowFactory {}
 
     Shortcuts {}
     ClipboardPanel {}

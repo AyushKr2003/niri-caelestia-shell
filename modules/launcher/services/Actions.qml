@@ -1,6 +1,7 @@
 pragma Singleton
 
 import qs.modules.launcher
+import qs.modules.configeditor
 import qs.services
 import qs.config
 import qs.utils
@@ -11,6 +12,16 @@ Searcher {
     id: root
 
     readonly property list<Action> actions: [
+        Action {
+            name: qsTr("Config")
+            desc: qsTr("Open the configuration editor")
+            icon: "settings"
+
+            function onClicked(list: AppList): void {
+                list.visibilities.launcher = false;
+                ConfigEditor.show();
+            }
+        },
         Action {
             name: qsTr("Calculator")
             desc: qsTr("Do simple math equations (powered by Qalc)")
