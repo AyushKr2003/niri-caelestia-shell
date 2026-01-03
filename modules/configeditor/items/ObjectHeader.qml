@@ -14,7 +14,7 @@ ColumnLayout {
     required property var propertyData
     required property var sectionPath
 
-    readonly property var nestedPath: [...sectionPath, propertyData.name]
+    readonly property var nestedPath: sectionPath.concat([propertyData.name])
     property var nestedObject: configObject[propertyData.name]
     readonly property string statePath: nestedPath.join(".")
     readonly property int nestingLevel: sectionPath.length - 1

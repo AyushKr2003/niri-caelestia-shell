@@ -11,6 +11,7 @@ import "modules/clipboard"
 import "modules/quicktoggles"
 import "modules/keybinds"
 import "modules/configeditor"
+import qs.services
 // import "./modules/sidebarLeft/"
 // import "./modules/sidebarRight/"
 
@@ -29,6 +30,9 @@ ShellRoot {
     ClipboardPanel {}
     QuickTogglesPanel {}
     KeybindsPanel {}
+    
+    // Initialize BatteryMonitor service
+    property var _batteryMonitor: BatteryMonitor
     // LazyLoader { active: enableSidebarLeft; component: SidebarLeft {} }
     // LazyLoader { active: enableSidebarRight; component: SidebarRight {} }
 }

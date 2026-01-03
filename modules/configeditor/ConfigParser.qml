@@ -232,7 +232,7 @@ Singleton {
             const type = getPropertyType(value);
 
             if (type !== "unknown") {
-                const fullPath = [...propertyPath, key].join(".");
+                const fullPath = propertyPath.concat([key]).join(".");
                 const writable = !root.readonlyProperties[fullPath];
                 props.push({ name: key, type: type, value: value, writable: writable });
             }

@@ -2,6 +2,8 @@ module qs.modules.configeditor
 
 singleton ConfigEditor ConfigEditor.qml
 singleton ConfigParser ConfigParser.qml
+singleton IconDatabase IconDatabase.qml
+singleton FontDatabase FontDatabase.qml
 
 ConfigEditorWindow ConfigEditorWindow.qml
 ConfigPane ConfigPane.qml

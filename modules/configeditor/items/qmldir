@@ -6,3 +6,9 @@ NumberConfigItem NumberConfigItem.qml
 StringConfigItem StringConfigItem.qml
 ObjectHeader ObjectHeader.qml
 PropertyEditor PropertyEditor.qml
+ArrayConfigItem ArrayConfigItem.qml
+ArrayObjectItem ArrayObjectItem.qml
+ArrayStringItem ArrayStringItem.qml
+ArraySimpleItem ArraySimpleItem.qml
+IconPickerItem IconPickerItem.qml
+FontPickerItem FontPickerItem.qml

@@ -15,7 +15,7 @@ Item {
     required property var propertyData
     required property var sectionPath
 
-    readonly property var fullPath: [...sectionPath, propertyData.name]
+    readonly property var fullPath: sectionPath.concat([propertyData.name])
     property var currentValue: configObject[propertyData.name]
 
     implicitHeight: 56
