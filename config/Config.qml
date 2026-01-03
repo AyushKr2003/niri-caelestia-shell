@@ -3,6 +3,7 @@ pragma Singleton
 import qs.utils
 import Quickshell
 import Quickshell.Io
+import QtQuick
 
 Singleton {
     id: root
@@ -23,10 +24,79 @@ Singleton {
     property alias services: adapter.services
     property alias paths: adapter.paths
 
+    // Track whether this is the initial load or a reload
+    property bool initialLoadComplete: false
+    
+    // Timer to measure config load time
+    property var loadStartTime: null
+
+    // Send notification helper
+    function sendNotification(title: string, body: string, icon: string, urgency: string): void {
+        let args = ["notify-send", "-a", "caelestia-shell"];
+        if (urgency) args.push("-u", urgency);
+        if (icon) args.push("-i", icon);
+        args.push(title, body);
+        Quickshell.execDetached(args);
+    }
+
     FileView {
+        id: configFile
+        
         path: `${Paths.config}/shell.json`
         watchChanges: true
-        onFileChanged: reload()
+        
+        onFileChanged: {
+            root.loadStartTime = Date.now();
+            reload();
+        }
+        
+        onLoaded: {
+            try {
+                // Try to parse JSON to validate it
+                JSON.parse(text());
+                
+                // Calculate load time
+                const loadTime = root.loadStartTime ? Date.now() - root.loadStartTime : 0;
+                
+                // Show notification only on reload (not initial load) and if enabled
+                if (root.initialLoadComplete && adapter.services.toasts.configLoaded) {
+                    root.sendNotification(
+                        "Config reloaded",
+                        loadTime > 0 ? `Configuration loaded in ${loadTime}ms` : "Configuration successfully reloaded",
+                        "preferences-system",
+                        "low"
+                    );
+                }
+                
+                root.initialLoadComplete = true;
+                root.loadStartTime = null;
+                
+            } catch (e) {
+                console.error("Config: Failed to parse config:", e.message);
+                if (adapter.services.toasts.configError) {
+                    root.sendNotification(
+                        "Config error",
+                        `Failed to load config: ${e.message}`,
+                        "dialog-error",
+                        "critical"
+                    );
+                }
+            }
+        }
+        
+        onLoadFailed: err => {
+            if (err !== FileViewError.FileNotFound) {
+                console.error("Config: Failed to read config file:", err);
+                if (adapter.services.toasts.configError) {
+                    root.sendNotification(
+                        "Config error",
+                        `Failed to read config file: ${FileViewError[err] || err}`,
+                        "dialog-error",
+                        "critical"
+                    );
+                }
+            }
+        }
 
         JsonAdapter {
             id: adapter

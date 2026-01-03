@@ -16,4 +16,12 @@ JsonObject {
             "to": "YT Music"
         }
     ]
+    
+    // Toast notifications configuration
+    property Toasts toasts: Toasts {}
+    
+    component Toasts: JsonObject {
+        property bool configLoaded: true      // Show notification when config is reloaded
+        property bool configError: true       // Show notification on config errors
+    }
 }
