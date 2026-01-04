@@ -24,6 +24,18 @@ Searcher {
         actualCurrent = path;
         // Save to state file directly
         saveWallpaperPath.running = true;
+        // Run matugen to generate colors from wallpaper
+        runMatugen(path);
+    }
+
+    function runMatugen(imagePath: string): void {
+        if (!imagePath) return;
+        try {
+            matugenProcess.command = ["matugen", "image", imagePath];
+            matugenProcess.running = true;
+        } catch (e) {
+            console.warn("Failed to run matugen:", e);
+        }
     }
 
     function preview(path: string): void {
@@ -81,6 +93,23 @@ Searcher {
         id: saveWallpaperPath
 
         command: ["sh", "-c", `mkdir -p '${root.stateDir}' && printf '%s' '${root.actualCurrent}' > '${root.currentNamePath}'`]
+    }
+
+    // Run matugen for color generation
+    Process {
+        id: matugenProcess
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                console.log("Matugen completed successfully");
+            } else {
+                console.warn("Matugen exited with code:", exitCode);
+            }
+        }
+
+        stderr: SplitParser {
+            onRead: data => console.warn("Matugen error:", data)
+        }
     }
 
     FileView {
