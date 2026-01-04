@@ -46,7 +46,7 @@ Item {
                     const wsName = Niri.getWorkspaceNameByIndex(root.workspace.index) || (root.workspace.ws);
                     const label = Config.bar.workspaces.label || root.workspace.ws;
                     const occupiedLabel = Config.bar.workspaces.occupiedLabel || label;
-                    const activeLabel = root.workspace.activeWsId || (root.workspace.isOccupied ? occupiedLabel : label);
+                    const activeLabel = Config.bar.workspaces.activeLabel || (root.workspace.isOccupied ? occupiedLabel : label);
                     return root.workspace.activeWsId === root.workspace.ws ? activeLabel : root.workspace.isOccupied ? occupiedLabel : label;
                 }
 
