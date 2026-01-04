@@ -9,8 +9,7 @@
 </div>
 
 
-> A **Quickshell-based desktop environment** forked from [Caelestia Shell](https://github.com/caelestia-dots/shell), adapted to run with the **Niri window manager**.
-> This fork keeps the dashboard-based workflow while experimenting with new sidebar features and Niri.
+> Personal fork of [jutraim's niri-caelestia-shell](https://github.com/jutraim/niri-caelestia-shell) (Niri adaptation of [Caelestia Shell](https://github.com/caelestia-dots/shell)) with my tweaks. **WIP** 🚧
 
 <div align=center>
 
@@ -46,41 +45,19 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 
 ---
 
-## ✨ What’s Different in This Fork?
+## ✨ My Changes
 
-Replaces **`Hyprland`** with **`Niri`** as the window manager.
+Based on [jutraim's niri-caelestia-shell](https://github.com/jutraim/niri-caelestia-shell) with these additions:
 
-### `Dashboard`
+- **Config Editor**: Visual JSON editor with searchable icon/font pickers, array editing (battery warnings, idle timeouts), nested object support
+- **Battery Monitor**: Configurable warning notifications at custom levels with icons and messages
+- **Enhanced Workspace Bar**: Program icons, drag-to-reorder windows, context menus, app grouping
+- **System Monitor**: Real-time CPU/GPU/Memory stats (AMD/NVIDIA, no Intel yet)
+- **Niri Integration**: Dashboard controls for Niri IPC commands
+- **Keybinds Search**: Searchable keybind viewer for quick shortcut reference
+- **Clipboard Manager**: History-based clipboard with search and management
 
-  - Window switch popup
-    * [x] Dashboard is now opened after clicking on the popup instead of completely popping up and taking up half the screen.
-    * [ ] Window decorations for pinning, hovering window, toggling fullscreen, and closing the window.
-
-  - Experimental Niri management tab in dashboard
-    * [x] Niri IPC command buttons for focused workspace
-    * [ ] Needs re-design
-
-### `Sidebar`
-
-- Workspace bar refactor (WIP)
-  * [x] Program Icon support instead of Material Font
-  * [x] Switch to window by clicking
-  * [x] Right click context menu
-    * [ ] Allow performing Niri IPC operations in context menu
-  * [x] Reorder window in workspace by drag&drop
-  * [x] Grouping windows of same program
-  * [x] Layout sensitive icons
-  * [ ] Needs rewrite
-
-### `Misc`
-- * [x]  Niri event parser for Quickshell
-- * [x]  Task manager (GPU/CPU/Memory monitoring, still improving)
-- * [x]  Collapsible container UI element
-- * [ ]  Application dock
-- * [ ]  Searching programs in Niri overview
-
-> [!NOTE]
-> Some Caelestia features are dropped or WIP due to Niri limitations. See [ known issues](#-known-issues)
+All built on top of the Niri window manager adaptation from the upstream fork.
 
 ---
 
@@ -102,59 +79,21 @@ You need both runtime dependencies and development headers.
 
 <div align=center>
 
-
-#### Core Dependencies 🖥️
-
-| Package | Usage |
+| Category | Packages |
 |---|---|
-| [`quickshell-git`](https://quickshell.outfoxxed.me) | Must be the git version |
-| [`networkmanager`](https://networkmanager.dev) | Network management |
-| [`fish`](https://github.com/fish-shell/fish-shell) | Terminal |
-| `glibc` | C library (runtime dependency) |
-| `qt6-declarative` | Qt components |
-| `gcc-libs` | GCC runtime |
+| Core | `quickshell-git`, `networkmanager`, `fish`, `glibc`, `qt6-declarative`, `gcc-libs` |
+| Audio & Visual | `cava`, `libcava`, `aubio`, `libpipewire`, `ddcutil`, `brightnessctl`, `materialyoucolor` |
+| Fonts | `ttf-material-icons-git`, `ttf-jetbrains-mono` |
+| Screenshot & Utils | `grim`, `swappy`, `app2unit`, `libqalculate` |
+| Build | `cmake`, `ninja` |
 
-#### Audio & Visual 🎵
-
-| Package | Usage |
-|---|---|
-| [`cava`](https://github.com/karlstav/cava) | Audio visualizer |
-| [`libcava`](https://pipewire.org) | Visualizer backend |
-| [`aubio`](https://github.com/aubio/aubio) | Beat detector |
-| [`libpipewire`](https://pipewire.org) | Media backend |
-| [`ddcutil`](https://github.com/rockowitz/ddcutil) | Monitor brightness control |
-| [`brightnessctl`](https://github.com/Hummer12007/brightnessctl) | Brightness control |
-| [`materialyoucolor`](https://github.com/T-Dynamos/materialyoucolor-python) | Dynamic Color generation |
-
-#### Fonts 🔣
-
-| Package | Usage |
-|---|---|
-| [`ttf-material-icons-git`](https://fonts.google.com/icons) | Icon font |
-| [`ttf-jetbrains-mono`](https://www.nerdfonts.com/font-downloads) | Monospace font |
-
-#### Screenshot & Utilities 🧰
-
-| Package | Usage |
-|---|---|
-| [`grim`](https://gitlab.freedesktop.org/emersion/grim) | Screenshot tool |
-| [`swappy`](https://github.com/jtheoof/swappy) | Screenshot annotation |
-| [`app2unit`](https://github.com/Vladimir-csp/app2unit) | Launch apps |
-| [`libqalculate`](https://github.com/Qalculate/libqalculate) | Calculator |
-
-#### BUILD dependencies 🏗️
-
-| Package | Usage |
-|---|---|
-| [`cmake`](https://cmake.org) | Build tool |
-| [`ninja`](https://github.com/ninja-build/ninja) | 🥷 |
 
 </div>
 
 
 ### Manual installation
 
-To install the shell manually, install all dependencies and clone this repo to `$XDG_CONFIG_HOME/quickshell/niri-caelestia-shell`.
+To install the shell manually, install all dependencies and clone this repo to `~/.config/quickshell/niri-caelestia-shell`.
 Then simply build and install using `cmake`.
 
 
@@ -173,13 +112,13 @@ Then simply build and install using `cmake`.
 2. Clone the repo:
 
     ```sh
-    cd $XDG_CONFIG_HOME/quickshell
+    cd ~/.config/quickshell
     git clone https://github.com/Ayushkr2003/niri-caelestia-shell
     ```
 3. Build:
 
     ```sh
-    cd $XDG_CONFIG_HOME/quickshell/niri-caelestia-shell
+    cd ~/.config/quickshell/niri-caelestia-shell
     cmake -B build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$HOME \
@@ -193,10 +132,10 @@ Then simply build and install using `cmake`.
     If you get `VERSION is not set and failed to get from git` error, that means I forgot to tag version. You can do `git tag 1.1.1` to work around it :)
 
 ### 🔃 Updating
-You can update by running `git pull` in `$XDG_CONFIG_HOME/quickshell/niri-caelestia-shell`.
+You can update by running `git pull` in `~/.config/quickshell/niri-caelestia-shell`.
 
 ```sh
-cd $XDG_CONFIG_HOME/quickshell/niri-caelestia-shell
+cd ~/.config/quickshell/niri-caelestia-shell
 git pull
 ```
 
@@ -548,7 +487,7 @@ Config lives in:
             "recolour": false
         },
         "workspaces": {
-            "label": "  ",
+            "label": "  ",
             
             
             "activeIndicator": true,
@@ -712,28 +651,11 @@ To set the wallpaper, you can use the app launcher command `> wallpaper`.
 
 ## 🧪 Known Issues
 
-1. Multi-monitor support is currently hardcoded :(
-2. Task manager has no Intel GPU support.
-3. Workspace bar needs refactoring at the moment.
-4. Picker (screenshot tool) window grabbing is WIP due to Niri limitations.
-5. Focus grabbing for Quickshell windows (power menu, task manager, settings) behaves awkwardly because of Niri limitations.
-6. Quickshell may occasionally crash because of upstream issues (it re-opens automagically)
-7. I'm not happy that you have to build it to be able to use it, so I might revert.
-8. Some dependencies aren't actually required but I keep them because the original repo still has them.
-9. I haven't touched theming, be cautious.
+1. Task manager has no Intel GPU support (AMD/NVIDIA only)
+2. Focus grabbing for Quickshell windows behaves awkwardly due to Niri limitations
+3. Quickshell may occasionally crash due to upstream issues (auto-restarts)
+4. Some dependencies may not be strictly required (inherited from upstream)
 
----
-
-## ❓ FAQ
-
-**Q: Can I theme it?**
-A: Yes, via `shell.json` (or Nix options if you use Home Manager).
-
-**Q: Why does my task manager Intel GPU messed-up?**
-A: GPU monitoring is limited; Intel isn’t supported yet.
-
-**Q: Why does it take so long for you to update?**
-A: Civil unrest in my country 😥
 
 ---
 
