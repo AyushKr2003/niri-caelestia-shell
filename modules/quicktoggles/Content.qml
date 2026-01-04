@@ -8,6 +8,7 @@ import qs.services
 import qs.config
 import qs.utils
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
@@ -410,16 +411,28 @@ Item {
                     Layout.fillWidth: true
                     spacing: Appearance.spacing.normal
 
-                    // Mic Mute Toggle
+                    // WiFi Toggle
                     ToggleButton {
                         Layout.fillWidth: true
-                        icon: Audio.sourceMuted ? "mic_off" : "mic"
-                        label: qsTr("Mic")
-                        active: !Audio.sourceMuted
-                        onClicked: {
-                            if (Audio.source?.audio)
-                                Audio.source.audio.muted = !Audio.source.audio.muted
+                        icon: Network.wifiEnabled ? "wifi" : "wifi_off"
+                        label: qsTr("WiFi")
+                        active: Network.wifiEnabled
+                        onLeftClicked: Network.toggleWifi()
+                        onRightClicked: openControlCenter("network")
+                    }
+
+                    // Bluetooth Toggle
+                    ToggleButton {
+                        Layout.fillWidth: true
+                        icon: (Bluetooth.defaultAdapter?.enabled ?? false) ? "bluetooth" : "bluetooth_disabled"
+                        label: qsTr("Bluetooth")
+                        active: Bluetooth.defaultAdapter?.enabled ?? false
+                        onLeftClicked: {
+                            const adapter = Bluetooth.defaultAdapter;
+                            if (adapter)
+                                adapter.enabled = !adapter.enabled;
                         }
+                        onRightClicked: openControlCenter("bluetooth")
                     }
 
                     // Audio Mute Toggle
@@ -428,10 +441,24 @@ Item {
                         icon: Audio.muted ? "volume_off" : "volume_up"
                         label: qsTr("Sound")
                         active: !Audio.muted
-                        onClicked: {
+                        onLeftClicked: {
                             if (Audio.sink?.audio)
                                 Audio.sink.audio.muted = !Audio.sink.audio.muted
                         }
+                        onRightClicked: openControlCenter("audio")
+                    }
+
+                    // Mic Mute Toggle
+                    ToggleButton {
+                        Layout.fillWidth: true
+                        icon: Audio.sourceMuted ? "mic_off" : "mic"
+                        label: qsTr("Mic")
+                        active: !Audio.sourceMuted
+                        onLeftClicked: {
+                            if (Audio.source?.audio)
+                                Audio.source.audio.muted = !Audio.source.audio.muted
+                        }
+                        onRightClicked: openControlCenter("audio")
                     }
 
                     // Keep Awake Toggle
@@ -440,28 +467,21 @@ Item {
                         icon: IdleInhibitor.enabled ? "coffee" : "bedtime"
                         label: qsTr("Awake")
                         active: IdleInhibitor.enabled
-                        onClicked: IdleInhibitor.enabled = !IdleInhibitor.enabled
-                    }
-
-                    // Settings Button
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: "settings"
-                        label: qsTr("Settings")
-                        active: false
-                        onClicked: {
-                            const panelsPopouts = root.wrapper && root.wrapper.parent ? root.wrapper.parent.popouts : null;
-                            if (panelsPopouts) {
-                                    panelsPopouts.detach("network");
-                            }
-                            // Close the quicktoggles panel after opening the ControlCenter popout
-                            if (root.visibilities) {
-                                root.visibilities.quicktoggles = false;
-                            }
-                        }
+                        onLeftClicked: IdleInhibitor.enabled = !IdleInhibitor.enabled
                     }
                 }
             }
+        }
+    }
+
+    function openControlCenter(pane: string): void {
+        const panelsPopouts = root.wrapper && root.wrapper.parent ? root.wrapper.parent.popouts : null;
+        if (panelsPopouts) {
+            panelsPopouts.detach(pane);
+        }
+        // Close the quicktoggles panel after opening the ControlCenter popout
+        if (root.visibilities) {
+            root.visibilities.quicktoggles = false;
         }
     }
 
@@ -472,7 +492,8 @@ Item {
         property string icon
         property string label
         property bool active: false
-        signal clicked()
+        signal leftClicked()
+        signal rightClicked()
 
         implicitWidth: 48
         implicitHeight: 48
@@ -482,9 +503,14 @@ Item {
         StateLayer {
             radius: parent.radius
             color: active ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurface
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-            function onClicked(): void {
-                toggle.clicked()
+            function onClicked(event): void {
+                if (event && event.button === Qt.RightButton) {
+                    toggle.rightClicked()
+                } else {
+                    toggle.leftClicked()
+                }
             }
         }
 
