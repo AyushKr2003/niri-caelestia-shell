@@ -23,7 +23,7 @@ StyledRect {
     signal update(var newData)
 
     implicitHeight: expanded ? headerHeight + contentColumn.implicitHeight + Appearance.spacing.normal : headerHeight
-    readonly property int headerHeight: 52
+    readonly property int headerHeight: 64
 
     radius: Appearance.rounding.normal
     color: Colours.palette.m3surfaceContainerLow
@@ -183,7 +183,7 @@ StyledRect {
         id: stringEditorComponent
 
         StyledRect {
-            height: 36
+            height: 48
             radius: Appearance.rounding.small
             color: Colours.palette.m3surfaceContainerHigh
 
@@ -205,7 +205,7 @@ StyledRect {
         id: numberEditorComponent
 
         StyledRect {
-            height: 36
+            height: 48
             radius: Appearance.rounding.small
             color: Colours.palette.m3surfaceContainerHigh
 
@@ -244,8 +244,8 @@ StyledRect {
             spacing: Appearance.spacing.small
 
             StyledRect {
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
                 radius: Appearance.rounding.small
                 color: Colours.palette.m3surfaceContainerHigh
 
@@ -259,7 +259,7 @@ StyledRect {
 
             StyledRect {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 36
+                Layout.preferredHeight: 48
                 radius: Appearance.rounding.small
                 color: Colours.palette.m3surfaceContainerHigh
 
@@ -280,8 +280,8 @@ StyledRect {
 
             // Icon picker button
             StyledRect {
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
                 radius: Appearance.rounding.small
                 color: Colours.palette.m3primaryContainer
 
