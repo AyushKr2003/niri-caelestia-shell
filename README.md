@@ -140,6 +140,11 @@ git pull
 ```
 
 <br>
+---
+
+## Theme Setup
+
+Detailed prerequisites and step-by-step setup for wallpaper-driven theming are provided in `THEME.md`. See: [THEME.md](THEME.md)
 
 ---
 

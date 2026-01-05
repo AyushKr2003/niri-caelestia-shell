@@ -24,17 +24,27 @@ Searcher {
         actualCurrent = path;
         // Save to state file directly
         saveWallpaperPath.running = true;
-        // Run matugen to generate colors from wallpaper
-        runMatugen(path);
+        // Run color generation from wallpaper
+        runColorGeneration(path);
     }
 
-    function runMatugen(imagePath: string): void {
+    function runColorGeneration(imagePath: string): void {
         if (!imagePath) return;
         try {
-            matugenProcess.command = ["matugen", "image", imagePath];
-            matugenProcess.running = true;
+            // Use switchwall.sh for full color generation (matugen + terminal + GTK/KDE)
+            const scriptPath = Qt.resolvedUrl("../scripts/colors/switchwall.sh").toString().replace("file://", "");
+            const mode = Colours.light ? "light" : "dark";
+            colorGenProcess.command = ["bash", scriptPath, "--mode", mode, imagePath];
+            colorGenProcess.running = true;
         } catch (e) {
-            console.warn("Failed to run matugen:", e);
+            console.warn("Failed to run color generation:", e);
+            // Fallback to just matugen
+            try {
+                matugenProcess.command = ["matugen", "image", imagePath];
+                matugenProcess.running = true;
+            } catch (e2) {
+                console.warn("Failed to run matugen:", e2);
+            }
         }
     }
 
@@ -109,6 +119,27 @@ Searcher {
 
         stderr: SplitParser {
             onRead: data => console.warn("Matugen error:", data)
+        }
+    }
+
+    // Run full color generation (switchwall.sh)
+    Process {
+        id: colorGenProcess
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                console.log("Color generation completed successfully");
+            } else {
+                console.warn("Color generation exited with code:", exitCode);
+            }
+        }
+
+        stdout: SplitParser {
+            onRead: data => console.log("Color gen:", data)
+        }
+
+        stderr: SplitParser {
+            onRead: data => console.warn("Color gen error:", data)
         }
     }
 
