@@ -20,7 +20,8 @@ import Quickshell
 ShellRoot {
     // property bool enableSidebarLeft: true
     // property bool enableSidebarRight: false
-    WallpaperBackground {}
+    Backdrop {}
+    Background {}
     Drawers {}
     AreaPicker {}
     Lock {}
