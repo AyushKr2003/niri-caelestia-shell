@@ -308,6 +308,12 @@ binds {
     // Session/Power menu
     Ctrl+Alt+Delete { spawn-sh "qs -c niri-caelestia-shell ipc call drawers toggle session"; }
 }
+
+layer-rule {
+    match namespace="quickshell:Backdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
 ```
 
 </details>
