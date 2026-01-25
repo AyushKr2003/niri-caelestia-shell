@@ -74,7 +74,7 @@ ColumnLayout {
                 if (network.isSecure) {
                     root.selectedNetwork = network;
                 } else {
-                    Network.connectToNetwork(network.ssid, "");
+                    Network.connectToNetwork(network.ssid);
                 }
             }
         }
@@ -207,7 +207,7 @@ ColumnLayout {
             network: root.selectedNetwork
 
             onAccepted: password => {
-                Network.connectToNetwork(root.selectedNetwork.ssid, password);
+                Network.connectToSecureNetwork(root.selectedNetwork.ssid, password);
                 root.selectedNetwork = null;
             }
 
