@@ -18,8 +18,51 @@ Searcher {
     readonly property string schemesDataPath: Qt.resolvedUrl("scheme.json")
     // Path to store current scheme state
     readonly property string schemeStatePath: `${Paths.state}/scheme.json`
-    // Path to the Python script for generating dynamic schemes
-    readonly property string generateScriptPath: Qt.resolvedUrl("../../../scripts/generate_scheme.py")
+
+    // Convert snake_case to camelCase
+    function snakeToCamel(str: string): string {
+        return str.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+    }
+
+    // Transform matugen output to expected format
+    function transformMatugenOutput(data: var, mode: string): var {
+        const colours = {};
+        const matugenColors = data.colors;
+
+        for (const [name, values] of Object.entries(matugenColors)) {
+            const camelName = snakeToCamel(name);
+            // Get the color for the specified mode, strip the # prefix
+            const hexColor = values[mode] || values["default"];
+            if (hexColor) {
+                colours[camelName] = hexColor.replace("#", "");
+            }
+        }
+
+        // Add palette key colors from palettes if available
+        if (data.palettes) {
+            const palettes = data.palettes;
+            if (palettes.primary) colours["primary_paletteKeyColor"] = (palettes.primary["40"] || "").replace("#", "");
+            if (palettes.secondary) colours["secondary_paletteKeyColor"] = (palettes.secondary["40"] || "").replace("#", "");
+            if (palettes.tertiary) colours["tertiary_paletteKeyColor"] = (palettes.tertiary["40"] || "").replace("#", "");
+            if (palettes.neutral) colours["neutral_paletteKeyColor"] = (palettes.neutral["40"] || "").replace("#", "");
+            if (palettes.neutral_variant) colours["neutral_variant_paletteKeyColor"] = (palettes.neutral_variant["40"] || "").replace("#", "");
+        }
+
+        // Add success colors (not in matugen)
+        if (mode === "light") {
+            colours["success"] = "4F6354";
+            colours["onSuccess"] = "FFFFFF";
+            colours["successContainer"] = "D1E8D5";
+            colours["onSuccessContainer"] = "0C1F13";
+        } else {
+            colours["success"] = "B5CCBA";
+            colours["onSuccess"] = "213528";
+            colours["successContainer"] = "374B3E";
+            colours["onSuccessContainer"] = "D1E9D6";
+        }
+
+        return colours;
+    }
 
     function transformSearch(search: string): string {
         return search.slice(`${Config.launcher.actionPrefix}scheme `.length);
@@ -54,7 +97,7 @@ Searcher {
             const variant = root.currentVariant || "tonalspot";
             console.log("Dynamic scheme: variant =", variant, "mode =", mode);
 
-            // Use Python script with materialyoucolor library
+            // Use matugen for color generation from wallpaper
             dynamicSchemeGenerator.wallpaper = wallpaper;
             dynamicSchemeGenerator.variant = variant;
             dynamicSchemeGenerator.mode = mode;
@@ -171,48 +214,78 @@ Searcher {
         }
     }
 
-    // Process for generating dynamic scheme from wallpaper using Python materialyoucolor
+    // Process for generating dynamic scheme from wallpaper using matugen
     Process {
         id: dynamicSchemeGenerator
 
         property string wallpaper
         property string variant
         property string mode
+        property string outputBuffer: ""
 
         running: false
 
         function run(): void {
-            const scriptPath = generateScriptPath.toString().replace("file://", "");
-            command = ["python3", scriptPath, wallpaper, variant, mode];
-            console.log("Running dynamic scheme generator:", JSON.stringify(command));
+            outputBuffer = "";
+            // Convert variant name to matugen type (e.g., "tonalspot" -> "scheme-tonal-spot")
+            let matugenType = "scheme-tonal-spot";
+            const variantMap = {
+                "content": "scheme-content",
+                "expressive": "scheme-expressive",
+                "fidelity": "scheme-fidelity",
+                "fruitsalad": "scheme-fruit-salad",
+                "monochrome": "scheme-monochrome",
+                "neutral": "scheme-neutral",
+                "rainbow": "scheme-rainbow",
+                "tonalspot": "scheme-tonal-spot",
+                "vibrant": "scheme-vibrant"
+            };
+            if (variantMap[variant]) {
+                matugenType = variantMap[variant];
+            }
+
+            command = ["matugen", "image", wallpaper, "--dry-run", "--json", "hex", "--mode", mode, "--type", matugenType];
+            console.log("Running matugen:", JSON.stringify(command));
             running = true;
         }
 
         stdout: SplitParser {
             onRead: data => {
-                console.log("Dynamic scheme generator stdout length:", data.length);
-                try {
-                    const colours = JSON.parse(data);
-                    console.log("Parsed colours, keys:", Object.keys(colours).length);
-                    const stateData = {
-                        name: "dynamic",
-                        flavour: "default",
-                        mode: dynamicSchemeGenerator.mode,
-                        variant: dynamicSchemeGenerator.variant,
-                        colours: colours
-                    };
+                // Accumulate output since JSON may span multiple lines
+                dynamicSchemeGenerator.outputBuffer += data;
+            }
+        }
 
-                    schemeStateWriter.write(JSON.stringify(stateData, null, 2));
-                    root.currentScheme = "dynamic default";
-                    Colours.load(JSON.stringify(stateData), false);
-                } catch (e) {
-                    console.error("Failed to parse dynamic scheme:", e, data);
-                }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                console.error("Matugen exited with code:", exitCode);
+                return;
+            }
+
+            console.log("Matugen output length:", outputBuffer.length);
+            try {
+                const matugenData = JSON.parse(outputBuffer);
+                const colours = root.transformMatugenOutput(matugenData, mode);
+                console.log("Transformed colours, keys:", Object.keys(colours).length);
+
+                const stateData = {
+                    name: "dynamic",
+                    flavour: "default",
+                    mode: mode,
+                    variant: variant,
+                    colours: colours
+                };
+
+                schemeStateWriter.write(JSON.stringify(stateData, null, 2));
+                root.currentScheme = "dynamic default";
+                Colours.load(JSON.stringify(stateData), false);
+            } catch (e) {
+                console.error("Failed to parse matugen output:", e);
             }
         }
 
         stderr: SplitParser {
-            onRead: data => console.error("Dynamic scheme generator error:", data)
+            onRead: data => console.error("Matugen error:", data)
         }
     }
 
