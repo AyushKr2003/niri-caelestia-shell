@@ -48,6 +48,10 @@ Searcher {
                 // If using dynamic scheme, regenerate colors with new variant
                 if (isDynamic) {
                     Schemes.regenerateDynamic();
+                    // Also regenerate terminal/GTK colors with new variant
+                    if (Wallpapers.current) {
+                        Wallpapers.runColorGeneration(Wallpapers.current, variantName);
+                    }
                 }
             } catch (e) {
                 console.error("Failed to set variant:", e);

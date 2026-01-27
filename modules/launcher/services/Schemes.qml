@@ -97,11 +97,14 @@ Searcher {
             const variant = root.currentVariant || "tonalspot";
             console.log("Dynamic scheme: variant =", variant, "mode =", mode);
 
-            // Use matugen for color generation from wallpaper
+            // Use matugen for color generation from wallpaper (Quickshell UI)
             dynamicSchemeGenerator.wallpaper = wallpaper;
             dynamicSchemeGenerator.variant = variant;
             dynamicSchemeGenerator.mode = mode;
             dynamicSchemeGenerator.run();
+
+            // Also run external color generation for terminal/GTK/apps
+            Wallpapers.runColorGeneration(wallpaper, variant);
             return;
         }
 

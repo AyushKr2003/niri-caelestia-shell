@@ -42,13 +42,22 @@ apply_term() {
   fi
   # Copy template
   mkdir -p "$STATE_DIR"/generated/terminal
-  cp "$SCRIPT_DIR/terminal/sequences.txt" "$STATE_DIR"/generated/terminal/sequences.txt
-  # Apply colors
+  
+  # Build sed expression for all color replacements
+  sed_expr=""
   for i in "${!colorlist[@]}"; do
-    sed -i "s/${colorlist[$i]} #/${colorvalues[$i]#\#}/g" "$STATE_DIR"/generated/terminal/sequences.txt
+    varname="${colorlist[$i]}"
+    colorval="${colorvalues[$i]}"
+    # Remove $ prefix from variable name and # prefix from color value
+    varname_clean="${varname#\$}"
+    colorval_clean="${colorval#\#}"
+    # Build sed expression (escape $ for pattern, append to expression)
+    sed_expr="${sed_expr}s/\\\$${varname_clean} #/${colorval_clean}/g;"
   done
-
-  sed -i "s/\$alpha/$term_alpha/g" "$STATE_DIR/generated/terminal/sequences.txt"
+  sed_expr="${sed_expr}s/\\\$alpha/$term_alpha/g;"
+  
+  # Apply all replacements at once
+  sed "$sed_expr" "$SCRIPT_DIR/terminal/sequences.txt" > "$STATE_DIR/generated/terminal/sequences.txt"
 
   for file in /dev/pts/*; do
     if [[ $file =~ ^/dev/pts/[0-9]+$ ]]; then

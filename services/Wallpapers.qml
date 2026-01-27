@@ -2,6 +2,7 @@ pragma Singleton
 
 import qs.config
 import qs.utils
+import qs.modules.launcher.services
 import Caelestia
 import Quickshell
 import Quickshell.Io
@@ -28,13 +29,32 @@ Searcher {
         runColorGeneration(path);
     }
 
-    function runColorGeneration(imagePath: string): void {
+    // Convert variant name to matugen type
+    function variantToMatugenType(variant) {
+        const variantMap = {
+            "content": "scheme-content",
+            "expressive": "scheme-expressive",
+            "fidelity": "scheme-fidelity",
+            "fruitsalad": "scheme-fruit-salad",
+            "monochrome": "scheme-monochrome",
+            "neutral": "scheme-neutral",
+            "rainbow": "scheme-rainbow",
+            "tonalspot": "scheme-tonal-spot",
+            "vibrant": "scheme-vibrant"
+        };
+        return variantMap[variant] || "scheme-tonal-spot";
+    }
+
+    function runColorGeneration(imagePath, variant) {
+        variant = variant || "";
         if (!imagePath) return;
         try {
             // Use switchwall.sh for full color generation (matugen + terminal + GTK/KDE)
             const scriptPath = Qt.resolvedUrl("../scripts/colors/switchwall.sh").toString().replace("file://", "");
             const mode = Colours.light ? "light" : "dark";
-            colorGenProcess.command = ["bash", scriptPath, "--mode", mode, imagePath];
+            const schemeType = variantToMatugenType(variant || Schemes.currentVariant || "tonalspot");
+            colorGenProcess.command = ["bash", scriptPath, "--mode", mode, "--type", schemeType, imagePath];
+            console.log("Running color generation:", JSON.stringify(colorGenProcess.command));
             colorGenProcess.running = true;
         } catch (e) {
             console.warn("Failed to run color generation:", e);

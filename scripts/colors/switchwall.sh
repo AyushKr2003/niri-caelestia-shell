@@ -102,8 +102,21 @@ switch() {
         echo "matugen not found, skipping matugen color generation"
     fi
 
-    # Run Python color generator for terminal colors and material_colors.scss
-    if [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
+    # Run color generator for terminal colors and material_colors.scss
+    # Try bash version first (no Python dependencies), then Python version
+    if [ -f "$SCRIPT_DIR/generate_colors_matugen.sh" ] && command -v jq &>/dev/null; then
+        bash "$SCRIPT_DIR/generate_colors_matugen.sh" "${generate_colors_args[@]}" \
+            > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null
+        if [[ $? -ne 0 ]]; then
+            echo "Bash color generation failed, trying Python..." >&2
+            # Fallback to Python version
+            if [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
+                python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
+                    > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
+                echo "Python color generation also failed." >&2
+            fi
+        fi
+    elif [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
         # Check if we have a virtual environment or use system python
         if [[ -n "$ILLOGICAL_IMPULSE_VIRTUAL_ENV" ]] && [ -f "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" ]; then
             source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate"
@@ -114,8 +127,10 @@ switch() {
             # Try with system python (needs materialyoucolor package)
             python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
                 > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
-            echo "Python color generation failed. Install materialyoucolor: pip install materialyoucolor"
+            echo "Python color generation failed. Install jq or materialyoucolor: pip install materialyoucolor" >&2
         fi
+    else
+        echo "No color generation script found." >&2
     fi
 
     # Apply colors to terminal and apps
