@@ -59,9 +59,8 @@ void CavaProcessor::initCava() {
 
     m_plan = cava_init(m_bars, static_cast<unsigned int>(m_sampleRate), 1, 1, 0.85, 50, 10000);
 
-    if (m_plan->status == -1) {
+    if (!m_plan) {
         qWarning() << "CavaProcessor::initCava: failed to initialise cava plan";
-        cleanup();
         return;
     }
 

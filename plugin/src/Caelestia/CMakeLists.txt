@@ -2,7 +2,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(Qalculate IMPORTED_TARGET libqalculate REQUIRED)
 pkg_check_modules(Pipewire IMPORTED_TARGET libpipewire-0.3 REQUIRED)
 pkg_check_modules(Aubio IMPORTED_TARGET aubio REQUIRED)
-pkg_check_modules(Cava IMPORTED_TARGET cava REQUIRED)
+pkg_check_modules(Cava IMPORTED_TARGET libcava REQUIRED)
 
 qt_add_qml_module(caelestia
     URI Caelestia
