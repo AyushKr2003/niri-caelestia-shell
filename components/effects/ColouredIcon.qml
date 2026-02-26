@@ -9,22 +9,26 @@ IconImage {
 
     required property color colour
     property color dominantColour
+    property bool _dominantReady: false
 
     asynchronous: true
+    visible: status === Image.Ready || status === Image.Loading
 
-    layer.enabled: true
+    layer.enabled: _dominantReady
     layer.effect: Colouriser {
         sourceColor: root.dominantColour
         colorizationColor: root.colour
     }
 
-    layer.onEnabledChanged: {
-        if (layer.enabled && status === Image.Ready)
-            CUtils.getDominantColour(this, c => dominantColour = c);
+    function _requestDominant(): void {
+        if (status === Image.Ready)
+            CUtils.getDominantColour(root, c => { dominantColour = c; _dominantReady = true; });
     }
 
+    Component.onCompleted: _requestDominant()
+
     onStatusChanged: {
-        if (layer.enabled && status === Image.Ready)
-            CUtils.getDominantColour(this, c => dominantColour = c);
+        if (status === Image.Ready)
+            _requestDominant();
     }
 }
