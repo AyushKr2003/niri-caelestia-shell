@@ -110,7 +110,7 @@ StyledRect {
         Repeater {
             id: workspaces
 
-            model: Config.bar.workspaces.shown > Niri.getWorkspaceCount() ? Niri.getWorkspaceCount() : Config.bar.workspaces.shown
+            model: Config.bar.workspaces.shown
 
             Workspace {
                 activeWsId: root.activeWsId

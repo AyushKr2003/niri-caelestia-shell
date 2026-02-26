@@ -42,23 +42,18 @@ StyledRect {
         return s;
     }
 
-    property bool isContextActiveInWs: false
-    property bool isWorkspacesContextActive: false
-    clip: false
+    clip: true
     y: offset + mask.y
+    implicitWidth: Config.bar.sizes.innerWidth - Appearance.padding.small * 2
     implicitHeight: size
-    radius: Appearance.rounding.small
-    color: Qt.alpha(Colours.palette.m3primary, 0.95)
+    radius: Appearance.rounding.full
+    color: Colours.palette.m3primary
 
     anchors {
         left: parent.left
         right: parent.right
         leftMargin: Appearance.padding.small
         rightMargin: Appearance.padding.small
-    }
-
-    Behavior on radius {
-        EAnim {}
     }
 
     // Trail animations
