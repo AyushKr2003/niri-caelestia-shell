@@ -12,7 +12,6 @@ import qs.components.images
 import qs.services
 import qs.config
 import qs.utils
-import Caelestia
 import Quickshell
 import Quickshell.Widgets
 import QtQuick

@@ -10,7 +10,10 @@ ColumnLayout {
     default property alias contentComponent: contentLoader.sourceComponent
 
     property string title: qsTr("Dropdown Title")
+    property string description: ""
     property bool expanded: false
+    property bool showBackground: false
+    property bool nested: false
     property color backgroundColor: expanded ? Colours.palette.m3surfaceContainerLow : "transparent"
 
     // Margin properties: if backgroundMargins >= 0, use it for all sides; otherwise, use individual margins
@@ -38,8 +41,8 @@ ColumnLayout {
         // color: "transparent"
         radius: Appearance.rounding.small
 
-        // Height is header + content (if expanded) + margins
-        Layout.preferredHeight: headerRow.implicitHeight + Appearance.padding.small * 2 + (root.expanded ? contentWrapper.implicitHeight : 0) + (anchors.topMargin + anchors.bottomMargin)
+        // Height is header + description (if shown) + content (if expanded) + margins
+        Layout.preferredHeight: headerRow.implicitHeight + Appearance.padding.small * 2 + (root.expanded && root.description !== "" ? descriptionText.implicitHeight + descriptionText.Layout.topMargin + descriptionText.Layout.bottomMargin : 0) + (root.expanded ? contentWrapper.implicitHeight : 0) + (anchors.topMargin + anchors.bottomMargin)
 
         Behavior on Layout.preferredHeight {
             Anim {}
@@ -92,6 +95,21 @@ ColumnLayout {
                         font.pointSize: Appearance.font.size.large
                     }
                 }
+            }
+
+            // Description text (shown when expanded and description is set)
+            StyledText {
+                id: descriptionText
+                Layout.fillWidth: true
+                Layout.leftMargin: Appearance.padding.large
+                Layout.rightMargin: Appearance.padding.small
+                Layout.topMargin: root.description !== "" ? Appearance.spacing.smaller : 0
+                Layout.bottomMargin: root.description !== "" ? Appearance.spacing.small : 0
+                visible: root.expanded && root.description !== ""
+                text: root.description
+                color: Colours.palette.m3onSurfaceVariant
+                font.pointSize: Appearance.font.size.small
+                wrapMode: Text.Wrap
             }
 
             // Collapsible content
