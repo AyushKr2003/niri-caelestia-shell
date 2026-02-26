@@ -13,7 +13,7 @@ Searcher {
 
     readonly property list<Action> actions: [
         Action {
-            name: qsTr("Config")
+            name: qsTr("Settings")
             desc: qsTr("Open the configuration editor")
             icon: "settings"
 
@@ -94,6 +94,7 @@ Searcher {
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
                 Colours.setMode("light");
+                Schemes.regenerateDynamic();
             }
         },
         Action {
@@ -104,6 +105,7 @@ Searcher {
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
                 Colours.setMode("dark");
+                Schemes.regenerateDynamic();
             }
         },
         Action {
@@ -146,17 +148,7 @@ Searcher {
 
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
-                Quickshell.execDetached(["loginctl", "lock-session"]);
-            }
-        },
-        Action {
-            name: qsTr("Sleep")
-            desc: qsTr("Suspend then hibernate")
-            icon: "bedtime"
-
-            function onClicked(list: AppList): void {
-                list.visibilities.launcher = false;
-                Quickshell.execDetached(["systemctl", "suspend-then-hibernate"]);
+                Quickshell.execDetached(["qs", "-c", "niri-caelestia-shell", "ipc", "call", "lock", "lock"]);
             }
         }
     ]
