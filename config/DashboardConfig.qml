@@ -4,6 +4,7 @@ JsonObject {
     property bool enabled: true
     property bool showOnHover: true
     property int mediaUpdateInterval: 500
+    property int resourceUpdateInterval: 1000
     property int dragThreshold: 50
     property int updateInterval: 1000
     property Sizes sizes: Sizes {}
