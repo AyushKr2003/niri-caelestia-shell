@@ -1,13 +1,33 @@
 import qs.components.misc
 import qs.modules.controlcenter
 import qs.services
+import qs.config
 import Quickshell
 import Quickshell.Io
+import QtQuick
 
 Scope {
     id: root
 
     property bool launcherInterrupted
+
+    Connections {
+        target: Config
+
+        function onConfigSaved(): void {
+            if (Config.utilities.toasts.configLoaded)
+                Toaster.toast(qsTr("Config saved"), qsTr("Configuration saved successfully"), "rule_settings");
+        }
+
+        function onConfigLoaded(elapsed: int): void {
+            if (Config.utilities.toasts.configLoaded)
+                Toaster.toast(qsTr("Config loaded"), qsTr("Config loaded in %1ms").arg(elapsed), "rule_settings");
+        }
+
+        function onConfigError(message: string): void {
+            Toaster.toast(qsTr("Config error"), message, "settings_alert", Toaster.typeError);
+        }
+    }
 
     // CustomShortcut {
     //     name: "controlCenter"
@@ -75,6 +95,26 @@ Scope {
 
         function open(): void {
             WindowFactory.create();
+        }
+    }
+
+    IpcHandler {
+        target: "toaster"
+
+        function info(title: string, message: string, icon: string): void {
+            Toaster.toast(title, message, icon, Toaster.typeInfo);
+        }
+
+        function success(title: string, message: string, icon: string): void {
+            Toaster.toast(title, message, icon, Toaster.typeSuccess);
+        }
+
+        function warn(title: string, message: string, icon: string): void {
+            Toaster.toast(title, message, icon, Toaster.typeWarning);
+        }
+
+        function error(title: string, message: string, icon: string): void {
+            Toaster.toast(title, message, icon, Toaster.typeError);
         }
     }
 }

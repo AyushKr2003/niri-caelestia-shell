@@ -6,6 +6,7 @@ import qs.modules.launcher as Launcher
 import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
+import qs.modules.utilities.toasts as Toasts
 import qs.modules.clipboard as Clipboard
 import qs.modules.quicktoggles as QuickToggles
 import qs.modules.keybinds as KeybindsModule
@@ -136,5 +137,14 @@ Item {
 
         anchors.bottom: parent.bottom
         anchors.right: parent.right
+    }
+
+    Toasts.Toasts {
+        id: toasts
+
+        width: implicitWidth
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.margins: Appearance.padding.normal
     }
 }

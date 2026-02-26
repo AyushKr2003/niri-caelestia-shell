@@ -2,9 +2,11 @@ pragma Singleton
 
 // import qs.components.misc
 import qs.config
+import qs.services
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import QtQuick
 
 Singleton {
     id: root
@@ -16,6 +18,17 @@ Singleton {
     function getIdentity(player: MprisPlayer): string {
         const alias = Config.services.playerAliases.find(a => a.from === player.identity);
         return alias?.to ?? player.identity;
+    }
+
+    Connections {
+        target: root.active
+
+        function onTrackChanged(): void {
+            if (!Config.utilities.toasts.nowPlaying)
+                return;
+            if (root.active)
+                Toaster.toast(qsTr("Now Playing"), qsTr("%1 - %2").arg(root.active.trackArtist).arg(root.active.trackTitle), "music_note");
+        }
     }
 
     // Niri does not have global shortcuts yet ;).

@@ -15,6 +15,41 @@ Item {
     property string defaultKbLayout: kbLayoutsArray[0] || "?"
     property bool capsLock: false
     property bool numLock: false
+    property bool _lockKeysInitialized: false
+
+    // Poll system LED state for caps/num lock
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            capsLockCheck.running = true;
+            numLockCheck.running = true;
+        }
+    }
+
+    Process {
+        id: capsLockCheck
+        command: ["bash", "-c", "cat /sys/class/leds/*capslock*/brightness 2>/dev/null | grep -q '[1-9]' && echo true || echo false"]
+        stdout: StdioCollector {
+            onStreamFinished: root.capsLock = text.trim() === "true"
+        }
+    }
+
+    Process {
+        id: numLockCheck
+        command: ["bash", "-c", "cat /sys/class/leds/*numlock*/brightness 2>/dev/null | grep -q '[1-9]' && echo true || echo false"]
+        stdout: StdioCollector {
+            onStreamFinished: root.numLock = text.trim() === "true"
+        }
+    }
+
+    Timer {
+        interval: 1500
+        running: true
+        onTriggered: root._lockKeysInitialized = true
+    }
     
     readonly property string kbLayout: {
         if (kbLayoutsArray.length > 0 && kbLayoutIndex >= 0 && kbLayoutIndex < kbLayoutsArray.length) {

@@ -33,6 +33,10 @@ Singleton {
 
     property bool recentlySaved: false
 
+    signal configSaved()
+    signal configLoaded(int elapsed)
+    signal configError(string message)
+
     function save(): void {
         saveTimer.restart();
         recentlySaved = true;
@@ -47,9 +51,11 @@ Singleton {
                 configFile.watchChanges = false;
                 configFile.setText(JSON.stringify(JSON.parse(configFile.text()), null, 2));
                 configFile.watchChanges = true;
+                root.configSaved();
             } catch (e) {
                 configFile.watchChanges = true;
                 console.error("Config: Failed to save:", e.message);
+                root.configError(e.message);
             }
         }
     }
@@ -60,14 +66,7 @@ Singleton {
         onTriggered: root.recentlySaved = false
     }
 
-    // Send notification helper
-    function sendNotification(title: string, body: string, icon: string, urgency: string): void {
-        let args = ["notify-send", "-a", "caelestia-shell"];
-        if (urgency) args.push("-u", urgency);
-        if (icon) args.push("-i", icon);
-        args.push(title, body);
-        Quickshell.execDetached(args);
-    }
+
 
     FileView {
         id: configFile
@@ -88,43 +87,23 @@ Singleton {
                 // Calculate load time
                 const loadTime = root.loadStartTime ? Date.now() - root.loadStartTime : 0;
                 
-                // Show notification only on reload (not initial load) and if enabled
-                if (root.initialLoadComplete && adapter.services.toasts.configLoaded) {
-                    root.sendNotification(
-                        "Config reloaded",
-                        loadTime > 0 ? `Configuration loaded in ${loadTime}ms` : "Configuration successfully reloaded",
-                        "preferences-system",
-                        "low"
-                    );
-                }
+                // Emit signal for toast handling (avoids circular qs.services import)
+                if (root.initialLoadComplete)
+                    root.configLoaded(loadTime);
                 
                 root.initialLoadComplete = true;
                 root.loadStartTime = null;
                 
             } catch (e) {
                 console.error("Config: Failed to parse config:", e.message);
-                if (adapter.services.toasts.configError) {
-                    root.sendNotification(
-                        "Config error",
-                        `Failed to load config: ${e.message}`,
-                        "dialog-error",
-                        "critical"
-                    );
-                }
+                root.configError(e.message);
             }
         }
         
         onLoadFailed: err => {
             if (err !== FileViewError.FileNotFound) {
                 console.error("Config: Failed to read config file:", err);
-                if (adapter.services.toasts.configError) {
-                    root.sendNotification(
-                        "Config error",
-                        `Failed to read config file: ${FileViewError[err] || err}`,
-                        "dialog-error",
-                        "critical"
-                    );
-                }
+                root.configError(`Failed to read: ${FileViewError[err] || err}`);
             }
         }
 

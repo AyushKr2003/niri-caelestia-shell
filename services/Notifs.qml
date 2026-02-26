@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import qs.config
+import qs.services
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
@@ -12,6 +13,25 @@ Singleton {
 
     readonly property list<Notif> list: []
     readonly property list<Notif> popups: list.filter(n => n.popup)
+    property alias dnd: props.dnd
+
+    onDndChanged: {
+        if (!Config.utilities.toasts.dndChanged)
+            return;
+
+        if (dnd)
+            Toaster.toast(qsTr("Do not disturb enabled"), qsTr("Popup notifications are now disabled"), "do_not_disturb_on");
+        else
+            Toaster.toast(qsTr("Do not disturb disabled"), qsTr("Popup notifications are now enabled"), "do_not_disturb_off");
+    }
+
+    PersistentProperties {
+        id: props
+
+        property bool dnd
+
+        reloadableId: "notifs"
+    }
 
     NotificationServer {
         id: server
@@ -27,7 +47,7 @@ Singleton {
             notif.tracked = true;
 
             root.list.push(notifComp.createObject(root, {
-                popup: true,
+                popup: !props.dnd,
                 notification: notif
             }));
         }
@@ -48,6 +68,22 @@ Singleton {
         function clear(): void {
             for (const notif of root.list)
                 notif.popup = false;
+        }
+
+        function getDnd(): string {
+            return props.dnd;
+        }
+
+        function toggleDnd(): void {
+            props.dnd = !props.dnd;
+        }
+
+        function enableDnd(): void {
+            props.dnd = true;
+        }
+
+        function disableDnd(): void {
+            props.dnd = false;
         }
     }
 
