@@ -21,6 +21,7 @@ Singleton {
     property alias session: adapter.session
     property alias winfo: adapter.winfo
     property alias lock: adapter.lock
+    property alias utilities: adapter.utilities
     property alias services: adapter.services
     property alias paths: adapter.paths
 
@@ -29,6 +30,35 @@ Singleton {
     
     // Timer to measure config load time
     property var loadStartTime: null
+
+    property bool recentlySaved: false
+
+    function save(): void {
+        saveTimer.restart();
+        recentlySaved = true;
+        recentSaveCooldown.restart();
+    }
+
+    Timer {
+        id: saveTimer
+        interval: 500
+        onTriggered: {
+            try {
+                configFile.watchChanges = false;
+                configFile.setText(JSON.stringify(JSON.parse(configFile.text()), null, 2));
+                configFile.watchChanges = true;
+            } catch (e) {
+                configFile.watchChanges = true;
+                console.error("Config: Failed to save:", e.message);
+            }
+        }
+    }
+
+    Timer {
+        id: recentSaveCooldown
+        interval: 2000
+        onTriggered: root.recentlySaved = false
+    }
 
     // Send notification helper
     function sendNotification(title: string, body: string, icon: string, urgency: string): void {
@@ -114,6 +144,7 @@ Singleton {
             property SessionConfig session: SessionConfig {}
             property WInfoConfig winfo: WInfoConfig {}
             property LockConfig lock: LockConfig {}
+            property UtilitiesConfig utilities: UtilitiesConfig {}
             property ServiceConfig services: ServiceConfig {}
             property UserPaths paths: UserPaths {}
         }

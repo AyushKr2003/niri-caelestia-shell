@@ -175,7 +175,7 @@ Singleton {
 
     function getCurrentWorkspaceNumber() {
         if (focusedWorkspaceIndex >= 0 && focusedWorkspaceIndex < allWorkspaces.length) {
-            return allWorkspaces[focusedWorkspaceIndex].idx + 1;
+            return allWorkspaces[focusedWorkspaceIndex].idx;
         }
         return 1;
     }
@@ -192,7 +192,7 @@ Singleton {
 
     function switchToWorkspaceByIndex(index) {
         if (!niriAvailable || index < 0 || index >= allWorkspaces.length) return false;
-        return switchToWorkspace(allWorkspaces[index].id);
+        return switchToWorkspace(allWorkspaces[index].idx);
     }
 
     function switchToWorkspaceByNumber(number, output) {
@@ -206,15 +206,15 @@ Singleton {
             .filter(w => w.output === targetOutput)
             .sort((a, b) => a.idx - b.idx);
         if (number >= 1 && number <= outputWorkspaces.length) {
-            return switchToWorkspace(outputWorkspaces[number - 1].id);
+            return switchToWorkspace(outputWorkspaces[number - 1].idx);
         }
         console.warn("NiriService: No workspace", number, "found on output", targetOutput);
         return false;
     }
 
-    function moveWindowToWorkspace(workspaceId) {
+    function moveWindowToWorkspace(workspaceIdx) {
         if (!niriAvailable) return false;
-        return _core.action("move-window-to-workspace", [workspaceId.toString()]);
+        return _core.action("move-window-to-workspace", [workspaceIdx.toString()]);
     }
 
     // --- Window Functions ---

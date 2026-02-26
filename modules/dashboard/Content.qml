@@ -6,10 +6,6 @@ import Quickshell
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
-//later additions
-import qs.components
-import qs.components.widgets
-import qs.services
 
 Item {
     id: root
@@ -136,36 +132,7 @@ Item {
                 }
             }
 
-            StyledRect {
-                id: separator
 
-                Layout.topMargin: Appearance.spacing.normal
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-
-                implicitHeight: 1
-                color: Colours.palette.m3outlineVariant
-            }
-
-            RowLayout {
-                id: styledRadialButton
-                Layout.alignment: Qt.AlignLeft
-                Layout.topMargin: Appearance.spacing.small
-                Layout.leftMargin: Appearance.spacing.small
-                Layout.rightMargin: Appearance.spacing.small
-
-                ActiveWindow {
-                    //TODO Add a way to mitigate overflow, I implemented a solution in dashboard/ActiveWindow but it's meh.
-                    id: activeWindow
-                    Layout.fillWidth: true
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                WindowDecorations {}
-            }
         }
     }
 

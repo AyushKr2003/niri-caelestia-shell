@@ -1,247 +1,170 @@
 pragma ComponentBehavior: Bound
 
+import ".."
+import "../components"
 import qs.components
 import qs.components.controls
+import qs.components.containers
+import qs.components.effects
 import qs.services
 import qs.config
-import Quickshell
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 ColumnLayout {
     id: root
 
+    required property Session session
+
     spacing: Appearance.spacing.normal
 
-    MaterialIcon {
-        Layout.alignment: Qt.AlignHCenter
-        text: "wifi"
-        font.pointSize: Appearance.font.size.extraLarge * 3
-        font.bold: true
+    SettingsHeader {
+        icon: "router"
+        title: qsTr("Network Settings")
     }
 
-    StyledText {
-        Layout.alignment: Qt.AlignHCenter
-        text: qsTr("Network settings")
-        font.pointSize: Appearance.font.size.large
-        font.bold: true
-    }
-
-    // WiFi Status Section
-    StyledText {
+    SectionHeader {
         Layout.topMargin: Appearance.spacing.large
-        text: qsTr("WiFi status")
-        font.pointSize: Appearance.font.size.larger
-        font.weight: 500
+        title: qsTr("Ethernet")
+        description: qsTr("Ethernet device information")
     }
 
-    StyledText {
-        text: qsTr("Enable or disable WiFi")
-        color: Colours.palette.m3outline
+    SectionContainer {
+        contentSpacing: Appearance.spacing.small / 2
+
+        PropertyRow {
+            label: qsTr("Total devices")
+            value: qsTr("%1").arg(Nmcli.ethernetDevices.length)
+        }
+
+        PropertyRow {
+            showTopMargin: true
+            label: qsTr("Connected devices")
+            value: qsTr("%1").arg(Nmcli.ethernetDevices.filter(d => d.connected).length)
+        }
     }
 
-    StyledRect {
-        Layout.fillWidth: true
-        implicitHeight: wifiStatus.implicitHeight + Appearance.padding.large * 2
+    SectionHeader {
+        Layout.topMargin: Appearance.spacing.large
+        title: qsTr("Wireless")
+        description: qsTr("WiFi network settings")
+    }
 
-        radius: Appearance.rounding.normal
-        color: Colours.tPalette.m3surfaceContainer
-
-        RowLayout {
-            id: wifiStatus
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Appearance.padding.large
-
-            spacing: Appearance.spacing.normal
-
-            StyledText {
-                Layout.fillWidth: true
-                text: qsTr("WiFi enabled")
-            }
-
-            StyledSwitch {
-                checked: Network.wifiEnabled
-                onToggled: Network.toggleWifi()
-                cLayer: 2
+    SectionContainer {
+        ToggleRow {
+            label: qsTr("WiFi enabled")
+            checked: Nmcli.wifiEnabled
+            toggle.onToggled: {
+                Nmcli.enableWifi(checked);
             }
         }
     }
 
-    // Connected Network Section
-    StyledText {
+    SectionHeader {
         Layout.topMargin: Appearance.spacing.large
-        text: qsTr("Active connection")
-        font.pointSize: Appearance.font.size.larger
-        font.weight: 500
+        title: qsTr("VPN")
+        description: qsTr("VPN provider settings")
+        visible: Config.utilities.vpn.enabled || Config.utilities.vpn.provider.length > 0
     }
 
-    StyledText {
-        text: qsTr("Currently connected network")
-        color: Colours.palette.m3outline
-    }
+    SectionContainer {
+        visible: Config.utilities.vpn.enabled || Config.utilities.vpn.provider.length > 0
 
-    StyledRect {
-        Layout.fillWidth: true
-        implicitHeight: activeConnection.implicitHeight + Appearance.padding.large * 2
-
-        radius: Appearance.rounding.normal
-        color: Colours.tPalette.m3surfaceContainer
-
-        ColumnLayout {
-            id: activeConnection
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Appearance.padding.large
-
-            spacing: Appearance.spacing.larger
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Appearance.spacing.normal
-
-                MaterialIcon {
-                    text: Network.active ? "wifi" : "wifi_off"
-                    font.pointSize: Appearance.font.size.extraLarge
-                    color: Network.active ? Colours.palette.m3primary : Colours.palette.m3outline
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.spacing.smaller
-
-                    StyledText {
-                        text: Network.active ? Network.active.ssid : qsTr("Not connected")
-                        font.weight: 600
-                    }
-
-                    StyledText {
-                        visible: Network.active
-                        text: Network.active ? `${qsTr("Signal")}: ${Network.active.strength}%` : ""
-                        font.pointSize: Appearance.font.size.small
-                        color: Colours.palette.m3outline
-                    }
-                }
+        ToggleRow {
+            label: qsTr("VPN enabled")
+            checked: Config.utilities.vpn.enabled
+            toggle.onToggled: {
+                Config.utilities.vpn.enabled = checked;
+                Config.save();
             }
+        }
 
-            StyledRect {
-                Layout.fillWidth: true
-                Layout.topMargin: Appearance.spacing.small
-                visible: Network.active
+        PropertyRow {
+            showTopMargin: true
+            label: qsTr("Providers")
+            value: qsTr("%1").arg(Config.utilities.vpn.provider.length)
+        }
 
-                implicitHeight: disconnectBtn.implicitHeight + Appearance.padding.normal
+        TextButton {
+            Layout.fillWidth: true
+            Layout.topMargin: Appearance.spacing.normal
+            Layout.minimumHeight: Appearance.font.size.normal + Appearance.padding.normal * 2
+            text: qsTr("⚙ Manage VPN Providers")
+            inactiveColour: Colours.palette.m3secondaryContainer
+            inactiveOnColour: Colours.palette.m3onSecondaryContainer
 
-                radius: Appearance.rounding.normal
-                color: Colours.palette.m3errorContainer
-
-                StateLayer {
-                    color: Colours.palette.m3onErrorContainer
-
-                    function onClicked(): void {
-                        Network.disconnectFromNetwork();
-                    }
-                }
-
-                RowLayout {
-                    id: disconnectBtn
-
-                    anchors.centerIn: parent
-                    spacing: Appearance.spacing.small
-
-                    MaterialIcon {
-                        text: "wifi_off"
-                        color: Colours.palette.m3onErrorContainer
-                        font.pointSize: Appearance.font.size.large
-                    }
-
-                    StyledText {
-                        text: qsTr("Disconnect")
-                        color: Colours.palette.m3onErrorContainer
-                        font.weight: 600
-                    }
-                }
+            onClicked: {
+                vpnSettingsDialog.open();
             }
         }
     }
 
-    // Network Information
-    StyledText {
+    SectionHeader {
         Layout.topMargin: Appearance.spacing.large
-        text: qsTr("Network information")
-        font.pointSize: Appearance.font.size.larger
-        font.weight: 500
+        title: qsTr("Current connection")
+        description: qsTr("Active network connection information")
     }
 
-    StyledText {
-        text: qsTr("Details about the connection")
-        color: Colours.palette.m3outline
+    SectionContainer {
+        contentSpacing: Appearance.spacing.small / 2
+
+        PropertyRow {
+            label: qsTr("Network")
+            value: Nmcli.active ? Nmcli.active.ssid : (Nmcli.activeEthernet ? Nmcli.activeEthernet.interface : qsTr("Not connected"))
+        }
+
+        PropertyRow {
+            showTopMargin: true
+            visible: Nmcli.active !== null
+            label: qsTr("Signal strength")
+            value: Nmcli.active ? qsTr("%1%").arg(Nmcli.active.strength) : qsTr("N/A")
+        }
+
+        PropertyRow {
+            showTopMargin: true
+            visible: Nmcli.active !== null
+            label: qsTr("Security")
+            value: Nmcli.active ? (Nmcli.active.isSecure ? qsTr("Secured") : qsTr("Open")) : qsTr("N/A")
+        }
+
+        PropertyRow {
+            showTopMargin: true
+            visible: Nmcli.active !== null
+            label: qsTr("Frequency")
+            value: Nmcli.active ? qsTr("%1 MHz").arg(Nmcli.active.frequency) : qsTr("N/A")
+        }
     }
 
-    StyledRect {
-        Layout.fillWidth: true
-        implicitHeight: networkInfo.implicitHeight + Appearance.padding.large * 2
+    Popup {
+        id: vpnSettingsDialog
 
-        radius: Appearance.rounding.normal
-        color: Colours.tPalette.m3surfaceContainer
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(600, parent.width - Appearance.padding.large * 2)
+        height: Math.min(700, parent.height - Appearance.padding.large * 2)
 
-        ColumnLayout {
-            id: networkInfo
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Appearance.padding.large
+        background: StyledRect {
+            color: Colours.palette.m3surface
+            radius: Appearance.rounding.large
+        }
 
-            spacing: Appearance.spacing.small / 2
+        StyledFlickable {
+            anchors.fill: parent
+            anchors.margins: Appearance.padding.large * 1.5
+            flickableDirection: Flickable.VerticalFlick
+            contentHeight: vpnSettingsContent.height
+            clip: true
 
-            StyledText {
-                text: qsTr("SSID")
-            }
+            VpnSettings {
+                id: vpnSettingsContent
 
-            StyledText {
-                text: Network.active?.ssid ?? qsTr("Not connected")
-                color: Colours.palette.m3outline
-                font.pointSize: Appearance.font.size.small
-            }
-
-            StyledText {
-                Layout.topMargin: Appearance.spacing.normal
-                text: qsTr("Security")
-            }
-
-            StyledText {
-                text: {
-                    if (!Network.active) return qsTr("N/A");
-                    return Network.active.isSecure ? Network.active.security : qsTr("Open");
-                }
-                color: Colours.palette.m3outline
-                font.pointSize: Appearance.font.size.small
-            }
-
-            StyledText {
-                Layout.topMargin: Appearance.spacing.normal
-                text: qsTr("Frequency")
-            }
-
-            StyledText {
-                text: Network.active ? `${Network.active.frequency} MHz` : qsTr("N/A")
-                color: Colours.palette.m3outline
-                font.pointSize: Appearance.font.size.small
-            }
-
-            StyledText {
-                Layout.topMargin: Appearance.spacing.normal
-                text: qsTr("BSSID")
-            }
-
-            StyledText {
-                text: Network.active?.bssid ?? qsTr("N/A")
-                color: Colours.palette.m3outline
-                font.pointSize: Appearance.font.size.small
+                anchors.left: parent.left
+                anchors.right: parent.right
+                session: root.session
             }
         }
     }

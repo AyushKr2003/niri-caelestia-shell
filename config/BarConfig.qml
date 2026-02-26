@@ -9,6 +9,7 @@ JsonObject {
     property Tray tray: Tray {}
     property Status status: Status {}
     property Clock clock: Clock {}
+    property Popouts popouts: Popouts {}
     property Sizes sizes: Sizes {}
 
     property list<var> entries: [
@@ -65,6 +66,7 @@ JsonObject {
         property bool activeIndicator: true
         property bool occupiedBg: true
         property bool showWindows: true
+        property bool perMonitorWorkspaces: true
         property bool windowIconImage: true // false -> MaterialIcons, true -> IconImage
         property int windowIconGap: 5
         property int windowIconSize: 30
@@ -84,6 +86,7 @@ JsonObject {
 
     component Tray: JsonObject {
         property bool background: false
+        property bool compact: false
         property bool recolour: false
     }
 
@@ -92,6 +95,7 @@ JsonObject {
         property bool showMicrophone: false
         property bool showKbLayout: false
         property bool showNetwork: true
+        property bool showWifi: true
         property bool showBluetooth: true
         property bool showBattery: true
         property bool showLockStatus: true
@@ -99,6 +103,12 @@ JsonObject {
 
     component Clock: JsonObject {
         property bool showIcon: true
+    }
+
+    component Popouts: JsonObject {
+        property bool activeWindow: true
+        property bool tray: true
+        property bool statusIcons: true
     }
 
     component Sizes: JsonObject {

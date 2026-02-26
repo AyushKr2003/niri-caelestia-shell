@@ -92,9 +92,9 @@ Item {
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton) {
                 const thing = root.workspace;
-                const winds = Niri.getWindowsByWorkspaceIndex(thing.index);
+                const winds = Niri.getWindowsByWorkspaceIndex(thing.index + thing.groupOffset);
 
-                if (thing && winds) {
+                if (thing && winds.length > 0) {
                     Niri.wsContextAnchor = thing;
                     Niri.wsContextType = "workspace";
                     root.workspace.windowPopoutSignal.requestWindowPopout();
@@ -102,10 +102,9 @@ Item {
                 return;
             }
             if (mouse.button === Qt.LeftButton) {
-                const thing = root.workspace;
-                const ws = thing.index + root.workspace.groupOffset;
-                if (Niri.focusedWorkspaceId + 1 !== ws)
-                    Niri.switchToWorkspaceByIndex(ws);
+                const wsArrayIndex = root.workspace.index + root.workspace.groupOffset;
+                if (Niri.focusedWorkspaceIndex !== wsArrayIndex)
+                    Niri.switchToWorkspaceByIndex(wsArrayIndex);
                 return;
             }
         }

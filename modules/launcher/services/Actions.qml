@@ -1,7 +1,7 @@
 pragma Singleton
 
 import qs.modules.launcher
-import qs.modules.configeditor
+import qs.modules.controlcenter
 import qs.services
 import qs.config
 import qs.utils
@@ -19,7 +19,7 @@ Searcher {
 
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
-                ConfigEditor.show();
+                WindowFactory.create();
             }
         },
         Action {
