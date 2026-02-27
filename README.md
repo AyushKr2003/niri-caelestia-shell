@@ -119,12 +119,9 @@ Then simply build and install using `cmake`.
 
     ```sh
     cd ~/.config/quickshell/niri-caelestia-shell
-    cmake -B build -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=$HOME \
-      -DINSTALL_QSCONFDIR=$HOME/.config/quickshell/niri-caelestia-shell
+    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/
     cmake --build build
-    cmake --install build
+    sudo cmake --install build
     ```
     It's trying to install into system paths (`/usr/lib/caelestia/...`),
     so grab the necessary permissions or use sudo while installing.
@@ -150,7 +147,7 @@ Detailed prerequisites and step-by-step setup for wallpaper-driven theming are p
 
 ## 🚀 Usage
 
-The shell can be started via the `quickshell -c niri-caelestia-shell -n` command or `qs -c niri-caelestia-shell -n` on your preferred terminal.
+The shell can be started via the `qs -c niri-caelestia-shell` on your preferred terminal.
 ><sub> (`qs` and `quickshell` are interchangable.) </sub>
 
 
