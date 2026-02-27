@@ -148,7 +148,8 @@ Searcher {
 
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
-                Quickshell.execDetached(["qs", "-c", "niri-caelestia-shell", "ipc", "call", "lock", "lock"]);
+                const configName = Quickshell.shellDir.toString().replace(/\/$/, "").split("/").pop();
+                Quickshell.execDetached(["qs", "-c", configName, "ipc", "call", "lock", "lock"]);
             }
         }
     ]
