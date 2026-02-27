@@ -3,62 +3,30 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
+import Caelestia
 import qs.config
 import qs.services
 import qs.utils
-import "./niri"
-
-// Main Niri compositor service - modular architecture with external components
-// Components are loaded from services/niri/ subdirectory
 
 Singleton {
     id: root
 
-    // ==================== Module Instances ====================
-    
-    NiriCore {
-        id: _core
-    }
-    
-    NiriWorkspaces {
-        id: _workspaces
-        core: _core
-    }
-    
-    NiriWindows {
-        id: _windows
-        core: _core
-        workspaces: _workspaces
-    }
-    
-    NiriOutputs {
-        id: _outputs
-        core: _core
-    }
-    
-    NiriKeyboard {
-        id: _keyboard
-        core: _core
-    }
-
-    // ==================== Public API Properties ====================
-    
     // --- Core ---
-    readonly property bool niriAvailable: _core.niriAvailable
-    
+    readonly property bool niriAvailable: NiriIpc.available
+
     // --- Workspaces ---
-    property alias allWorkspaces: _workspaces.allWorkspaces
-    property alias focusedWorkspaceIndex: _workspaces.focusedWorkspaceIndex
-    property alias focusedWorkspaceId: _workspaces.focusedWorkspaceId
-    property alias currentOutputWorkspaces: _workspaces.currentOutputWorkspaces
-    property alias focusedMonitorName: _workspaces.focusedMonitorName
-    property alias workspaceHasWindows: _workspaces.workspaceHasWindows
-    property alias wsContextExpanded: _workspaces.wsContextExpanded
-    property alias wsContextAnchor: _workspaces.wsContextAnchor
-    property alias wsContextType: _workspaces.wsContextType
+    readonly property var allWorkspaces: NiriIpc.workspaces
+    readonly property int focusedWorkspaceIndex: NiriIpc.focusedWorkspaceIndex
+    readonly property int focusedWorkspaceId: NiriIpc.focusedWorkspaceId
+    readonly property var currentOutputWorkspaces: NiriIpc.currentOutputWorkspaces
+    readonly property string focusedMonitorName: NiriIpc.focusedMonitorName
+    readonly property var workspaceHasWindows: NiriIpc.workspaceHasWindows
+
+    // UI context menu state
+    property bool wsContextExpanded: false
+    property var wsContextAnchor: null
+    property string wsContextType: "none"
     
-    // External timer for backwards compatibility
     property Timer wsAnchorClearTimer: Timer {
         interval: Appearance.anim.durations.normal
         repeat: false
@@ -75,34 +43,36 @@ Singleton {
             wsAnchorClearTimer.start();
         }
     }
-    
+
     // --- Windows ---
-    property alias windows: _windows.windows
-    property alias focusedWindowIndex: _windows.focusedWindowIndex
-    property alias focusedWindowId: _windows.focusedWindowId
-    property alias focusedWindowTitle: _windows.focusedWindowTitle
-    property alias focusedWindowClass: _windows.focusedWindowClass
-    property alias focusedWindow: _windows.focusedWindow
-    property alias lastFocusedWindow: _windows.lastFocusedWindow
-    property alias lastFocusedColumn: _windows.lastFocusedColumn
-    property alias scrollDirection: _windows.scrollDirection
-    property alias inOverview: _windows.inOverview
+    readonly property var windows: NiriIpc.windows
+    readonly property int focusedWindowIndex: NiriIpc.focusedWindowIndex
+    readonly property string focusedWindowId: NiriIpc.focusedWindowId
+    readonly property string focusedWindowTitle: NiriIpc.focusedWindowTitle
+    readonly property string focusedWindowClass: NiriIpc.focusedWindowClass
+    readonly property var focusedWindow: NiriIpc.focusedWindow
+    readonly property var lastFocusedWindow: NiriIpc.lastFocusedWindow
+    readonly property string scrollDirection: NiriIpc.scrollDirection
+    readonly property bool inOverview: NiriIpc.inOverview
     signal windowOpenedOrChanged(var windowData)
-    
+
     // --- Outputs ---
-    property alias outputs: _outputs.outputs
+    readonly property var outputs: NiriIpc.outputs
     
     // --- Keyboard ---
-    property alias kbLayoutsArray: _keyboard.kbLayoutsArray
-    property alias kbLayoutIndex: _keyboard.kbLayoutIndex
-    property alias kbLayouts: _keyboard.kbLayouts
-    property alias defaultKbLayout: _keyboard.defaultKbLayout
-    property alias kbLayout: _keyboard.kbLayout
-    property alias capsLock: _keyboard.capsLock
-    property alias numLock: _keyboard.numLock
+    readonly property var kbLayoutsArray: NiriIpc.kbLayoutsArray
+    readonly property int kbLayoutIndex: NiriIpc.kbLayoutIndex
+    readonly property string kbLayouts: NiriIpc.kbLayouts
+    readonly property string defaultKbLayout: NiriIpc.defaultKbLayout
+    readonly property string kbLayout: NiriIpc.kbLayout
+    readonly property bool capsLock: NiriIpc.capsLock
+    readonly property bool numLock: NiriIpc.numLock
+
+    property bool _lockKeysInitialized: false
+    Timer { interval: 1500; running: true; onTriggered: root._lockKeysInitialized = true }
 
     onCapsLockChanged: {
-        if (!_keyboard._lockKeysInitialized || !Config.utilities.toasts.capsLockChanged)
+        if (!_lockKeysInitialized || !Config.utilities.toasts.capsLockChanged)
             return;
         if (capsLock)
             Toaster.toast(qsTr("Caps lock enabled"), qsTr("Caps lock is currently enabled"), "keyboard_capslock_badge");
@@ -111,7 +81,7 @@ Singleton {
     }
 
     onNumLockChanged: {
-        if (!_keyboard._lockKeysInitialized || !Config.utilities.toasts.numLockChanged)
+        if (!_lockKeysInitialized || !Config.utilities.toasts.numLockChanged)
             return;
         if (numLock)
             Toaster.toast(qsTr("Num lock enabled"), qsTr("Num lock is currently enabled"), "looks_one");
@@ -120,41 +90,24 @@ Singleton {
     }
 
     onKbLayoutChanged: {
-        if (!_keyboard._lockKeysInitialized || !Config.utilities.toasts.kbLayoutChanged)
+        if (!_lockKeysInitialized || !Config.utilities.toasts.kbLayoutChanged)
             return;
         Toaster.toast(qsTr("Keyboard layout changed"), qsTr("Layout changed to: %1").arg(kbLayout), "keyboard");
     }
 
-    // ==================== Initialization ====================
-    
-    Component.onCompleted: {
-        console.log("NiriService: Initializing modular Niri service...");
-        _core.checkAvailability();
-        
-        // Forward window events from module to root
-        _windows.windowOpenedOrChanged.connect(root.windowOpenedOrChanged);
-        
-        // Debug paths
-        console.log("Paths.home:", Paths.home);
-        console.log("Paths.pictures:", Paths.pictures);
-        console.log("Paths.data:", Paths.data);
-        console.log("Paths.state:", Paths.state);
-        console.log("Paths.cache:", Paths.cache);
-        console.log("Paths.config:", Paths.config);
-        console.log("Paths.imagecache:", Paths.imagecache);
-        console.log("Paths.wallsdir:", Paths.wallsdir);
-        console.log("Paths.libdir:", Paths.libdir);
+    // --- Initialization ---
+    Connections {
+        target: NiriIpc
+        function onWindowOpenedOrChanged(windowData) {
+            root.windowOpenedOrChanged(windowData);
+        }
     }
 
-    // ==================== Public API Functions ====================
+    Component.onCompleted: console.log("NiriService: Using native C++ IPC (NiriIpc)")
 
     // --- Workspace Functions ---
     function getWorkspaceIdxById(workspaceId) {
-        return _workspaces.getWorkspaceIdxById(workspaceId);
-    }
-
-    function updateWorkspaceHasWindows() {
-        _workspaces.updateWorkspaceHasWindows(_windows.windows);
+        return NiriIpc.getWorkspaceIdxById(workspaceId);
     }
 
     function getActiveWorkspaceName() {
@@ -207,12 +160,12 @@ Singleton {
 
     function switchToWorkspace(workspaceId) {
         if (!niriAvailable) return false;
-        return _core.action("focus-workspace", [workspaceId.toString()]);
+        return NiriIpc.action("focus-workspace", [workspaceId.toString()]);
     }
 
     function switchToWorkspaceUpDown(direction) {
         if (!niriAvailable) return false;
-        return _core.action("focus-workspace-" + direction, []);
+        return NiriIpc.action("focus-workspace-" + direction, []);
     }
 
     function switchToWorkspaceByIndex(index) {
@@ -239,7 +192,7 @@ Singleton {
 
     function moveWindowToWorkspace(workspaceIdx) {
         if (!niriAvailable) return false;
-        return _core.action("move-window-to-workspace", [workspaceIdx.toString()]);
+        return NiriIpc.action("move-window-to-workspace", [workspaceIdx.toString()]);
     }
 
     // --- Window Functions ---
@@ -297,81 +250,81 @@ Singleton {
         if (Number(windowID) === Number(focusedWindowId) && Config.bar.workspaces.doubleClickToCenter) {
             return centerWindow();
         }
-        return _core.action("focus-window", ["--id", windowID.toString()]);
+        return NiriIpc.action("focus-window", ["--id", windowID.toString()]);
     }
 
     function closeWindow(windowId) {
         if (!niriAvailable) return false;
         const id = windowId ? windowId.toString() : focusedWindowId.toString();
-        return _core.action("close-window", ["--id", id]);
+        return NiriIpc.action("close-window", ["--id", id]);
     }
 
     function closeFocusedWindow() {
         if (!niriAvailable) return false;
-        return _core.action("close-window", []);
+        return NiriIpc.action("close-window", []);
     }
 
     function toggleWindowFloating(windowId) {
         if (!niriAvailable) return false;
         const id = windowId ? windowId.toString() : focusedWindowId.toString();
-        return _core.action("toggle-window-floating", ["--id", id]);
+        return NiriIpc.action("toggle-window-floating", ["--id", id]);
     }
 
     function toggleWindowOpacity() {
         if (!niriAvailable) return false;
-        return _core.action("toggle-window-rule-opacity", []);
+        return NiriIpc.action("toggle-window-rule-opacity", []);
     }
 
     function expandColumnToAvailable() {
         if (!niriAvailable) return false;
-        return _core.action("expand-column-to-available-width", []);
+        return NiriIpc.action("expand-column-to-available-width", []);
     }
 
     function centerWindow() {
         if (!niriAvailable) return false;
-        return _core.action("center-window", []);
+        return NiriIpc.action("center-window", []);
     }
 
     function screenshotWindow() {
         if (!niriAvailable) return false;
-        return _core.action("screenshot-window", []);
+        return NiriIpc.action("screenshot-window", []);
     }
 
     function keyboardShortcutsInhibitWindow() {
         if (!niriAvailable) return false;
-        return _core.action("toggle-keyboard-shortcuts-inhibit", []);
+        return NiriIpc.action("toggle-keyboard-shortcuts-inhibit", []);
     }
 
     function toggleWindowedFullscreen() {
         if (!niriAvailable) return false;
-        return _core.action("toggle-windowed-fullscreen", []);
+        return NiriIpc.action("toggle-windowed-fullscreen", []);
     }
 
     function toggleFullscreen() {
         if (!niriAvailable) return false;
-        return _core.action("fullscreen-window", []);
+        return NiriIpc.action("fullscreen-window", []);
     }
 
     function toggleMaximize() {
         if (!niriAvailable) return false;
-        return _core.action("maximize-column", []);
+        return NiriIpc.action("maximize-column", []);
     }
 
     function toggleOverview() {
         if (!niriAvailable) return false;
-        return _core.action("toggle-overview", []);
+        return NiriIpc.action("toggle-overview", []);
     }
 
     function doScreenTransition(delayMs) {
         if (!niriAvailable) return false;
         var delay = delayMs !== undefined ? delayMs : 500;
-        return _core.action("do-screen-transition", ["-d", delay.toString()]);
+        return NiriIpc.action("do-screen-transition", ["-d", delay.toString()]);
     }
 
     function moveColumnToIndex(windowId, index) {
         if (!niriAvailable) return false;
         if (focusWindow(windowId)) {
-            return _core.action("move-column-to-index", [index.toString()]);
+            return NiriIpc.action("move-column-to-index", [index.toString()]);
         }
         return false;
     }
@@ -380,7 +333,7 @@ Singleton {
         if (!niriAvailable) return false;
         
         if (Number(windowId) === Number(focusedWindowId)) {
-            return _core.action("move-column-to-index", [index.toString()]);
+            return NiriIpc.action("move-column-to-index", [index.toString()]);
         }
         
         focusWindow(windowId);
@@ -393,7 +346,7 @@ Singleton {
         timer.triggered.connect(function() {
             timer.stop();
             timer.destroy();
-            _core.action("move-column-to-index", [index.toString()]);
+            NiriIpc.action("move-column-to-index", [index.toString()]);
         });
         timer.start();
         return true;
@@ -436,7 +389,14 @@ Singleton {
 
     // --- Grouping Functions ---
     function sortWindows(windowList) {
-        return _windows.sortWindows(windowList);
+        return windowList.slice().sort((a, b) => {
+            const aPos = Array.isArray(a.layout?.pos_in_scrolling_layout) 
+                ? a.layout.pos_in_scrolling_layout : [0, 0];
+            const bPos = Array.isArray(b.layout?.pos_in_scrolling_layout) 
+                ? b.layout.pos_in_scrolling_layout : [0, 0];
+            if (aPos[0] !== bPos[0]) return aPos[0] - bPos[0];
+            return aPos[1] - bPos[1];
+        });
     }
 
     function groupWindowsByApp(windowList) {

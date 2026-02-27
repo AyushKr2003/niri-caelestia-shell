@@ -9,3 +9,5 @@
 build/
 .cache/
 /modules/keybinds/keybinds.json
+REVIEW.md
+TODO.md

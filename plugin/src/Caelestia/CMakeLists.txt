@@ -18,6 +18,8 @@ qt_add_qml_module(caelestia
         audiocollector.hpp audiocollector.cpp
         audioprovider.hpp audioprovider.cpp
         cavaprovider.hpp cavaprovider.cpp
+        nirisocket.hpp nirisocket.cpp
+        niriipc.hpp niriipc.cpp
 )
 
 qt_query_qml_module(caelestia
@@ -38,6 +40,6 @@ install(FILES "${module_qmldir}" DESTINATION "${module_dir}")
 install(FILES "${module_typeinfo}" DESTINATION "${module_dir}")
 
 target_link_libraries(caelestia PRIVATE
-    Qt::Core Qt::Qml Qt::Gui Qt::Concurrent Qt::Multimedia
+    Qt::Core Qt::Qml Qt::Gui Qt::Concurrent Qt::Multimedia Qt::Network
     PkgConfig::Qalculate PkgConfig::Pipewire PkgConfig::Aubio PkgConfig::Cava
 )

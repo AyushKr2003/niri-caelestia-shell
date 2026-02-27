@@ -325,7 +325,7 @@ layer-rule {
 Config lives in:
 
 ```
-~/.config/caelestia/shell.json
+~/.config/niri_caelestia/shell.json
 ```
 <details><summary> <b> Example JSON </b></summary>
 
