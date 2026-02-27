@@ -65,14 +65,14 @@ JsonObject {
         property int shown: 4
         property bool activeIndicator: true
         property bool occupiedBg: true
-        property bool showWindows: true
+        property bool showWindows: false
         property bool perMonitorWorkspaces: true
-        property bool windowIconImage: true // false -> MaterialIcons, true -> IconImage
+        property bool windowIconImage: false // false -> MaterialIcons, true -> IconImage
         property int windowIconGap: 5
         property int windowIconSize: 30
         property bool groupIconsByApp: false
         property bool groupingRespectsLayout: true
-        property bool focusedWindowBlob: true
+        property bool focusedWindowBlob: false
         property bool windowRighClickContext: true
         property bool windowContextDefaultExpand: true
         property bool doubleClickToCenter: true
