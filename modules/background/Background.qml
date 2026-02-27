@@ -1,63 +1,153 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
-import qs.components.images
+import qs.components.containers
 import qs.services
 import qs.config
-import QtQuick
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
+import QtQuick
 
-Variants {
-    id: root
-    model: Quickshell.screens
+Loader {
+    active: Config.background.enabled
 
-    PanelWindow {
-        id: bgRoot
+    sourceComponent: Variants {
+        model: Quickshell.screens
 
-        required property var modelData
+        StyledWindow {
+            id: win
 
-        // Hide when fullscreen
-        property bool hasFullscreenWindow: false
-        visible: true
+            required property var modelData
 
-        // Workspaces
-        property int firstWorkspaceId: 1
-        property int lastWorkspaceId: 10
+            screen: modelData
+            name: "background"
+            WlrLayershell.exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: Config.background.wallpaperEnabled ? WlrLayer.Background : WlrLayer.Bottom
+            color: Config.background.wallpaperEnabled ? "black" : "transparent"
+            surfaceFormat.opaque: false
 
-        readonly property string wallpaperPathallpapers.current || ""
-        readonly property bool wallpaperIsGif: wallpaperPath.toLowerCase().endsWith(".gif")
+            anchors.top: true
+            anchors.bottom: true
+            anchors.left: true
+            anchors.right: true
 
-        // Layer props
-        screen: modelData
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Bottom
-        WlrLayershell.namespace: "quickshell:background"
-        anchors { top: true; bottom: true; left: true; right: true }
-        color: "transparent"
+            Item {
+                id: behindClock
 
-        // Static wallpaper (non-GIF images)
-        Image {
-            id: wallpaper
-            anchors.fill: parent
-            visible: !bgRoot.wallpaperIsGif
-            fillMode: Image.PreserveAspectCrop
-            source: bgRoot.wallpaperPath
-            asynchronous: true
-            cache: false
-        }
+                anchors.fill: parent
 
-        // Animated GIF wallpaper
-        AnimatedImage {
-            id: gifWallpaper
-            anchors.fill: parent
-            visible: bgRoot.wallpaperIsGif
-            source: bgRoot.wallpaperPath
-            fillMode: Image.PreserveAspectCrop
-            playing: visible
-            asynchronous: true
+                Loader {
+                    id: wallpaperLoader
+
+                    anchors.fill: parent
+                    active: Config.background.wallpaperEnabled
+
+                    sourceComponent: Wallpaper {}
+                }
+
+                Visualiser {
+                    anchors.fill: parent
+                    screen: win.modelData
+                    wallpaper: wallpaperLoader
+                }
+            }
+
+            Loader {
+                id: clockLoader
+                active: Config.background.desktopClock.enabled
+
+                anchors.margins: Appearance.padding.large * 2
+                anchors.leftMargin: Appearance.padding.large * 2 + Config.bar.sizes.innerWidth + Math.max(Appearance.padding.smaller, Config.border.thickness)
+
+                state: Config.background.desktopClock.position
+                states: [
+                    State {
+                        name: "top-left"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                        }
+                    },
+                    State {
+                        name: "top-center"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                    },
+                    State {
+                        name: "top-right"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                        }
+                    },
+                    State {
+                        name: "middle-left"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                        }
+                    },
+                    State {
+                        name: "middle-center"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                    },
+                    State {
+                        name: "middle-right"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                        }
+                    },
+                    State {
+                        name: "bottom-left"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                        }
+                    },
+                    State {
+                        name: "bottom-center"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                    },
+                    State {
+                        name: "bottom-right"
+                        AnchorChanges {
+                            target: clockLoader
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                        }
+                    }
+                ]
+
+                transitions: Transition {
+                    AnchorAnimation {
+                        duration: Appearance.anim.durations.expressiveDefaultSpatial
+                        easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+                    }
+                }
+
+                sourceComponent: DesktopClock {
+                    wallpaper: behindClock
+                    absX: clockLoader.x
+                    absY: clockLoader.y
+                }
+            }
         }
     }
 }

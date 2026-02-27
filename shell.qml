@@ -4,12 +4,12 @@
 
 import "modules"
 import "modules/drawers"
-import "modules/background"
 import "modules/areapicker"
 import "modules/lock"
 import "modules/clipboard"
 import "modules/quicktoggles"
 import "modules/keybinds"
+import "modules/background"
 import qs.modules.controlcenter
 import qs.services
 // import "./modules/sidebarLeft/"

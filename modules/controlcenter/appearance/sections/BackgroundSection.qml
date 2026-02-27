@@ -18,6 +18,10 @@ CollapsibleSection {
     title: qsTr("Background")
     showBackground: true
 
+    ColumnLayout {
+        spacing: Appearance.spacing.small
+        Layout.fillWidth: true
+
     SwitchRow {
         label: qsTr("Background enabled")
         checked: rootPane.backgroundEnabled
@@ -342,4 +346,6 @@ CollapsibleSection {
             }
         }
     }
+
+    } // end ColumnLayout wrapper
 }

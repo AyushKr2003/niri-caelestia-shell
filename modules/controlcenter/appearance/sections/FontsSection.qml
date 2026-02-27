@@ -18,6 +18,10 @@ CollapsibleSection {
     title: qsTr("Fonts")
     showBackground: true
 
+    ColumnLayout {
+        spacing: Appearance.spacing.small
+        Layout.fillWidth: true
+
     CollapsibleSection {
         id: materialFontSection
         title: qsTr("Material font family")
@@ -279,4 +283,6 @@ CollapsibleSection {
             }
         }
     }
+
+    } // end ColumnLayout wrapper
 }

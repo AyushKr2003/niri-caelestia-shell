@@ -139,11 +139,25 @@ Singleton {
             enabled: background.enabled,
             wallpaperEnabled: background.wallpaperEnabled,
             desktopClock: {
-                enabled: background.desktopClock.enabled
+                enabled: background.desktopClock.enabled,
+                scale: background.desktopClock.scale,
+                position: background.desktopClock.position,
+                invertColors: background.desktopClock.invertColors,
+                background: {
+                    enabled: background.desktopClock.background.enabled,
+                    opacity: background.desktopClock.background.opacity,
+                    blur: background.desktopClock.background.blur
+                },
+                shadow: {
+                    enabled: background.desktopClock.shadow.enabled,
+                    opacity: background.desktopClock.shadow.opacity,
+                    blur: background.desktopClock.shadow.blur
+                }
             },
             visualiser: {
                 enabled: background.visualiser.enabled,
                 autoHide: background.visualiser.autoHide,
+                blur: background.visualiser.blur,
                 rounding: background.visualiser.rounding,
                 spacing: background.visualiser.spacing
             }

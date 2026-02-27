@@ -18,6 +18,10 @@ CollapsibleSection {
     title: qsTr("Transparency")
     showBackground: true
 
+    ColumnLayout {
+        spacing: Appearance.spacing.small
+        Layout.fillWidth: true
+
     SwitchRow {
         label: qsTr("Transparency enabled")
         checked: rootPane.transparencyEnabled
@@ -76,4 +80,6 @@ CollapsibleSection {
             }
         }
     }
+
+    } // end ColumnLayout wrapper
 }

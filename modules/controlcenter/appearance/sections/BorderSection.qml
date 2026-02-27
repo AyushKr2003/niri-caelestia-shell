@@ -18,6 +18,10 @@ CollapsibleSection {
     title: qsTr("Border")
     showBackground: true
 
+    ColumnLayout {
+        spacing: Appearance.spacing.small
+        Layout.fillWidth: true
+
     SectionContainer {
         contentSpacing: Appearance.spacing.normal
 
@@ -65,4 +69,6 @@ CollapsibleSection {
             }
         }
     }
+
+    } // end ColumnLayout wrapper
 }
