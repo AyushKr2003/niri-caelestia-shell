@@ -123,7 +123,7 @@ Then simply build and install using `cmake`.
     cmake --build build
     sudo cmake --install build
     ```
-    It's trying to install into system paths (`/usr/lib/caelestia/...`),
+    It's trying to install into system paths (`/usr/lib/qt6/qml/Caelestia/...`),
     so grab the necessary permissions or use sudo while installing.
 
     If you get `VERSION is not set and failed to get from git` error, that means I forgot to tag version. You can do `git tag 1.1.1` to work around it :)
