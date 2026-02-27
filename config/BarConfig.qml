@@ -80,7 +80,7 @@ JsonObject {
         property bool activeTrail: false
         property bool pagerActive: true
         property string label: "◦" // ""
-        property string occupiedLabel: "⊙" // "󰮯"
+        property string occupiedLabel: " " // "󰮯"
         property string activeLabel: "󰮯" //Handled in workspace.qml
     }
 
