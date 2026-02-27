@@ -138,7 +138,7 @@ Searcher {
 
             function onClicked(list: AppList): void {
                 list.visibilities.launcher = false;
-                Quickshell.execDetached(["loginctl", "terminate-user", ""]);
+                Quickshell.execDetached(["niri", "msg", "action", "quit"]);
             }
         },
         Action {
