@@ -24,8 +24,7 @@ Item {
         const end = start + Config.bar.workspaces.shown;
         for (const [ws, occ] of Object.entries(occupied)) {
             if (ws > start && ws <= end && occ) {
-                if (!occupied[ws + 1]) {
-                    // WARNING changed - 1 to + 1 to make workspaces not join
+                if (!occupied[ws - 1]) {
                     if (pills[count])
                         pills[count].start = ws;
                     else
@@ -77,7 +76,7 @@ Item {
             implicitHeight: start && end ? end.y + end.size - start.y : 0
             // implicitHeight: end?.y + end?.height - start?.y
 
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.palette.m3primary
             radius: Appearance.rounding.small
 
             scale: 0

@@ -45,7 +45,11 @@ StyledRect {
 
         sourceComponent: OccupiedBg {
             workspaces: workspaces
-            occupied: root.occupied
+            occupied: {
+                let merged = Object.assign({}, root.occupied);
+                merged[root.activeWsId] = true;
+                return merged;
+            }
             groupOffset: root.groupOffset
         }
     }
@@ -105,7 +109,7 @@ StyledRect {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin: Appearance.padding.small
-        spacing: Math.floor(Appearance.spacing.small)
+        spacing: Math.floor(Appearance.spacing.small / 2)
 
         Repeater {
             id: workspaces
