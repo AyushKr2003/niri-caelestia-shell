@@ -25,6 +25,10 @@ Item {
     property int updateInterval: Config.dashboard.updateInterval ?? 1000
     property int dragThreshold: Config.dashboard.dragThreshold ?? 50
     
+    // Weather
+    property string weatherLocation: Config.services.weatherLocation ?? ""
+    property bool useFahrenheit: Config.services.useFahrenheit ?? false
+
     // Performance Resources
     property bool showBattery: Config.dashboard.performance.showBattery ?? false
     property bool showGpu: Config.dashboard.performance.showGpu ?? true
@@ -40,6 +44,8 @@ Item {
         Config.dashboard.showOnHover = root.showOnHover;
         Config.dashboard.updateInterval = root.updateInterval;
         Config.dashboard.dragThreshold = root.dragThreshold;
+        Config.services.weatherLocation = root.weatherLocation;
+        Config.services.useFahrenheit = root.useFahrenheit;
         Config.dashboard.performance.showBattery = root.showBattery;
         Config.dashboard.performance.showGpu = root.showGpu;
         Config.dashboard.performance.showCpu = root.showCpu;
@@ -110,6 +116,11 @@ Item {
 
                 // General Settings Section
                 GeneralSection {
+                    rootItem: root
+                }
+
+                // Weather Section
+                WeatherSection {
                     rootItem: root
                 }
 
