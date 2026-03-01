@@ -250,6 +250,16 @@ All IPC commands can be called via `quickshell -c niri-caelestia-shell ipc call 
 
 </details>
 
+## If you want blur overview add this in your NIRI config
+```kdl
+
+layer-rule {
+    match namespace="quickshell:Backdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
+````
+
 <details><summary> <b> Example Niri config.kdl </b></summary>
 
 ```kdl

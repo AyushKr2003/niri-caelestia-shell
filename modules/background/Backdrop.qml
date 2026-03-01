@@ -29,42 +29,48 @@ Variants {
 
         color: "transparent"
 
-        // Aurora backdrop - always enabled
-        readonly property int backdropBlurRadius: 80
-        readonly property real auroraOverlayOpacity: 0
+        // Use the same wallpaper source as the main background
+        readonly property string wallpaperSource: {
+            const path = Wallpapers.current;
+            if (!path) return "";
+            // Ensure file:// prefix for local paths
+            if (path.startsWith("/")) return "file://" + path;
+            return path;
+        }
 
         Item {
+            id: blurContainer
             anchors.fill: parent
 
-            // Aurora-style blurred wallpaper
+            layer.enabled: bgImage.status === Image.Ready
+            layer.effect: MultiEffect {
+                blurEnabled: true
+                blur: 0.8
+                blurMax: 64
+            }
+
             Image {
-                id: auroraWallpaper
+                id: bgImage
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                source: Wallpapers.current
+                source: backdropWindow.wallpaperSource
                 asynchronous: true
                 cache: true
-                sourceSize.width: backdropWindow.screen.width
-                sourceSize.height: backdropWindow.screen.height
+                smooth: true
+                sourceSize.width: backdropWindow.screen?.width ?? 1920
+                sourceSize.height: backdropWindow.screen?.height ?? 1080
 
-                layer.enabled: Appearance.transparency.enabled
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blur: backdropWindow.backdropBlurRadius / 100.0
-                    blurMax: 64
+                onStatusChanged: {
+                    console.log("Backdrop image status:", status, "source:", source.toString().slice(-40))
                 }
             }
+        }
 
-            // Aurora-style color overlay
-            Rectangle {
-                anchors.fill: parent
-                color: Qt.rgba(
-                    Colours.palette.m3surfaceContainer.r,
-                    Colours.palette.m3surfaceContainer.g,
-                    Colours.palette.m3surfaceContainer.b,
-                    backdropWindow.auroraOverlayOpacity
-                )
-            }
+        // Tint overlay (on top of blurred image)
+        Rectangle {
+            anchors.fill: parent
+            color: Colours.palette.m3surface
+            opacity: 0.15
         }
     }
 }
