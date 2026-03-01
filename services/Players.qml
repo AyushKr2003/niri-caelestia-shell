@@ -3,6 +3,7 @@ pragma Singleton
 // import qs.components.misc
 import qs.config
 import qs.services
+import Caelestia
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris

@@ -7,7 +7,7 @@ import qs.components.controls
 import qs.services
 import qs.utils
 import qs.config
-import Caelestia
+import Caelestia.Services
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Mpris

@@ -7,7 +7,6 @@ import qs.components.effects
 import qs.components.images
 import qs.services
 import qs.config
-import Caelestia
 import QtQuick
 
 GridView {

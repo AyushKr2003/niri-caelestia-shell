@@ -20,7 +20,6 @@ NiriIpc::NiriIpc(QObject* parent)
     connect(&m_eventSocket, &NiriEventSocket::connected, this, &NiriIpc::onEventStreamConnected);
     connect(&m_eventSocket, &NiriEventSocket::disconnected, this, &NiriIpc::onEventStreamDisconnected);
     connect(&m_eventSocket, &NiriEventSocket::eventReceived, this, &NiriIpc::onEvent);
-    connect(&m_ledWatcher, &QFileSystemWatcher::fileChanged, this, &NiriIpc::onLedFileChanged);
 
     setupLedWatchers();
     m_eventSocket.connectToNiri();
@@ -662,15 +661,20 @@ void NiriIpc::setupLedWatchers() {
 
         if (entry.contains(QStringLiteral("capslock"), Qt::CaseInsensitive)) {
             m_capsLockPath = brightnessPath;
-            m_ledWatcher.addPath(brightnessPath);
         } else if (entry.contains(QStringLiteral("numlock"), Qt::CaseInsensitive)) {
             m_numLockPath = brightnessPath;
-            m_ledWatcher.addPath(brightnessPath);
         }
     }
 
     // Initial read
     readLedState();
+
+    // Poll sysfs since inotify doesn't work on virtual files
+    if (!m_capsLockPath.isEmpty() || !m_numLockPath.isEmpty()) {
+        m_ledPollTimer.setInterval(300);
+        connect(&m_ledPollTimer, &QTimer::timeout, this, &NiriIpc::readLedState);
+        m_ledPollTimer.start();
+    }
 }
 
 void NiriIpc::readLedState() {
@@ -692,19 +696,6 @@ void NiriIpc::readLedState() {
     if (m_numLock != newNum) {
         m_numLock = newNum;
         emit numLockChanged();
-    }
-}
-
-void NiriIpc::onLedFileChanged(const QString& path) {
-    Q_UNUSED(path);
-    readLedState();
-
-    // QFileSystemWatcher may drop watches when files are replaced
-    if (!m_capsLockPath.isEmpty() && !m_ledWatcher.files().contains(m_capsLockPath)) {
-        m_ledWatcher.addPath(m_capsLockPath);
-    }
-    if (!m_numLockPath.isEmpty() && !m_ledWatcher.files().contains(m_numLockPath)) {
-        m_ledWatcher.addPath(m_numLockPath);
     }
 }
 

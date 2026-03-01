@@ -2,6 +2,7 @@ import qs.components.misc
 import qs.modules.controlcenter
 import qs.services
 import qs.config
+import Caelestia
 import Quickshell
 import Quickshell.Io
 import QtQuick
@@ -25,7 +26,7 @@ Scope {
         }
 
         function onConfigError(message: string): void {
-            Toaster.toast(qsTr("Config error"), message, "settings_alert", Toaster.typeError);
+            Toaster.toast(qsTr("Config error"), message, "settings_alert", Toast.Error);
         }
     }
 
@@ -102,19 +103,19 @@ Scope {
         target: "toaster"
 
         function info(title: string, message: string, icon: string): void {
-            Toaster.toast(title, message, icon, Toaster.typeInfo);
+            Toaster.toast(title, message, icon, Toast.Info);
         }
 
         function success(title: string, message: string, icon: string): void {
-            Toaster.toast(title, message, icon, Toaster.typeSuccess);
+            Toaster.toast(title, message, icon, Toast.Success);
         }
 
         function warn(title: string, message: string, icon: string): void {
-            Toaster.toast(title, message, icon, Toaster.typeWarning);
+            Toaster.toast(title, message, icon, Toast.Warning);
         }
 
         function error(title: string, message: string, icon: string): void {
-            Toaster.toast(title, message, icon, Toaster.typeError);
+            Toaster.toast(title, message, icon, Toast.Error);
         }
     }
 }

@@ -2,11 +2,11 @@
 
 #include "nirisocket.hpp"
 
-#include <qfilesystemwatcher.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qobject.h>
 #include <qqmlintegration.h>
+#include <qtimer.h>
 #include <qvariant.h>
 
 namespace caelestia {
@@ -114,7 +114,6 @@ private slots:
     void onEventStreamConnected();
     void onEventStreamDisconnected();
     void onEvent(const QJsonObject& event);
-    void onLedFileChanged(const QString& path);
 
 private:
     void fetchInitialState();
@@ -171,7 +170,7 @@ private:
     // LED state
     bool m_capsLock = false;
     bool m_numLock = false;
-    QFileSystemWatcher m_ledWatcher;
+    QTimer m_ledPollTimer;
     QString m_capsLockPath;
     QString m_numLockPath;
 };

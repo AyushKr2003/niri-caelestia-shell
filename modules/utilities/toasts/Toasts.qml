@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import qs.components
 import qs.config
 import qs.services
+import Caelestia
 import Quickshell
 import QtQuick
 
@@ -50,7 +51,7 @@ Item {
         id: toast
 
         required property int index
-        required property var modelData
+        required property Toast modelData
 
         readonly property bool previewHidden: {
             let extraHidden = 0;

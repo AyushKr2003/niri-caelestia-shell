@@ -154,15 +154,16 @@ Singleton {
         target: Wallpapers
 
         function onCurrentChanged(): void {
-            const current = Wallpapers.current;
-            CUtils.getAverageLuminance(current, l => {
-                if (Wallpapers.current == current)
-                    root.wallLuminance = l;
-            });
+            wallAnalyser.source = Wallpapers.current;
 
             // Regenerate dynamic scheme if currently active
             Schemes.regenerateDynamic();
         }
+    }
+
+    ImageAnalyser {
+        id: wallAnalyser
+        onLuminanceChanged: root.wallLuminance = luminance
     }
 
     component Transparency: QtObject {

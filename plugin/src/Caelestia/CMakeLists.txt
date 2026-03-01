@@ -2,44 +2,58 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(Qalculate IMPORTED_TARGET libqalculate REQUIRED)
 pkg_check_modules(Pipewire IMPORTED_TARGET libpipewire-0.3 REQUIRED)
 pkg_check_modules(Aubio IMPORTED_TARGET aubio REQUIRED)
-pkg_check_modules(Cava IMPORTED_TARGET libcava REQUIRED)
+pkg_check_modules(Cava IMPORTED_TARGET libcava QUIET)
+if(NOT Cava_FOUND)
+    pkg_check_modules(Cava IMPORTED_TARGET cava REQUIRED)
+endif()
 
-qt_add_qml_module(caelestia
+function(qml_module arg_TARGET)
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "URI" "SOURCES;LIBRARIES")
+
+    qt_add_qml_module(${arg_TARGET}
+        URI ${arg_URI}
+        VERSION ${VERSION_SHORT}
+        SOURCES ${arg_SOURCES}
+    )
+
+    qt_query_qml_module(${arg_TARGET}
+        URI module_uri
+        VERSION module_version
+        PLUGIN_TARGET module_plugin_target
+        TARGET_PATH module_target_path
+        QMLDIR module_qmldir
+        TYPEINFO module_typeinfo
+    )
+
+    message(STATUS "Created QML module ${module_uri}, version ${module_version}")
+
+    set(module_dir "${INSTALL_QMLDIR}/${module_target_path}")
+    install(TARGETS ${arg_TARGET} LIBRARY DESTINATION "${module_dir}" RUNTIME DESTINATION "${module_dir}")
+    install(TARGETS "${module_plugin_target}" LIBRARY DESTINATION "${module_dir}" RUNTIME DESTINATION "${module_dir}")
+    install(FILES "${module_qmldir}" DESTINATION "${module_dir}")
+    install(FILES "${module_typeinfo}" DESTINATION "${module_dir}")
+
+    target_link_libraries(${arg_TARGET} PRIVATE Qt::Core Qt::Qml ${arg_LIBRARIES})
+endfunction()
+
+qml_module(caelestia
     URI Caelestia
-    VERSION ${VERSION_SHORT}
     SOURCES
         cutils.hpp cutils.cpp
-        cachingimagemanager.hpp cachingimagemanager.cpp
-        filesystemmodel.hpp filesystemmodel.cpp
         qalculator.hpp qalculator.cpp
-        beattracker.hpp beattracker.cpp
-        service.hpp service.cpp
-        serviceref.hpp serviceref.cpp
-        audiocollector.hpp audiocollector.cpp
-        audioprovider.hpp audioprovider.cpp
-        cavaprovider.hpp cavaprovider.cpp
-        nirisocket.hpp nirisocket.cpp
-        niriipc.hpp niriipc.cpp
+        imageanalyser.hpp imageanalyser.cpp
+        appdb.hpp appdb.cpp
+        toaster.hpp toaster.cpp
+        requests.hpp requests.cpp
+    LIBRARIES
+        Qt::Gui
+        Qt::Quick
+        Qt::Concurrent
+        Qt::Network
+        Qt::Sql
+        PkgConfig::Qalculate
 )
 
-qt_query_qml_module(caelestia
-    URI module_uri
-    VERSION module_version
-    PLUGIN_TARGET module_plugin_target
-    TARGET_PATH module_target_path
-    QMLDIR module_qmldir
-    TYPEINFO module_typeinfo
-)
-
-message(STATUS "Created QML module ${module_uri}, version ${module_version}")
-
-set(module_dir "${INSTALL_QMLDIR}/${module_target_path}")
-install(TARGETS caelestia LIBRARY DESTINATION "${module_dir}" RUNTIME DESTINATION "${module_dir}")
-install(TARGETS "${module_plugin_target}" LIBRARY DESTINATION "${module_dir}" RUNTIME DESTINATION "${module_dir}")
-install(FILES "${module_qmldir}" DESTINATION "${module_dir}")
-install(FILES "${module_typeinfo}" DESTINATION "${module_dir}")
-
-target_link_libraries(caelestia PRIVATE
-    Qt::Core Qt::Qml Qt::Gui Qt::Concurrent Qt::Multimedia Qt::Network
-    PkgConfig::Qalculate PkgConfig::Pipewire PkgConfig::Aubio PkgConfig::Cava
-)
+add_subdirectory(Internal)
+add_subdirectory(Models)
+add_subdirectory(Services)

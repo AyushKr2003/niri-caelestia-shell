@@ -8,27 +8,19 @@ IconImage {
     id: root
 
     required property color colour
-    property color dominantColour
-    property bool _dominantReady: false
+    property alias dominantColour: analyser.dominantColour
 
     asynchronous: true
     visible: status === Image.Ready || status === Image.Loading
 
-    layer.enabled: _dominantReady
+    layer.enabled: status === Image.Ready
     layer.effect: Colouriser {
         sourceColor: root.dominantColour
         colorizationColor: root.colour
     }
 
-    function _requestDominant(): void {
-        if (status === Image.Ready)
-            CUtils.getDominantColour(root, c => { dominantColour = c; _dominantReady = true; });
-    }
-
-    Component.onCompleted: _requestDominant()
-
-    onStatusChanged: {
-        if (status === Image.Ready)
-            _requestDominant();
+    ImageAnalyser {
+        id: analyser
+        sourceItem: root.status === Image.Ready ? root : null
     }
 }
