@@ -30,7 +30,7 @@ Singleton {
 
     Process {
         id: createStateDir
-        command: ["sh", "-c", `mkdir -p '${root.stateDir}'`]
+        command: ["mkdir", "-p", root.stateDir]
         onExited: {
             console.log("Keybinds: State directory created");
             root.refresh();

@@ -95,11 +95,10 @@ Singleton {
             colours: colours
         };
 
-        // Ensure directory exists and write file
+        // Ensure directory exists, then write via FileView
         const jsonContent = JSON.stringify(stateData, null, 2);
-        const escapedJson = jsonContent.replace(/'/g, "'\\''");
-        saveSchemeStateProcess.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
-        saveSchemeStateProcess.running = true;
+        ensureStateDirProcess._pendingContent = jsonContent;
+        ensureStateDirProcess.running = true;
     }
 
     FileView {
@@ -135,9 +134,20 @@ Singleton {
     }
 
     Process {
-        id: saveSchemeStateProcess
+        id: ensureStateDirProcess
 
+        property string _pendingContent
+
+        command: ["mkdir", "-p", Paths.state]
         running: false
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && _pendingContent) {
+                schemeStateFile.watchChanges = false;
+                schemeStateFile.setText(_pendingContent);
+                schemeStateFile.watchChanges = true;
+            }
+        }
     }
 
     Connections {

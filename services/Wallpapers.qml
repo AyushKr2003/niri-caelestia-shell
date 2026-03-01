@@ -23,8 +23,8 @@ Searcher {
 
     function setWallpaper(path: string): void {
         actualCurrent = path;
-        // Save to state file directly
-        saveWallpaperPath.running = true;
+        // Ensure state directory exists, then save
+        ensureStateDir.running = true;
         // Run color generation from wallpaper
         runColorGeneration(path);
     }
@@ -118,11 +118,21 @@ Searcher {
         }
     }
 
-    // Create state directory and save wallpaper path
+    // Create state directory, then write wallpaper path via FileView
     Process {
-        id: saveWallpaperPath
+        id: ensureStateDir
 
-        command: ["sh", "-c", `mkdir -p '${root.stateDir}' && printf '%s' '${root.actualCurrent}' > '${root.currentNamePath}'`]
+        command: ["mkdir", "-p", root.stateDir]
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                stateFile.watchChanges = false;
+                stateFile.setText(root.actualCurrent);
+                stateFile.watchChanges = true;
+            } else {
+                console.warn("Wallpapers: Failed to create state directory:", root.stateDir);
+            }
+        }
     }
 
     // Run matugen for color generation

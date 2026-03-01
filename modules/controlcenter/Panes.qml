@@ -37,6 +37,18 @@ ClippingRectangle {
     }
 
     Connections {
+        target: root
+
+        function onSessionChanged(): void {
+            if (root.session) {
+                for (let i = 0; i < paneRepeater.count; i++) {
+                    paneRepeater.itemAt(i)?.updateActive();
+                }
+            }
+        }
+    }
+
+    Connections {
         target: root.session
 
         function onActiveIndexChanged(): void {
@@ -48,7 +60,7 @@ ClippingRectangle {
         id: layout
 
         spacing: 0
-        y: -root.session.activeIndex * root.height
+        y: -(root.session?.activeIndex ?? 0) * root.height
         clip: true
 
         property bool animationComplete: true
@@ -72,6 +84,8 @@ ClippingRectangle {
         }
 
         Repeater {
+            id: paneRepeater
+
             model: PaneRegistry.count
 
             Pane {
@@ -106,6 +120,7 @@ ClippingRectangle {
         property bool hasBeenLoaded: false
 
         function updateActive(): void {
+            if (!root.session) return;
             const diff = Math.abs(root.session.activeIndex - pane.paneIndex);
             const isActivePane = diff === 0;
             let shouldBeActive = false;
@@ -141,7 +156,7 @@ ClippingRectangle {
                     pane.hasBeenLoaded = true;
                 }
 
-                if (active && !item) {
+                if (active && !item && root.session) {
                     loader.setSource(pane.componentPath, {
                         "session": root.session
                     });

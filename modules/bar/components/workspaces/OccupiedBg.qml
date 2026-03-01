@@ -76,8 +76,8 @@ Item {
             implicitHeight: start && end ? end.y + end.size - start.y : 0
             // implicitHeight: end?.y + end?.height - start?.y
 
-            color: Colours.palette.m3primary
-            radius: Appearance.rounding.small
+            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            radius: Appearance.rounding.full
 
             scale: 0
             Component.onCompleted: scale = 1.0

@@ -23,7 +23,7 @@ StyledRect {
     implicitWidth: Config.bar.sizes.innerWidth
 
     color: Colours.tPalette.m3surfaceContainer
-    radius: Appearance.rounding.normal
+    radius: Appearance.rounding.full
 
     signal requestWindowPopout
 
@@ -87,24 +87,10 @@ StyledRect {
     //     }
     // }
 
-    Loader {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        active: Config.bar.workspaces.activeIndicator
-        asynchronous: true
-
-        sourceComponent: ActiveIndicator {
-            activeWsId: root.activeWsId
-            workspaces: workspaces
-            mask: layout
-            groupOffset: root.groupOffset
-        }
-    }
-
     ColumnLayout {
         id: layout
 
-        z: 1
+        z: 0
 
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
@@ -123,6 +109,21 @@ StyledRect {
                 focusedWindowId: root.focusedWindowId
                 windowPopoutSignal: root
             }
+        }
+    }
+
+    Loader {
+        z: 1
+        anchors.left: parent.left
+        anchors.right: parent.right
+        active: Config.bar.workspaces.activeIndicator
+        asynchronous: true
+
+        sourceComponent: ActiveIndicator {
+            activeWsId: root.activeWsId
+            workspaces: workspaces
+            mask: layout
+            groupOffset: root.groupOffset
         }
     }
 

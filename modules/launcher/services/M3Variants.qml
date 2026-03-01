@@ -36,11 +36,10 @@ Searcher {
                 const isDynamic = currentState.name === "dynamic";
                 currentState.variant = variantName;
 
-                // Save updated state
+                // Save updated state via FileView
                 const jsonContent = JSON.stringify(currentState, null, 2);
-                const escapedJson = jsonContent.replace(/'/g, "'\\''")
-                schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
-                schemeStateWriter.running = true;
+                ensureStateDirProcess._pendingContent = jsonContent;
+                ensureStateDirProcess.running = true;
 
                 // Update the Schemes service current variant
                 Schemes.currentVariant = variantName;
@@ -60,9 +59,18 @@ Searcher {
     }
 
     Process {
-        id: schemeStateWriter
+        id: ensureStateDirProcess
 
+        property string _pendingContent
+
+        command: ["mkdir", "-p", Paths.state]
         running: false
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && _pendingContent) {
+                schemeStateFile.setText(_pendingContent);
+            }
+        }
     }
 
     list: [

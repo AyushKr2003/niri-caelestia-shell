@@ -203,17 +203,26 @@ Searcher {
         onFileChanged: reload()
     }
 
-    // Process for saving scheme state
+    // Process for ensuring state directory exists before writing
     Process {
         id: schemeStateWriter
 
+        property string _pendingContent
+
+        command: ["mkdir", "-p", Paths.state]
         running: false
 
         function write(content: string): void {
-            // Ensure directory exists
-            const escapedJson = content.replace(/'/g, "'\\''");
-            schemeStateWriter.command = ["sh", "-c", `mkdir -p '${Paths.state}' && printf '%s' '${escapedJson}' > '${Paths.state}/scheme.json'`];
+            _pendingContent = content;
             schemeStateWriter.running = true;
+        }
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && _pendingContent) {
+                schemeStateFile.watchChanges = false;
+                schemeStateFile.setText(_pendingContent);
+                schemeStateFile.watchChanges = true;
+            }
         }
     }
 

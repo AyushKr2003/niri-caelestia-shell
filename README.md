@@ -128,6 +128,19 @@ Then simply build and install using `cmake`.
 
     If you get `VERSION is not set and failed to get from git` error, that means I forgot to tag version. You can do `git tag 1.1.1` to work around it :)
 
+<!-- 
+    
+    cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$HOME \
+    -DINSTALL_QSCONFDIR=$HOME/.config/quickshell/niri-caelestia-shell
+    cmake --build build
+    cmake --install build
+    
+    run it by 
+    QML_IMPORT_PATH=$HOME/usr/lib/qt6/qml qs -c niri-caelestia-shell
+    so that it won't overlap with hyprland caelestia -->
+
 ### 🔃 Updating
 You can update by running `git pull` in `~/.config/quickshell/niri-caelestia-shell`.
 

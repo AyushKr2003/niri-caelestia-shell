@@ -51,7 +51,7 @@ Item {
                     return root.workspace.activeWsId === root.workspace.ws ? activeLabel : root.workspace.isOccupied ? occupiedLabel : label;
                 }
 
-                color: root.workspace.activeWsId === root.workspace.ws ? Colours.palette.m3onPrimary : (root.workspace.isOccupied ? Colours.palette.m3onPrimary : Colours.palette.m3outlineVariant)
+                color: Config.bar.workspaces.occupiedBg || root.workspace.isOccupied || root.workspace.activeWsId === root.workspace.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -63,8 +63,7 @@ Item {
             // anchors.leftMargin: Appearance.padding.large
             active: root.popupActive
             sourceComponent: StyledText {
-                color: root.workspace.activeWsId === root.workspace.ws ? Colours.palette.m3onPrimary // <--- customize to your active color
-                 : (root.workspace.isOccupied ? Colours.palette.m3onPrimary : Colours.palette.m3outlineVariant)
+                color: Config.bar.workspaces.occupiedBg || root.workspace.isOccupied || root.workspace.activeWsId === root.workspace.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
 
                 font.family: Appearance.font.family.mono
                 text: Niri.getWorkspaceNameByIndex(root.workspace.index) || "Workspace " + (root.workspace.index + 1)

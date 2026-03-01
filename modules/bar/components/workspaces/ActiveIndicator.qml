@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import qs.components
+import qs.components.effects
 import qs.services
 import qs.config
 import QtQuick
@@ -54,6 +55,17 @@ StyledRect {
         right: parent.right
         leftMargin: Appearance.padding.small
         rightMargin: Appearance.padding.small
+    }
+
+    Colouriser {
+        source: root.mask
+        sourceColor: Colours.palette.m3onSurface
+        colorizationColor: Colours.palette.m3onPrimary
+
+        x: 0
+        y: -root.offset
+        implicitWidth: root.mask.implicitWidth
+        implicitHeight: root.mask.implicitHeight
     }
 
     // Trail animations

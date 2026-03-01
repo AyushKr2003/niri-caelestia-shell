@@ -108,7 +108,7 @@ Variants {
                 property bool keybinds
                 property bool editingWeatherLocation
 
-                Component.onCompleted: Visibilities.screens[scope.modelData] = this
+                Component.onCompleted: Visibilities.screens[scope.modelData.name] = this
             }
 
             Interactions {
