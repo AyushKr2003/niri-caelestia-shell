@@ -469,6 +469,15 @@ Item {
                         active: IdleInhibitor.enabled
                         onLeftClicked: IdleInhibitor.enabled = !IdleInhibitor.enabled
                     }
+
+                    // Settings (open Control Center)
+                    ToggleButton {
+                        Layout.fillWidth: true
+                        icon: "settings"
+                        label: qsTr("Settings")
+                        active: false
+                        onLeftClicked: openControlCenter("any")
+                    }
                 }
             }
         }
