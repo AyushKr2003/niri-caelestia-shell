@@ -11,7 +11,7 @@ import QtQuick
 Searcher {
     id: root
 
-    readonly property list<Action> actions: [
+    readonly property list<QtObject> actions: [
         Action {
             name: qsTr("Settings")
             desc: qsTr("Open the configuration editor")
