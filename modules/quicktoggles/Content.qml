@@ -386,97 +386,73 @@ Item {
         StyledRect {
             id: togglesSection
             Layout.fillWidth: true
-            implicitHeight: togglesLayout.implicitHeight + Appearance.padding.normal * 2
+            implicitHeight: togglesLayout.implicitHeight + Appearance.padding.large * 2
             radius: Appearance.rounding.normal
             color: Colours.tPalette.m3surfaceContainer
 
             ColumnLayout {
                 id: togglesLayout
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Appearance.padding.normal
+                anchors.fill: parent
+                anchors.margins: Appearance.padding.large
                 spacing: Appearance.spacing.normal
 
-                // Header
                 StyledText {
                     text: qsTr("Quick Toggles")
-                    font.pointSize: Appearance.font.size.smaller
-                    font.weight: Font.Medium
-                    Layout.fillWidth: true
+                    font.pointSize: Appearance.font.size.normal
                 }
 
-                // Toggle buttons row
                 RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.spacing.normal
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: Appearance.spacing.small
 
-                    // WiFi Toggle
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: Network.wifiEnabled ? "wifi" : "wifi_off"
-                        label: qsTr("WiFi")
-                        active: Network.wifiEnabled
-                        onLeftClicked: Network.toggleWifi()
-                        onRightClicked: openControlCenter("network")
+                    Toggle {
+                        icon: "wifi"
+                        checked: Network.wifiEnabled
+                        onClicked: Network.toggleWifi()
                     }
 
-                    // Bluetooth Toggle
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: (Bluetooth.defaultAdapter?.enabled ?? false) ? "bluetooth" : "bluetooth_disabled"
-                        label: qsTr("Bluetooth")
-                        active: Bluetooth.defaultAdapter?.enabled ?? false
-                        onLeftClicked: {
+                    Toggle {
+                        icon: "bluetooth"
+                        checked: Bluetooth.defaultAdapter?.enabled ?? false
+                        onClicked: {
                             const adapter = Bluetooth.defaultAdapter;
                             if (adapter)
                                 adapter.enabled = !adapter.enabled;
                         }
-                        onRightClicked: openControlCenter("bluetooth")
                     }
 
-                    // Audio Mute Toggle
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: Audio.muted ? "volume_off" : "volume_up"
-                        label: qsTr("Sound")
-                        active: !Audio.muted
-                        onLeftClicked: {
-                            if (Audio.sink?.audio)
-                                Audio.sink.audio.muted = !Audio.sink.audio.muted
+                    Toggle {
+                        icon: "mic"
+                        checked: !Audio.sourceMuted
+                        onClicked: {
+                            const audio = Audio.source?.audio;
+                            if (audio)
+                                audio.muted = !audio.muted;
                         }
-                        onRightClicked: openControlCenter("audio")
                     }
 
-                    // Mic Mute Toggle
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: Audio.sourceMuted ? "mic_off" : "mic"
-                        label: qsTr("Mic")
-                        active: !Audio.sourceMuted
-                        onLeftClicked: {
-                            if (Audio.source?.audio)
-                                Audio.source.audio.muted = !Audio.source.audio.muted
-                        }
-                        onRightClicked: openControlCenter("audio")
-                    }
-
-                    // Keep Awake Toggle
-                    ToggleButton {
-                        Layout.fillWidth: true
-                        icon: IdleInhibitor.enabled ? "coffee" : "bedtime"
-                        label: qsTr("Awake")
-                        active: IdleInhibitor.enabled
-                        onLeftClicked: IdleInhibitor.enabled = !IdleInhibitor.enabled
-                    }
-
-                    // Settings (open Control Center)
-                    ToggleButton {
-                        Layout.fillWidth: true
+                    Toggle {
                         icon: "settings"
-                        label: qsTr("Settings")
-                        active: false
-                        onLeftClicked: openControlCenter("any")
+                        inactiveOnColour: Colours.palette.m3onSurfaceVariant
+                        toggle: false
+                        onClicked: {
+                            root.visibilities.quicktoggles = false;
+                            openControlCenter("network");
+                        }
+                    }
+
+                    Toggle {
+                        icon: "notifications_off"
+                        checked: Notifs.dnd
+                        onClicked: Notifs.dnd = !Notifs.dnd
+                    }
+
+                    Toggle {
+                        icon: "vpn_key"
+                        checked: VPN.connected
+                        enabled: !VPN.connecting
+                        visible: Config.utilities.vpn.provider.some(p => typeof p === "object" ? (p.enabled === true) : false)
+                        onClicked: VPN.toggle()
                     }
                 }
             }
@@ -494,40 +470,21 @@ Item {
         }
     }
 
-    // Toggle Button Component
-    component ToggleButton: StyledRect {
-        id: toggle
+    // Toggle component matching Hyprland's utilities/cards/Toggles style
+    component Toggle: IconButton {
+        Layout.fillWidth: true
+        Layout.preferredWidth: implicitWidth + (stateLayer.pressed ? Appearance.padding.large : internalChecked ? Appearance.padding.smaller : 0)
+        radius: stateLayer.pressed ? Appearance.rounding.small / 2 : internalChecked ? Appearance.rounding.small : Appearance.rounding.normal
+        inactiveColour: Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
+        toggle: true
+        radiusAnim.duration: Appearance.anim.durations.expressiveFastSpatial
+        radiusAnim.easing.bezierCurve: Appearance.anim.curves.expressiveFastSpatial
 
-        property string icon
-        property string label
-        property bool active: false
-        signal leftClicked()
-        signal rightClicked()
-
-        implicitWidth: 48
-        implicitHeight: 48
-        radius: Appearance.rounding.normal
-        color: active ? Colours.palette.m3primaryContainer : Colours.tPalette.m3surfaceContainerHigh
-
-        StateLayer {
-            radius: parent.radius
-            color: active ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurface
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-            function onClicked(event): void {
-                if (event && event.button === Qt.RightButton) {
-                    toggle.rightClicked()
-                } else {
-                    toggle.leftClicked()
-                }
+        Behavior on Layout.preferredWidth {
+            Anim {
+                duration: Appearance.anim.durations.expressiveFastSpatial
+                easing.bezierCurve: Appearance.anim.curves.expressiveFastSpatial
             }
-        }
-
-        MaterialIcon {
-            anchors.centerIn: parent
-            text: toggle.icon
-            font.pointSize: Appearance.font.size.larger
-            color: toggle.active ? Colours.palette.m3onPrimaryContainer : Colours.palette.m3onSurfaceVariant
         }
     }
 
