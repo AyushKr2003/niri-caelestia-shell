@@ -135,7 +135,8 @@ Item {
         }
 
         anchors.fill: parent
-
+        sourceSize.width: root.width
+        sourceSize.height: root.height
         opacity: 0
         scale: Wallpapers.showPreview ? 1 : 0.8
 

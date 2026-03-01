@@ -44,6 +44,8 @@ Variants {
                 source: Wallpapers.current
                 asynchronous: true
                 cache: true
+                sourceSize.width: backdropWindow.screen.width
+                sourceSize.height: backdropWindow.screen.height
 
                 layer.enabled: Appearance.effectsEnabled
                 layer.effect: MultiEffect {

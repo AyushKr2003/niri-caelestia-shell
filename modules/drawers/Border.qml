@@ -12,12 +12,13 @@ Item {
     required property Item bar
 
     anchors.fill: parent
+    visible: Config.border.thickness > 0
 
     StyledRect {
         anchors.fill: parent
         color: Colours.palette.m3surface
 
-        layer.enabled: true
+        layer.enabled: root.visible
         layer.effect: MultiEffect {
             maskSource: mask
             maskEnabled: true
@@ -31,7 +32,7 @@ Item {
         id: mask
 
         anchors.fill: parent
-        layer.enabled: true
+        layer.enabled: root.visible
         visible: false
 
         Rectangle {

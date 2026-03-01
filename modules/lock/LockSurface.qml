@@ -179,6 +179,8 @@ WlSessionLockSurface {
         anchors.fill: parent
         source: Wallpapers.current || Config.paths.wallpaper || ""
         fillMode: Image.PreserveAspectCrop
+        sourceSize.width: root.screen.width
+        sourceSize.height: root.screen.height
         opacity: 1
         z: 1
         

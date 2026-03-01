@@ -39,7 +39,7 @@ Item {
         id: wrapper
 
         anchors.fill: parent
-        layer.enabled: true
+        layer.enabled: root.opacity > 0
 
         Loader {
             anchors.fill: parent
