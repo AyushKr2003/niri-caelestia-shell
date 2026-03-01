@@ -33,50 +33,92 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: root.padding
-        spacing: Appearance.spacing.normal
+        spacing: Appearance.spacing.small
 
-
-        /* NOTIFICATION HISTORY */
+        /* ─── NOTIFICATIONS ─── */
         StyledClippingRect {
             id: notifSection
             Layout.fillWidth: true
-            Layout.preferredHeight: 220
+            Layout.preferredHeight: notifExpanded ? expandedHeight : collapsedHeight
             radius: Appearance.rounding.normal
             color: Colours.tPalette.m3surfaceContainer
+
+            readonly property bool notifExpanded: root.visibilities.notifsExpanded
+            readonly property int collapsedHeight: notifHeader.implicitHeight + Appearance.padding.normal * 2
+            readonly property int listContentHeight: notifHeader.implicitHeight + Appearance.padding.normal * 2 + Appearance.spacing.small + notifList.contentHeight + Appearance.spacing.small * Math.max(0, Notifs.list.length - 1) + Appearance.padding.normal
+            readonly property int screenHalfHeight: (Screen.height || 1080) / 2
+            readonly property int expandedHeight: Notifs.list.length === 0
+                ? collapsedHeight + 120
+                : Math.max(collapsedHeight + 120, Math.min(listContentHeight, screenHalfHeight))
+
+            Behavior on Layout.preferredHeight {
+                Anim {
+                    duration: Appearance.anim.durations.normal
+                    easing.bezierCurve: Appearance.anim.curves.emphasized
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: Appearance.padding.normal
                 spacing: Appearance.spacing.small
 
-                // Header
+                // ── Header row ──
                 RowLayout {
                     id: notifHeader
                     Layout.fillWidth: true
                     spacing: Appearance.spacing.small
 
                     MaterialIcon {
-                        text: "notifications"
+                        text: Notifs.dnd ? "notifications_off" : "notifications"
                         font.pointSize: Appearance.font.size.normal
-                        color: Colours.palette.m3primary
+                        color: Notifs.dnd ? Colours.palette.m3outline : Colours.palette.m3primary
                     }
 
                     StyledText {
-                        text: Notifs.list.length > 0 
-                            ? qsTr("%1 notification%2").arg(Notifs.list.length).arg(Notifs.list.length === 1 ? "" : "s") 
-                            : qsTr("Notifications")
+                        text: {
+                            if (Notifs.dnd)
+                                return qsTr("Do Not Disturb");
+                            if (Notifs.list.length > 0)
+                                return qsTr("%1 notification%2").arg(Notifs.list.length).arg(Notifs.list.length === 1 ? "" : "s");
+                            return qsTr("Notifications");
+                        }
                         font.pointSize: Appearance.font.size.smaller
                         font.weight: Font.Medium
                         Layout.fillWidth: true
                     }
 
-                    // Clear all button
+                    // DND toggle
                     StyledRect {
-                        Layout.preferredWidth: 24
-                        Layout.preferredHeight: 24
-                        radius: Appearance.rounding.small
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        radius: Appearance.rounding.full
+                        color: Notifs.dnd ? Colours.palette.m3errorContainer : "transparent"
+
+                        StateLayer {
+                            radius: parent.radius
+                            color: Notifs.dnd ? Colours.palette.m3onErrorContainer : Colours.palette.m3onSurface
+
+                            function onClicked(): void {
+                                Notifs.dnd = !Notifs.dnd;
+                            }
+                        }
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: Notifs.dnd ? "do_not_disturb_on" : "do_not_disturb_off"
+                            font.pointSize: Appearance.font.size.small
+                            color: Notifs.dnd ? Colours.palette.m3onErrorContainer : Colours.palette.m3onSurfaceVariant
+                        }
+                    }
+
+                    // Clear all
+                    StyledRect {
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        radius: Appearance.rounding.full
                         color: "transparent"
-                        visible: Notifs.list.length > 0
+                        visible: Notifs.list.length > 0 && notifSection.notifExpanded
 
                         StateLayer {
                             radius: parent.radius
@@ -84,61 +126,81 @@ Item {
 
                             function onClicked(): void {
                                 for (const notif of Notifs.list)
-                                    notif.notification.dismiss()
+                                    notif.notification.dismiss();
                             }
                         }
 
                         MaterialIcon {
                             anchors.centerIn: parent
-                            text: "clear_all"
+                            text: "delete_sweep"
                             font.pointSize: Appearance.font.size.small
                             color: Colours.palette.m3error
                         }
                     }
-                }
 
-                // Notification list or empty state
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    // Expand / collapse chevron
+                    StyledRect {
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        radius: Appearance.rounding.full
+                        color: "transparent"
 
-                    // Empty state - like lock screen
-                    Loader {
-                        anchors.centerIn: parent
-                        asynchronous: true
-                        active: opacity > 0
-                        opacity: Notifs.list.length > 0 ? 0 : 1
+                        StateLayer {
+                            radius: parent.radius
+                            color: Colours.palette.m3onSurface
 
-                        sourceComponent: ColumnLayout {
-                            spacing: Appearance.spacing.normal
-
-                            Image {
-                                Layout.alignment: Qt.AlignHCenter
-                                asynchronous: true
-                                source: `file://${Quickshell.shellDir}/assets/dino.png`
-                                fillMode: Image.PreserveAspectFit
-                                sourceSize.width: 280
-
-                                layer.enabled: true
-                                layer.effect: Colouriser {
-                                    colorizationColor: Colours.palette.m3outlineVariant
-                                    brightness: 1
-                                }
-                            }
-
-                            StyledText {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: qsTr("No Notifications")
-                                color: Colours.palette.m3outlineVariant
-                                font.pointSize: Appearance.font.size.normal
-                                font.weight: Font.Medium
+                            function onClicked(): void {
+                                root.visibilities.notifsExpanded = !root.visibilities.notifsExpanded;
                             }
                         }
 
-                        Behavior on opacity {
-                            Anim {
-                                duration: Appearance.anim.durations.normal
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: notifSection.notifExpanded ? "keyboard_arrow_up" : "keyboard_arrow_down"
+                            font.pointSize: Appearance.font.size.normal
+                            color: Colours.palette.m3onSurfaceVariant
+
+                            Behavior on rotation {
+                                Anim {
+                                    duration: Appearance.anim.durations.small
+                                    easing.bezierCurve: Appearance.anim.curves.emphasized
+                                }
                             }
+                        }
+                    }
+                }
+
+                // ── Notification body (only when expanded) ──
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: notifSection.notifExpanded
+                    opacity: notifSection.notifExpanded ? 1 : 0
+
+                    Behavior on opacity {
+                        Anim {
+                            duration: Appearance.anim.durations.normal
+                        }
+                    }
+
+                    // Empty state
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        visible: Notifs.list.length === 0
+                        spacing: Appearance.spacing.small
+
+                        MaterialIcon {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "notifications_none"
+                            font.pointSize: Appearance.font.size.extraLarge * 1.5
+                            color: Colours.palette.m3outlineVariant
+                        }
+
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: qsTr("All clear")
+                            color: Colours.palette.m3outlineVariant
+                            font.pointSize: Appearance.font.size.smaller
                         }
                     }
 
@@ -148,7 +210,7 @@ Item {
                         anchors.fill: parent
                         clip: true
                         spacing: Appearance.spacing.small
-                        opacity: Notifs.list.length > 0 ? 1 : 0
+                        visible: Notifs.list.length > 0
 
                         model: ScriptModel {
                             values: [...Notifs.list].reverse()
@@ -163,300 +225,71 @@ Item {
                         }
 
                         ScrollBar.vertical: StyledScrollBar {}
-
-                        Behavior on opacity {
-                            Anim {
-                                duration: Appearance.anim.durations.normal
-                            }
-                        }
                     }
                 }
             }
         }
 
-        /* WEATHER SECTION */
-        StyledRect {
-            id: weatherSection
-            Layout.fillWidth: true
-            implicitHeight: weatherLayout.implicitHeight + Appearance.padding.normal * 2
-            radius: Appearance.rounding.normal
-            color: Colours.tPalette.m3surfaceContainer
-
-            property bool editingLocation: root.visibilities.editingWeatherLocation
-
-            ColumnLayout {
-                id: weatherLayout
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Appearance.padding.normal
-                spacing: Appearance.spacing.small
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.spacing.normal
-
-                    // Weather icon
-                    MaterialIcon {
-                        text: Weather.icon
-                        font.pointSize: Appearance.font.size.extraLarge * 1.5
-                        color: Colours.palette.m3secondary
-                    }
-
-                    // Weather info
-                    ColumnLayout {
-                        spacing: 0
-
-                        StyledText {
-                            text: Weather.temp
-                            font.pointSize: Appearance.font.size.large
-                            font.weight: 700
-                            color: Colours.palette.m3onSurface
-                        }
-
-                        StyledText {
-                            text: Weather.description
-                            font.pointSize: Appearance.font.size.smaller
-                            color: Colours.palette.m3onSurfaceVariant
-                        }
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Right side info
-                    ColumnLayout {
-                        spacing: 2
-
-                        RowLayout {
-                            spacing: Appearance.spacing.small
-                            Layout.alignment: Qt.AlignRight
-
-                            MaterialIcon {
-                                text: "water_drop"
-                                font.pointSize: Appearance.font.size.small
-                                color: Colours.palette.m3tertiary
-                            }
-                            StyledText {
-                                text: Weather.humidity + "%"
-                                font.pointSize: Appearance.font.size.smaller
-                                color: Colours.palette.m3onSurfaceVariant
-                            }
-                        }
-
-                        // City with edit button
-                        RowLayout {
-                            Layout.alignment: Qt.AlignRight
-                            spacing: Appearance.spacing.small
-
-                            StyledText {
-                                text: Weather.city || "Loading..."
-                                font.pointSize: Appearance.font.size.extraSmall
-                                color: Colours.palette.m3outline
-                                visible: !weatherSection.editingLocation
-                            }
-
-                            // Edit button
-                            StyledRect {
-                                Layout.preferredWidth: 16
-                                Layout.preferredHeight: 16
-                                radius: Appearance.rounding.small
-                                color: "transparent"
-                                visible: !weatherSection.editingLocation
-
-                                StateLayer {
-                                    radius: parent.radius
-                                    color: Colours.palette.m3primary
-
-                                    function onClicked(): void {
-                                        root.visibilities.editingWeatherLocation = true
-                                        locationInput.text = Config.services.weatherLocation || Weather.city || ""
-                                        locationInput.forceActiveFocus()
-                                    }
-                                }
-
-                                MaterialIcon {
-                                    anchors.centerIn: parent
-                                    text: "edit"
-                                    font.pointSize: Appearance.font.size.extraSmall
-                                    color: Colours.palette.m3outline
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Location edit field
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Appearance.spacing.small
-                    visible: weatherSection.editingLocation
-
-                    StyledRect {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: Appearance.rounding.small
-                        color: Colours.tPalette.m3surfaceContainerHigh
-
-                        StyledTextField {
-                            id: locationInput
-                            anchors.fill: parent
-                            anchors.leftMargin: Appearance.padding.small
-                            anchors.rightMargin: Appearance.padding.small
-                            placeholderText: qsTr("Enter city name...")
-                            verticalAlignment: Text.AlignVCenter
-
-                            Keys.onReturnPressed: saveLocation()
-                            Keys.onEnterPressed: saveLocation()
-                            Keys.onEscapePressed: {
-                                root.visibilities.editingWeatherLocation = false
-                            }
-
-                            function saveLocation(): void {
-                                if (text.trim() !== "") {
-                                    saveLocationProcess.command = ["sh", "-c", 
-                                        `sed -i 's/"weatherLocation": "[^"]*"/"weatherLocation": "${text.trim()}"/' '${Paths.config}/shell.json'`
-                                    ]
-                                    saveLocationProcess.running = true
-                                }
-                                root.visibilities.editingWeatherLocation = false
-                            }
-                        }
-                    }
-
-                    // Save button
-                    StyledRect {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        radius: Appearance.rounding.small
-                        color: Colours.palette.m3primaryContainer
-
-                        StateLayer {
-                            radius: parent.radius
-                            color: Colours.palette.m3onPrimaryContainer
-
-                            function onClicked(): void {
-                                locationInput.saveLocation()
-                            }
-                        }
-
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            text: "check"
-                            font.pointSize: Appearance.font.size.small
-                            color: Colours.palette.m3onPrimaryContainer
-                        }
-                    }
-
-                    // Cancel button
-                    StyledRect {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        radius: Appearance.rounding.small
-                        color: Colours.tPalette.m3surfaceContainerHigh
-
-                        StateLayer {
-                            radius: parent.radius
-                            color: Colours.palette.m3onSurface
-
-                            function onClicked(): void {
-                                root.visibilities.editingWeatherLocation = false
-                            }
-                        }
-
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            text: "close"
-                            font.pointSize: Appearance.font.size.small
-                            color: Colours.palette.m3onSurfaceVariant
-                        }
-                    }
-                }
-            }
-
-            Process {
-                id: saveLocationProcess
-                onExited: {
-                    // Reload weather after config is saved
-                    Weather.reload()
-                }
-            }
-        }
-
-        /* QUICK TOGGLES SECTION */
+        /* ─── QUICK TOGGLES ─── */
         StyledRect {
             id: togglesSection
             Layout.fillWidth: true
-            implicitHeight: togglesLayout.implicitHeight + Appearance.padding.large * 2
+            implicitHeight: togglesRow.implicitHeight + Appearance.padding.normal * 2
             radius: Appearance.rounding.normal
             color: Colours.tPalette.m3surfaceContainer
 
-            ColumnLayout {
-                id: togglesLayout
+            RowLayout {
+                id: togglesRow
                 anchors.fill: parent
-                anchors.margins: Appearance.padding.large
-                spacing: Appearance.spacing.normal
+                anchors.margins: Appearance.padding.normal
+                spacing: Appearance.spacing.small
 
-                StyledText {
-                    text: qsTr("Quick Toggles")
-                    font.pointSize: Appearance.font.size.normal
+                Toggle {
+                    icon: "wifi"
+                    checked: Network.wifiEnabled
+                    onClicked: Network.toggleWifi()
                 }
 
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: Appearance.spacing.small
-
-                    Toggle {
-                        icon: "wifi"
-                        checked: Network.wifiEnabled
-                        onClicked: Network.toggleWifi()
+                Toggle {
+                    icon: "bluetooth"
+                    checked: Bluetooth.defaultAdapter?.enabled ?? false
+                    onClicked: {
+                        const adapter = Bluetooth.defaultAdapter;
+                        if (adapter)
+                            adapter.enabled = !adapter.enabled;
                     }
+                }
 
-                    Toggle {
-                        icon: "bluetooth"
-                        checked: Bluetooth.defaultAdapter?.enabled ?? false
-                        onClicked: {
-                            const adapter = Bluetooth.defaultAdapter;
-                            if (adapter)
-                                adapter.enabled = !adapter.enabled;
-                        }
+                Toggle {
+                    icon: "mic"
+                    checked: !Audio.sourceMuted
+                    onClicked: {
+                        const audio = Audio.source?.audio;
+                        if (audio)
+                            audio.muted = !audio.muted;
                     }
+                }
 
-                    Toggle {
-                        icon: "mic"
-                        checked: !Audio.sourceMuted
-                        onClicked: {
-                            const audio = Audio.source?.audio;
-                            if (audio)
-                                audio.muted = !audio.muted;
-                        }
-                    }
+                Toggle {
+                    icon: "vpn_key"
+                    checked: VPN.connected
+                    enabled: !VPN.connecting
+                    visible: Config.utilities.vpn.provider.some(p => typeof p === "object" ? (p.enabled === true) : false)
+                    onClicked: VPN.toggle()
+                }
 
-                    Toggle {
-                        icon: "settings"
-                        inactiveOnColour: Colours.palette.m3onSurfaceVariant
-                        toggle: false
-                        onClicked: {
-                            root.visibilities.quicktoggles = false;
-                            openControlCenter("network");
-                        }
-                    }
-
-                    Toggle {
-                        icon: "notifications_off"
-                        checked: Notifs.dnd
-                        onClicked: Notifs.dnd = !Notifs.dnd
-                    }
-
-                    Toggle {
-                        icon: "vpn_key"
-                        checked: VPN.connected
-                        enabled: !VPN.connecting
-                        visible: Config.utilities.vpn.provider.some(p => typeof p === "object" ? (p.enabled === true) : false)
-                        onClicked: VPN.toggle()
+                Toggle {
+                    icon: "settings"
+                    inactiveOnColour: Colours.palette.m3onSurfaceVariant
+                    toggle: false
+                    onClicked: {
+                        root.visibilities.quicktoggles = false;
+                        openControlCenter("network");
                     }
                 }
             }
         }
+
     }
 
     function openControlCenter(pane: string): void {
@@ -493,49 +326,80 @@ Item {
         id: notifItem
 
         property var notif
+        property bool expanded: false
+
+        // Whether the body text is truncated (needs expand)
+        readonly property bool bodyTruncated: bodyText.truncated
 
         implicitHeight: notifContent.implicitHeight + Appearance.padding.smaller * 2
         radius: Appearance.rounding.small
         color: notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3errorContainer : Colours.tPalette.m3surfaceContainerHigh
 
+        Behavior on implicitHeight {
+            Anim {
+                duration: Appearance.anim.durations.small
+                easing.bezierCurve: Appearance.anim.curves.emphasizedDecel
+            }
+        }
+
+        // Click to expand/collapse — only when body is long enough
+        StateLayer {
+            anchors.fill: parent
+            radius: notifItem.radius
+            color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onErrorContainer : Colours.palette.m3onSurface
+            disabled: !notifItem.bodyTruncated && !notifItem.expanded
+
+            function onClicked(): void {
+                notifItem.expanded = !notifItem.expanded
+            }
+        }
+
         RowLayout {
             id: notifContent
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Appearance.padding.smaller
             spacing: Appearance.spacing.small
 
             // App icon
-            StyledRect {
+            Item {
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
+                Layout.maximumHeight: 32
                 Layout.alignment: Qt.AlignTop
-                radius: Appearance.rounding.full
-                color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3error : Colours.palette.m3secondaryContainer
 
-                Loader {
-                    anchors.centerIn: parent
-                    asynchronous: true
+                StyledRect {
+                    width: 32
+                    height: 32
+                    radius: Appearance.rounding.full
+                    color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3error : Colours.palette.m3secondaryContainer
 
-                    sourceComponent: notifItem.notif?.appIcon ? appIconComp : materialIconComp
+                    Loader {
+                        anchors.centerIn: parent
+                        asynchronous: true
 
-                    Component {
-                        id: appIconComp
+                        sourceComponent: notifItem.notif?.appIcon ? appIconComp : materialIconComp
 
-                        ColouredIcon {
-                            implicitSize: 18
-                            source: Quickshell.iconPath(notifItem.notif?.appIcon ?? "")
-                            colour: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
-                            layer.enabled: (notifItem.notif?.appIcon ?? "").endsWith("symbolic")
+                        Component {
+                            id: appIconComp
+
+                            ColouredIcon {
+                                implicitSize: 18
+                                source: Quickshell.iconPath(notifItem.notif?.appIcon ?? "")
+                                colour: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
+                                layer.enabled: (notifItem.notif?.appIcon ?? "").endsWith("symbolic")
+                            }
                         }
-                    }
 
-                    Component {
-                        id: materialIconComp
+                        Component {
+                            id: materialIconComp
 
-                        MaterialIcon {
-                            text: Icons.getNotifIcon(notifItem.notif?.summary ?? "", notifItem.notif?.urgency ?? NotificationUrgency.Normal)
-                            font.pointSize: Appearance.font.size.normal
-                            color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
+                            MaterialIcon {
+                                text: Icons.getNotifIcon(notifItem.notif?.summary ?? "", notifItem.notif?.urgency ?? NotificationUrgency.Normal)
+                                font.pointSize: Appearance.font.size.normal
+                                color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
+                            }
                         }
                     }
                 }
@@ -546,25 +410,98 @@ Item {
                 Layout.fillWidth: true
                 spacing: 2
 
+                // App name when expanded
+                StyledText {
+                    Layout.fillWidth: true
+                    text: notifItem.notif?.appName ?? ""
+                    font.pointSize: Appearance.font.size.ultraSmall
+                    font.weight: Font.Medium
+                    color: Colours.palette.m3outline
+                    visible: notifItem.expanded && text.length > 0
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                }
+
                 StyledText {
                     Layout.fillWidth: true
                     text: notifItem.notif?.summary ?? ""
                     font.pointSize: Appearance.font.size.small
                     font.weight: Font.Medium
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
+                    elide: notifItem.expanded ? Text.ElideNone : Text.ElideRight
+                    maximumLineCount: notifItem.expanded ? 3 : 1
+                    wrapMode: notifItem.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
                     color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onErrorContainer : Colours.palette.m3onSurface
                 }
 
                 StyledText {
+                    id: bodyText
                     Layout.fillWidth: true
                     text: notifItem.notif?.body ?? ""
                     font.pointSize: Appearance.font.size.extraSmall
-                    elide: Text.ElideRight
-                    maximumLineCount: 2
+                    elide: notifItem.expanded ? Text.ElideNone : Text.ElideRight
+                    maximumLineCount: notifItem.expanded ? 20 : 2
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onErrorContainer : Colours.palette.m3onSurfaceVariant
                     visible: text.length > 0
+                }
+
+                // Notification image when expanded
+                Image {
+                    Layout.fillWidth: true
+                    Layout.maximumHeight: 120
+                    source: (notifItem.expanded && notifItem.notif?.image) ? notifItem.notif.image : ""
+                    fillMode: Image.PreserveAspectFit
+                    visible: notifItem.expanded && status === Image.Ready
+                    asynchronous: true
+                }
+
+                // Action buttons when expanded
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: Appearance.spacing.small
+                    visible: notifItem.expanded && notifActionsRepeater.count > 0
+
+                    Repeater {
+                        id: notifActionsRepeater
+                        model: notifItem.notif?.actions ?? []
+
+                        delegate: StyledRect {
+                            required property var modelData
+
+                            implicitWidth: actionLabel.implicitWidth + Appearance.padding.normal * 2
+                            implicitHeight: actionLabel.implicitHeight + Appearance.padding.small * 2
+                            radius: Appearance.rounding.small
+                            color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3error : Colours.palette.m3secondaryContainer
+
+                            StateLayer {
+                                radius: parent.radius
+                                color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
+
+                                function onClicked(): void {
+                                    modelData.invoke()
+                                }
+                            }
+
+                            StyledText {
+                                id: actionLabel
+                                anchors.centerIn: parent
+                                text: modelData.text ?? ""
+                                font.pointSize: Appearance.font.size.ultraSmall
+                                font.weight: Font.Medium
+                                color: notifItem.notif?.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : Colours.palette.m3onSecondaryContainer
+                            }
+                        }
+                    }
+                }
+
+                // Expand indicator
+                MaterialIcon {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: notifItem.expanded ? "expand_less" : "expand_more"
+                    font.pointSize: Appearance.font.size.extraSmall
+                    color: Colours.palette.m3outline
+                    visible: notifItem.bodyTruncated || notifItem.expanded
+                    opacity: 0.6
                 }
             }
 

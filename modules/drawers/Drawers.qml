@@ -107,6 +107,7 @@ Variants {
                 property bool quicktoggles
                 property bool keybinds
                 property bool editingWeatherLocation
+                property bool notifsExpanded
 
                 Component.onCompleted: Visibilities.screens[scope.modelData.name] = this
             }
