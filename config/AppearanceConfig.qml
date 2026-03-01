@@ -10,6 +10,7 @@ JsonObject {
 
     component Rounding: JsonObject {
         property real scale: 1
+        property int extraSmall: 8 * scale
         property int small: 12 * scale
         property int normal: 17 * scale
         property int large: 25 * scale
@@ -18,6 +19,7 @@ JsonObject {
 
     component Spacing: JsonObject {
         property real scale: 1
+        property int extraSmall: 5 * scale
         property int small: 7 * scale
         property int smaller: 10 * scale
         property int normal: 12 * scale

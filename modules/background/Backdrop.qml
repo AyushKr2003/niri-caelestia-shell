@@ -47,7 +47,7 @@ Variants {
                 sourceSize.width: backdropWindow.screen.width
                 sourceSize.height: backdropWindow.screen.height
 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: Appearance.transparency.enabled
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: backdropWindow.backdropBlurRadius / 100.0

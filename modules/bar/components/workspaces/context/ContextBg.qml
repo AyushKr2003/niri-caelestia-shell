@@ -36,10 +36,10 @@ Item {
         color: root.bgColor
 
         width: root.activated && Niri.wsContextAnchor ? Config.bar.workspaces.windowContextWidth + Config.bar.workspaces.windowIconSize : Config.bar.workspaces.windowIconSize
-        height: (root.anchorWs.height) + root.gPadding * 2
+        height: (root.anchorWs?.height ?? 0) + root.gPadding * 2
 
         x: 0
-        y: root.anchorWs?.mapToItem(root, 0, 0).y - root.gPadding
+        y: root.anchorWs?.mapToItem(root, 0, 0).y - root.gPadding ?? 0
 
         radius: root.rounding
         topRightRadius: Appearance.rounding.normal

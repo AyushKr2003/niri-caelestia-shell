@@ -96,17 +96,6 @@ Singleton {
                 size: { scale: appearance.font.size.scale }
             },
             anim: {
-                curves: {
-                    emphasized: appearance.anim.curves.emphasized,
-                    emphasizedAccel: appearance.anim.curves.emphasizedAccel,
-                    emphasizedDecel: appearance.anim.curves.emphasizedDecel,
-                    standard: appearance.anim.curves.standard,
-                    standardAccel: appearance.anim.curves.standardAccel,
-                    standardDecel: appearance.anim.curves.standardDecel,
-                    expressiveFastSpatial: appearance.anim.curves.expressiveFastSpatial,
-                    expressiveDefaultSpatial: appearance.anim.curves.expressiveDefaultSpatial,
-                    expressiveEffects: appearance.anim.curves.expressiveEffects
-                },
                 durations: { scale: appearance.anim.durations.scale }
             },
             transparency: {
