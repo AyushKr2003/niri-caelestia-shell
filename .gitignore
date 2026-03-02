@@ -11,3 +11,4 @@ build/
 /modules/keybinds/keybinds.json
 REVIEW.md
 TODO.md
+__pycache__/

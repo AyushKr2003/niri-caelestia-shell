@@ -1,181 +1,129 @@
 #!/usr/bin/env bash
 
-# Wallpaper color generation script for niri-caelestia-shell
-# Generates Material You colors from wallpaper using matugen and custom scripts
+# switchwall.sh — Generate Material You colors from a wallpaper image
+#
+# Orchestrates the full color pipeline:
+#   1. Set GNOME color-scheme (dark/light)
+#   2. Run matugen for GTK/Qt theming
+#   3. Generate material_colors.scss (terminal + shell palette)
+#   4. Apply colors to terminals, GTK, KDE
+#
+# Usage: switchwall.sh [--mode dark|light] [--type scheme-type] <image_path>
 
-QUICKSHELL_CONFIG_NAME="niri-caelestia-shell"
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-CONFIG_DIR="$XDG_CONFIG_HOME/quickshell/$QUICKSHELL_CONFIG_NAME"
-CACHE_DIR="$XDG_CACHE_HOME/quickshell"
-STATE_DIR="$XDG_STATE_HOME/quickshell/user"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SHELL_CONFIG_FILE="$CONFIG_DIR/shell.json"
-MATUGEN_DIR="$XDG_CONFIG_HOME/matugen"
-terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
-# Ensure directories exist
-mkdir -p "$STATE_DIR/generated"
+TERMINAL_SCHEME="$SCRIPT_DIR/terminal/scheme-base.json"
+PIDFILE="/run/user/$(id -u)/switchwall.pid"
+VALID_SCHEME_TYPES=(
+    scheme-content scheme-expressive scheme-fidelity scheme-fruit-salad
+    scheme-monochrome scheme-neutral scheme-rainbow scheme-tonal-spot
+)
 
-pre_process() {
-    local mode_flag="$1"
-    # Set GNOME color-scheme if mode_flag is dark or light
-    if [[ "$mode_flag" == "dark" ]]; then
-        gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || true
-    elif [[ "$mode_flag" == "light" ]]; then
-        gsettings set org.gnome.desktop.interface color-scheme 'prefer-light' 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3' 2>/dev/null || true
-    fi
+# Set GNOME desktop color-scheme to match the selected mode.
+set_desktop_mode() {
+    local mode="$1"
+    case "$mode" in
+        dark)
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'  2>/dev/null || true
+            gsettings set org.gnome.desktop.interface gtk-theme    'adw-gtk3-dark' 2>/dev/null || true
+            ;;
+        light)
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-light' 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface gtk-theme    'adw-gtk3'      2>/dev/null || true
+            ;;
+    esac
 }
 
-post_process() {
-    # Run VS Code color script if it exists
-    if [ -f "$SCRIPT_DIR/code/material-code-set-color.sh" ]; then
-        "$SCRIPT_DIR/code/material-code-set-color.sh" &
-    fi
-}
-
-get_max_monitor_resolution() {
-    local width=1920
-    local height=1080
-    # Try Niri first
-    if command -v niri >/dev/null 2>&1 && niri msg outputs >/dev/null 2>&1; then
-        local res=$(niri msg outputs 2>/dev/null | grep -oP 'Current mode: \K\d+x\d+' | sort -t'x' -k1 -nr | head -1)
-        if [[ -n "$res" ]]; then
-            width=$(echo "$res" | cut -d'x' -f1)
-            height=$(echo "$res" | cut -d'x' -f2)
-        fi
-    fi
-    echo "$width $height"
-}
-
-switch() {
-    local imgpath="$1"
-    local mode_flag="$2"
-    local type_flag="$3"
-
-    if [[ -z "$imgpath" ]]; then
-        echo "No image path provided"
-        exit 1
-    fi
-
-    if [[ ! -f "$imgpath" ]]; then
-        echo "Image not found: $imgpath"
-        exit 1
-    fi
-
-    # Kill any previous switchwall instance to avoid races
-    local pidfile="/run/user/$(id -u)/switchwall.pid"
-    if [[ -f "$pidfile" ]]; then
+# Kill any previous instance to avoid concurrent color generation.
+acquire_lock() {
+    if [[ -f "$PIDFILE" ]]; then
         local oldpid
-        oldpid=$(cat "$pidfile" 2>/dev/null)
+        oldpid=$(cat "$PIDFILE" 2>/dev/null) || true
         if [[ -n "$oldpid" ]] && kill -0 "$oldpid" 2>/dev/null; then
-            kill "$oldpid" 2>/dev/null
+            kill "$oldpid" 2>/dev/null || true
             wait "$oldpid" 2>/dev/null || true
         fi
     fi
-    echo $$ > "$pidfile"
-    trap 'rm -f "$pidfile"' EXIT
+    echo $$ > "$PIDFILE"
+    trap 'rm -f "$PIDFILE"' EXIT
+}
 
-    # Determine mode if not set
-    if [[ -z "$mode_flag" ]]; then
-        current_mode=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
-        if [[ "$current_mode" == "prefer-dark" ]]; then
-            mode_flag="dark"
-        else
-            mode_flag="light"
-        fi
+# Run the color generator, producing material_colors.scss.
+generate_colors() {
+    local -a args=("$@")
+
+    if ! command -v matugen &>/dev/null; then
+        die "matugen not found — install it to generate colors"
+    fi
+    if ! command -v jq &>/dev/null; then
+        die "jq not found — install it to generate colors"
     fi
 
-    # Default scheme type
-    if [[ -z "$type_flag" ]]; then
-        type_flag="scheme-tonal-spot"
+    if ! bash "$SCRIPT_DIR/generate_colors_matugen.sh" "${args[@]}" > "$SCSS_FILE" 2>/dev/null; then
+        die "Color generation failed"
+    fi
+}
+
+switch() {
+    local imgpath="$1" mode="$2" scheme_type="$3"
+
+    [[ -n "$imgpath" ]] || die "No image path provided"
+    [[ -f "$imgpath" ]] || die "Image not found: $imgpath"
+
+    acquire_lock
+
+    # Resolve mode from GNOME settings when not provided
+    if [[ -z "$mode" ]]; then
+        local current
+        current=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
+        mode=$( [[ "$current" == "prefer-dark" ]] && echo dark || echo light )
     fi
 
-    local matugen_args=(image "$imgpath")
-    local generate_colors_args=(--path "$imgpath")
+    : "${scheme_type:=scheme-tonal-spot}"
 
-    [[ -n "$mode_flag" ]] && matugen_args+=(--mode "$mode_flag")
-    generate_colors_args+=(--mode "$mode_flag")
+    # -- 1. Desktop theme mode --
+    set_desktop_mode "$mode"
 
-    [[ -n "$type_flag" ]] && matugen_args+=(--type "$type_flag")
-    generate_colors_args+=(--scheme "$type_flag")
-
-    generate_colors_args+=(--termscheme "$terminalscheme" --blend_bg_fg)
-    generate_colors_args+=(--cache "$STATE_DIR/generated/color.txt")
-
-    pre_process "$mode_flag"
-
-    # Run matugen for GTK/Qt/other apps
+    # -- 2. Matugen (GTK / Qt templates) --
     local matugen_pid=""
     if command -v matugen &>/dev/null; then
-        matugen "${matugen_args[@]}" &
+        matugen image "$imgpath" --mode "$mode" --type "$scheme_type" &
         matugen_pid=$!
     else
-        echo "matugen not found, skipping matugen color generation"
+        log "matugen not found, skipping GTK/Qt template generation"
     fi
 
-    # Run color generator for terminal colors and material_colors.scss
-    # Try bash version first (no Python dependencies), then Python version
-    if [ -f "$SCRIPT_DIR/generate_colors_matugen.sh" ] && command -v jq &>/dev/null; then
-        bash "$SCRIPT_DIR/generate_colors_matugen.sh" "${generate_colors_args[@]}" \
-            > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null
-        if [[ $? -ne 0 ]]; then
-            echo "Bash color generation failed, trying Python..." >&2
-            # Fallback to Python version
-            if [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
-                python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
-                    > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
-                echo "Python color generation also failed." >&2
-            fi
-        fi
-    elif [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
-        python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
-            > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
-        echo "Python color generation failed. Install jq or materialyoucolor: pip install materialyoucolor" >&2
-    else
-        echo "No color generation script found." >&2
-    fi
+    # -- 3. Generate material_colors.scss --
+    generate_colors \
+        --path   "$imgpath" \
+        --mode   "$mode" \
+        --scheme "$scheme_type" \
+        --termscheme "$TERMINAL_SCHEME" \
+        --blend_bg_fg \
+        --cache  "$GENERATED_DIR/color.txt" \
+    || true
 
-    # Wait for matugen to finish before applying colors
+    # -- 4. Wait for matugen before applying --
     if [[ -n "$matugen_pid" ]]; then
         wait "$matugen_pid" 2>/dev/null || true
     fi
 
-    # Apply colors to terminal and apps
-    if [ -f "$SCRIPT_DIR/applycolor.sh" ]; then
+    # -- 5. Apply colours (terminal, GTK, KDE) --
+    if [[ -f "$SCRIPT_DIR/applycolor.sh" ]]; then
         "$SCRIPT_DIR/applycolor.sh"
     fi
-
-    # Generate Vesktop theme if script exists
-    if [ -f "$SCRIPT_DIR/system24_palette.py" ]; then
-        python3 "$SCRIPT_DIR/system24_palette.py" 2>/dev/null &
-    fi
-
-    post_process
 }
 
-main() {
+parse_args() {
     local imgpath=""
-    local mode_flag=""
-    local type_flag=""
+    local mode=""
+    local scheme_type=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --mode)
-                mode_flag="$2"
-                shift 2
-                ;;
-            --type)
-                type_flag="$2"
-                shift 2
-                ;;
-            --image)
-                imgpath="$2"
-                shift 2
-                ;;
+            --mode)   mode="$2";        shift 2 ;;
+            --type)   scheme_type="$2";  shift 2 ;;
+            --image)  imgpath="$2";      shift 2 ;;
             *)
                 if [[ -z "$imgpath" ]]; then
                     imgpath="$1"
@@ -185,29 +133,22 @@ main() {
         esac
     done
 
-    # Validate type_flag
-    allowed_types=(scheme-content scheme-expressive scheme-fidelity scheme-fruit-salad scheme-monochrome scheme-neutral scheme-rainbow scheme-tonal-spot)
-    if [[ -n "$type_flag" ]]; then
-        valid_type=0
-        for t in "${allowed_types[@]}"; do
-            if [[ "$type_flag" == "$t" ]]; then
-                valid_type=1
-                break
-            fi
+    # Validate scheme type
+    if [[ -n "$scheme_type" ]]; then
+        local valid=0
+        for t in "${VALID_SCHEME_TYPES[@]}"; do
+            [[ "$scheme_type" == "$t" ]] && { valid=1; break; }
         done
-        if [[ $valid_type -eq 0 ]]; then
-            echo "Warning: Invalid type '$type_flag', defaulting to 'scheme-tonal-spot'" >&2
-            type_flag="scheme-tonal-spot"
+        if (( !valid )); then
+            warn "Invalid scheme type '$scheme_type', using 'scheme-tonal-spot'"
+            scheme_type="scheme-tonal-spot"
         fi
     fi
 
-    if [[ -z "$imgpath" ]]; then
-        echo "Usage: switchwall.sh [--mode dark|light] [--type scheme-type] <image_path>"
-        echo "Or: switchwall.sh --image <image_path>"
-        exit 1
-    fi
+    [[ -n "$imgpath" ]] || die "Usage: switchwall.sh [--mode dark|light] [--type scheme-type] <image_path>"
+    [[ -f "$imgpath" ]] || die "Image not found: $imgpath"
 
-    switch "$imgpath" "$mode_flag" "$type_flag"
+    switch "$imgpath" "$mode" "$scheme_type"
 }
 
-main "$@"
+parse_args "$@"

@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
-# Color generation script using matugen (no Python dependencies required)
-# Generates material_colors.scss compatible with applycolor.sh
+# generate_colors_matugen.sh — Generate material_colors.scss using matugen + jq
+#
+# Outputs SCSS variable definitions to stdout.
+# No Python dependencies required; needs matugen and jq.
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-STATE_DIR="$XDG_STATE_HOME/quickshell/user"
-OUTPUT_DIR="$STATE_DIR/generated"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 # Default values
 IMAGE_PATH=""

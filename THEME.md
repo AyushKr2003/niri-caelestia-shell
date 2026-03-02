@@ -228,11 +228,6 @@ Python script that:
 
 **Location:** `scripts/colors/generate_colors_material.py`
 
-### apply-gtk-theme.sh
-Generates and applies GTK theme files from extracted colors
-
-**Location:** `scripts/colors/apply-gtk-theme.sh`
-
 ## Scheme Types
 
 Available Material Design schemes:
@@ -312,8 +307,7 @@ Color theming options (add to your config):
     "wallpaperTheming": {
       "enableTerminal": true,
       "enableAppsAndShell": true,
-      "enableQtApps": true,
-      "enableVesktop": true
+      "enableQtApps": true
     }
   }
 }
