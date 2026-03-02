@@ -38,6 +38,39 @@ Singleton {
         }
     }
 
+    // Reusable timer for moveColumnToIndexAfterFocus
+    property var _moveAfterFocusCb: null
+    property Timer _moveAfterFocusTimer: Timer {
+        repeat: false
+        onTriggered: {
+            if (root._moveAfterFocusCb) {
+                var cb = root._moveAfterFocusCb;
+                root._moveAfterFocusCb = null;
+                cb();
+            }
+        }
+    }
+
+    // State + timer for sequential group column moves
+    property var _seqState: null
+    property Timer _seqTimer: Timer {
+        repeat: false
+        onTriggered: {
+            var s = root._seqState;
+            if (!s) return;
+            if (s.i >= s.windowIds.length) {
+                root._seqState = null;
+                root.focusWindow(Number(s.curWindowId));
+                return;
+            }
+            var wid = s.windowIds[s.i];
+            s.i++;
+            root.moveColumnToIndexAfterFocus(wid, s.targetIndex);
+            root._seqTimer.interval = s.delayMs * (s.i + 1) || 100;
+            root._seqTimer.restart();
+        }
+    }
+
     onWsContextAnchorChanged: {
         wsAnchorClearTimer.stop();
         if (wsContextAnchor === null) {
@@ -340,52 +373,24 @@ Singleton {
         focusWindow(windowId);
         
         var delay = delayMs !== undefined ? delayMs : 25;
-        var timer = Qt.createQmlObject(
-            'import QtQuick; Timer { interval: ' + delay + '; repeat: false }', 
-            root
-        );
-        timer.triggered.connect(function() {
-            timer.stop();
-            timer.destroy();
+        _moveAfterFocusCb = function() {
             NiriIpc.action("move-column-to-index", [index.toString()]);
-        });
-        timer.start();
+        };
+        _moveAfterFocusTimer.interval = delay;
+        _moveAfterFocusTimer.restart();
         return true;
     }
 
     function moveGroupColumnsSequential(curWindowId, windowIds, targetIndex, delayMs) {
-        var i = 0;
-        
-        function moveNext() {
-            if (i >= windowIds.length) {
-                var timer = Qt.createQmlObject(
-                    'import QtQuick; Timer { interval: ' + (delayMs * (i + 1) || 100) + '; repeat: false }',
-                    root
-                );
-                timer.triggered.connect(function() {
-                    timer.stop();
-                    timer.destroy();
-                    focusWindow(Number(curWindowId));
-                });
-                timer.start();
-                return;
-            }
-
-            var windowId = windowIds[i];
-            var timer = Qt.createQmlObject(
-                'import QtQuick; Timer { interval: ' + (delayMs * (i + 1) || 100) + '; repeat: false }',
-                root
-            );
-            timer.triggered.connect(function() {
-                timer.stop();
-                timer.destroy();
-                moveColumnToIndexAfterFocus(windowId, targetIndex);
-                i++;
-                moveNext();
-            });
-            timer.start();
-        }
-        moveNext();
+        _seqState = {
+            curWindowId: curWindowId,
+            windowIds: windowIds,
+            targetIndex: targetIndex,
+            delayMs: delayMs,
+            i: 0
+        };
+        _seqTimer.interval = delayMs * 1 || 100;
+        _seqTimer.restart();
     }
 
     // --- Grouping Functions ---

@@ -6,6 +6,8 @@
 #include <qlocalsocket.h>
 #include <QProcessEnvironment>
 
+#include <memory>
+
 namespace caelestia {
 
 static QString niriSocketPath() {
@@ -166,7 +168,7 @@ void NiriRequestSocket::startRequest(const PendingRequest& req) {
         sock->flush();
     });
 
-    auto* buffer = new QByteArray();
+    auto buffer = std::make_shared<QByteArray>();
 
     connect(sock, &QLocalSocket::readyRead, this, [sock, buffer]() {
         buffer->append(sock->readAll());
@@ -190,7 +192,6 @@ void NiriRequestSocket::startRequest(const PendingRequest& req) {
                                : obj);
             }
         }
-        delete buffer;
         sock->deleteLater();
         processQueue();
     });
@@ -198,7 +199,6 @@ void NiriRequestSocket::startRequest(const PendingRequest& req) {
     connect(sock, &QLocalSocket::errorOccurred, this, [this, sock, buffer, callback](QLocalSocket::LocalSocketError) {
         qWarning() << "NiriRequestSocket: Error:" << sock->errorString();
         if (callback) callback(false, QJsonObject());
-        delete buffer;
         sock->deleteLater();
         processQueue();
     });

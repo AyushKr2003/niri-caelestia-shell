@@ -20,8 +20,8 @@ Item {
         anchors.left: parent.left
 
         animate: true
-        text: Weather.icon
-        color: Colours.palette.m3secondary
+        text: Weather.error ? "cloud_alert" : Weather.icon
+        color: Weather.error ? Colours.palette.m3error : Colours.palette.m3secondary
         font.pointSize: Appearance.font.size.extraLarge * 2
     }
 
@@ -38,14 +38,15 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
 
             animate: true
-            text: Weather.temp
-            color: Colours.palette.m3primary
-            font.pointSize: Appearance.font.size.extraLarge
+            text: Weather.error ? Weather.error : Weather.temp
+            color: Weather.error ? Colours.palette.m3error : Colours.palette.m3primary
+            font.pointSize: Weather.error ? Appearance.font.size.normal : Appearance.font.size.extraLarge
             font.weight: 500
         }
 
         StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: !Weather.error
 
             animate: true
             text: Weather.description

@@ -1,7 +1,5 @@
 pragma Singleton
 
-import qs.modules.launcher
-import qs.services
 import qs.config
 import qs.utils
 import Quickshell
@@ -137,7 +135,7 @@ Searcher {
         required property string name
         required property string description
 
-        function onClicked(list: AppList): void {
+        function onClicked(list: var): void {
             list.visibilities.launcher = false;
             root.setVariant(variant);
         }

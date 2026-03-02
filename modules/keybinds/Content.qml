@@ -333,7 +333,7 @@ Item {
 
             // Empty state
             Column {
-                visible: filteredModel.count === 0 && !Keybinds.loading
+                visible: filteredModel.count === 0 && !Keybinds.loading && !Keybinds.error
                 anchors.centerIn: parent
                 spacing: Appearance.spacing.normal
 
@@ -349,6 +349,27 @@ Item {
                     text: searchInput.text === "" ? qsTr("No keybinds found") : qsTr("No results found")
                     font.pointSize: Appearance.font.size.normal
                     color: Colours.palette.m3outline
+                }
+            }
+
+            // Error state
+            Column {
+                visible: Keybinds.error && !Keybinds.loading
+                anchors.centerIn: parent
+                spacing: Appearance.spacing.normal
+
+                MaterialIcon {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "error_outline"
+                    font.pointSize: Appearance.font.size.extraLarge
+                    color: Colours.palette.m3error
+                }
+
+                StyledText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Keybinds.error
+                    font.pointSize: Appearance.font.size.normal
+                    color: Colours.palette.m3error
                 }
             }
 

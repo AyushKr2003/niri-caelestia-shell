@@ -12,14 +12,10 @@ import "modules/keybinds"
 import "modules/background"
 import qs.modules.controlcenter
 import qs.services
-// import "./modules/sidebarLeft/"
-// import "./modules/sidebarRight/"
 
 import Quickshell
 
 ShellRoot {
-    // property bool enableSidebarLeft: true
-    // property bool enableSidebarRight: false
     Backdrop {}
     Background {}
     Drawers {}
@@ -33,6 +29,4 @@ ShellRoot {
     
     // Initialize BatteryMonitor service
     property var _batteryMonitor: BatteryMonitor
-    // LazyLoader { active: enableSidebarLeft; component: SidebarLeft {} }
-    // LazyLoader { active: enableSidebarRight; component: SidebarRight {} }
 }

@@ -16,6 +16,8 @@ Singleton {
     property list<var> ddcMonitors: []
     readonly property list<Monitor> monitors: variants.instances
     property bool appleDisplayPresent: false
+    property bool _ddcAvailable: false
+    property bool _ddcChecked: false
 
     function getMonitorForScreen(screen: ShellScreen): var {
         return monitors.find(m => m.modelData === screen);
@@ -78,7 +80,7 @@ Singleton {
 
     onMonitorsChanged: {
         ddcMonitors = [];
-        ddcProc.running = true;
+        if (_ddcAvailable) ddcProc.running = true;
     }
 
     Variants {
@@ -98,6 +100,19 @@ Singleton {
         onExited: (exitCode) => {
             if (exitCode !== 0) {
                 root.appleDisplayPresent = false;
+            }
+        }
+    }
+
+    Process {
+        id: ddcCheck
+        running: true
+        command: ["which", "ddcutil"]
+        onExited: (exitCode) => {
+            root._ddcChecked = true;
+            root._ddcAvailable = exitCode === 0;
+            if (root._ddcAvailable) {
+                ddcProc.running = true;
             }
         }
     }

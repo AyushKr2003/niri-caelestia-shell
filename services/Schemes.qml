@@ -1,7 +1,5 @@
 pragma Singleton
 
-import qs.modules.launcher
-import qs.services
 import qs.config
 import qs.utils
 import Quickshell
@@ -307,7 +305,7 @@ Searcher {
         readonly property string flavour: modelData.flavour
         readonly property var colours: modelData.colours
 
-        function onClicked(list: AppList): void {
+        function onClicked(list: var): void {
             list.visibilities.launcher = false;
             root.setScheme(name, flavour);
         }

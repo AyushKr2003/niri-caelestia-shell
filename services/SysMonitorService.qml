@@ -75,6 +75,7 @@ Singleton {
 
     property var gpus: [] // Array of GPU objects: {vendor, name, usage, temperature, memoryUsed, memoryTotal, card, busId}
     property var _gpuDetectCallback: null
+    property var _cachedGpuList: null
 
     property string gpuDetectScript: "
 for card in /sys/class/drm/card[0-9]*; do
@@ -138,6 +139,10 @@ done | awk -F'|' '!seen[\$6]++ {print \$0}'
     }
 
     function detectGpus(callback) {
+        if (_cachedGpuList !== null) {
+            callback(_cachedGpuList);
+            return;
+        }
         gpuDetectProcess._callback = function (output) {
             let lines = output.trim().split("\n");
             let detected = [];
@@ -152,9 +157,14 @@ done | awk -F'|' '!seen[\$6]++ {print \$0}'
                     pciid
                 });
             }
+            root._cachedGpuList = detected;
             callback(detected);
         };
         gpuDetectProcess.running = true;
+    }
+
+    function invalidateGpuCache() {
+        _cachedGpuList = null;
     }
 
     function updateGpuStats() {

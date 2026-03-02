@@ -16,6 +16,7 @@ Singleton {
     property var keybinds: []
     property bool loading: false
     property bool initialized: false
+    property string error: ""
 
     function refresh(): void {
         console.log("Keybinds: Starting refresh");
@@ -43,7 +44,7 @@ Singleton {
         
         command: [
             "sh", "-c",
-            `python3 '${root.scriptsDir}/expand.py' | ` +
+            `set -o pipefail; python3 '${root.scriptsDir}/expand.py' | ` +
             `python3 '${root.scriptsDir}/extract_binds.py' | ` +
             `python3 '${root.scriptsDir}/dedupe_binds.py' | ` +
             `python3 '${root.scriptsDir}/pretty_print_binds.py' > '${root.cacheFile}'`
@@ -53,9 +54,11 @@ Singleton {
             root.loading = false;
             if (code === 0) {
                 console.log("Keybinds: Generation successful");
+                root.error = "";
                 cacheFileView.reload();
             } else {
                 console.error("Keybinds: Generation failed with code", code);
+                root.error = qsTr("Failed to generate keybinds");
             }
         }
     }
@@ -71,10 +74,12 @@ Singleton {
                 const data = JSON.parse(text());
                 root.keybinds = data;
                 root.initialized = true;
+                root.error = "";
                 console.log(`Keybinds: Loaded ${root.keybinds.length} keybinds`);
             } catch (e) {
                 console.error("Keybinds: Failed to parse JSON:", e);
                 root.keybinds = [];
+                root.error = qsTr("Failed to parse keybinds");
             }
         }
     }

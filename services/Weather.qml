@@ -13,6 +13,7 @@ Singleton {
     property string loc
     property var cc
     property var forecast
+    property string error: ""
 
     readonly property string icon: cc ? Icons.getWeatherIcon(cc.weatherCode) : "cloud_alert"
     readonly property string description: cc?.weatherDesc[0].value ?? qsTr("No weather")
@@ -38,11 +39,16 @@ Singleton {
                     if (response.loc) {
                         loc = response.loc;
                         city = response.city ?? "";
+                        error = "";
                         timer.restart();
                     }
                 } catch (e) {
                     console.warn("Weather: Failed to parse location response:", e);
+                    error = qsTr("Location unavailable");
                 }
+            }, err => {
+                console.warn("Weather: Location fetch failed:", err);
+                error = qsTr("Location unavailable");
             });
         }
     }
@@ -55,19 +61,23 @@ Singleton {
         Requests.get(url, text => {
             try {
                 const json = JSON.parse(text);
-                if (json.results && json.results.length > 0) {
-                    const result = json.results[0];
-                    loc = result.latitude + "," + result.longitude;
-                    city = result.name;
-                    console.log("Geocoding success: " + cityName + " -> " + loc);
-                } else {
+                if (!json.results || json.results.length === 0) {
                     console.error("Geocoding failed for: " + cityName);
-                    loc = ""; 
-                    reload(); 
+                    error = qsTr("City not found");
+                    return;
                 }
+                const result = json.results[0];
+                loc = result.latitude + "," + result.longitude;
+                city = result.name;
+                error = "";
+                console.log("Geocoding success: " + cityName + " -> " + loc);
             } catch (e) {
                 console.warn("Weather: Failed to parse geocoding response:", e);
+                error = qsTr("City not found");
             }
+        }, err => {
+            console.warn("Weather: Geocoding fetch failed:", err);
+            error = qsTr("Location unavailable");
         });
     }
 
@@ -84,6 +94,7 @@ Singleton {
                 const json = JSON.parse(text);
                 if (!json.current || !json.daily) return;
 
+                error = "";
                 cc = {
                     "weatherCode": String(json.current.weather_code),
                     "weatherDesc": [{ "value": getWeatherCondition(String(json.current.weather_code))}],
@@ -113,7 +124,11 @@ Singleton {
                 forecast = forecastList;
             } catch (e) {
                 console.warn("Weather: Failed to parse weather data:", e);
+                error = qsTr("Weather data unavailable");
             }
+        }, err => {
+            console.warn("Weather: Data fetch failed:", err);
+            error = qsTr("Weather data unavailable");
         });
     }
 

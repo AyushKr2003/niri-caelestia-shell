@@ -216,31 +216,7 @@ ColumnLayout {
 
 // --- Keyboard State Tracker ---
     
-    property bool isCapsLock: false
-
-    Timer {
-        interval: 500
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            capsLockCheck.running = true
-        }
-    }
-
-    Process {
-        id: capsLockCheck
-        // We use 'grep -l' to stop at the first match, ensuring we don't wait for all devices
-        // We use 'bash -c' to ensure the * wildcard expands correctly
-        command: ["bash", "-c", "grep -l '[1-9]' /sys/class/leds/*capslock*/brightness 2>/dev/null && echo true || echo false"]
-        stdout: function(output) {
-            const newState = output.trim().includes("true");
-            if (root.isCapsLock !== newState) {
-                console.log("[LockScreen] CapsLock changed:", newState);
-            }
-            root.isCapsLock = newState;
-        }
-    }
+    readonly property bool isCapsLock: Niri.capsLock
 
     Item {
         Layout.fillWidth: true

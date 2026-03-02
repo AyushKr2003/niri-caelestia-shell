@@ -42,10 +42,6 @@ Scope {
             lock.locked = true;
         }
 
-        function unlock(): void {
-            lock.unlock();
-        }
-
         function isLocked(): bool {
             return lock.locked;
         }

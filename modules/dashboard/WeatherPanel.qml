@@ -28,10 +28,10 @@ Item {
                 Layout.alignment: Qt.AlignLeft
                 spacing: 0
                 StyledText {
-                    text: Weather.city || "Loading..."
+                    text: Weather.error ? Weather.error : (Weather.city || "Loading...")
                     font.pointSize: Appearance.font.size.extraLarge
                     font.weight: 600
-                    color: Colours.palette.m3onSurface
+                    color: Weather.error ? Colours.palette.m3error : Colours.palette.m3onSurface
                 }
                 StyledText {
                     text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")

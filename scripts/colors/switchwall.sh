@@ -66,6 +66,19 @@ switch() {
         exit 1
     fi
 
+    # Kill any previous switchwall instance to avoid races
+    local pidfile="/run/user/$(id -u)/switchwall.pid"
+    if [[ -f "$pidfile" ]]; then
+        local oldpid
+        oldpid=$(cat "$pidfile" 2>/dev/null)
+        if [[ -n "$oldpid" ]] && kill -0 "$oldpid" 2>/dev/null; then
+            kill "$oldpid" 2>/dev/null
+            wait "$oldpid" 2>/dev/null || true
+        fi
+    fi
+    echo $$ > "$pidfile"
+    trap 'rm -f "$pidfile"' EXIT
+
     # Determine mode if not set
     if [[ -z "$mode_flag" ]]; then
         current_mode=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
@@ -96,8 +109,10 @@ switch() {
     pre_process "$mode_flag"
 
     # Run matugen for GTK/Qt/other apps
+    local matugen_pid=""
     if command -v matugen &>/dev/null; then
         matugen "${matugen_args[@]}" &
+        matugen_pid=$!
     else
         echo "matugen not found, skipping matugen color generation"
     fi
@@ -117,20 +132,16 @@ switch() {
             fi
         fi
     elif [ -f "$SCRIPT_DIR/generate_colors_material.py" ]; then
-        # Check if we have a virtual environment or use system python
-        if [[ -n "$ILLOGICAL_IMPULSE_VIRTUAL_ENV" ]] && [ -f "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" ]; then
-            source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate"
-            python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
-                > "$STATE_DIR/generated/material_colors.scss"
-            deactivate
-        else
-            # Try with system python (needs materialyoucolor package)
-            python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
-                > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
-            echo "Python color generation failed. Install jq or materialyoucolor: pip install materialyoucolor" >&2
-        fi
+        python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_args[@]}" \
+            > "$STATE_DIR/generated/material_colors.scss" 2>/dev/null || \
+        echo "Python color generation failed. Install jq or materialyoucolor: pip install materialyoucolor" >&2
     else
         echo "No color generation script found." >&2
+    fi
+
+    # Wait for matugen to finish before applying colors
+    if [[ -n "$matugen_pid" ]]; then
+        wait "$matugen_pid" 2>/dev/null || true
     fi
 
     # Apply colors to terminal and apps
