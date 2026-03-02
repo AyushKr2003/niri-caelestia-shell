@@ -41,6 +41,7 @@ Item {
 
     ClippingRectangle {
         id: lockClippingRect
+
         anchors.fill: parent
         anchors.margins: Appearance.padding.md
         anchors.leftMargin: 0
@@ -51,6 +52,7 @@ Item {
 
         Loader {
             id: lockLoader
+
             anchors.fill: parent
             anchors.margins: Appearance.padding.xl + Appearance.padding.md
             anchors.leftMargin: Appearance.padding.xl
@@ -62,6 +64,7 @@ Item {
 
     InnerBorder {
         id: lockBorder
+
         leftThickness: 0
         rightThickness: Appearance.padding.md
     }
@@ -71,6 +74,8 @@ Item {
 
         StyledFlickable {
             id: lockFlickable
+
+            readonly property var rootPane: root
             flickableDirection: Flickable.VerticalFlick
             contentHeight: lockLayout.height
 
@@ -80,10 +85,14 @@ Item {
 
             ColumnLayout {
                 id: lockLayout
+
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                spacing: Appearance.spacing.lg
+                spacing: Appearance.spacing.sm
+
+                readonly property var rootPane: lockFlickable.rootPane
+                readonly property bool allExpanded: layoutSection.expanded && authSection.expanded && sizingSection.expanded
 
                 RowLayout {
                     spacing: Appearance.spacing.md
@@ -93,85 +102,109 @@ Item {
                         font.pointSize: Appearance.font.size.titleMedium
                         font.weight: 500
                     }
-                }
 
-                // Layout Section
-                SectionContainer {
-                    alignTop: true
-
-                    StyledText {
-                        text: qsTr("Layout")
-                        font.pointSize: Appearance.font.size.bodyMedium
+                    Item {
+                        Layout.fillWidth: true
                     }
 
-                    SwitchRow {
-                        label: qsTr("Show side panels")
-                        checked: root.showExtras
-                        onToggled: checked => {
-                            root.showExtras = checked;
-                            root.saveConfig();
-                        }
-                    }
+                    IconButton {
+                        icon: lockLayout.allExpanded ? "unfold_less" : "unfold_more"
+                        type: IconButton.Text
+                        label.animate: true
 
-                    SwitchRow {
-                        label: qsTr("Recolour logo")
-                        checked: root.recolourLogo
-                        onToggled: checked => {
-                            root.recolourLogo = checked;
-                            root.saveConfig();
+                        onClicked: {
+                            const expand = !lockLayout.allExpanded;
+                            layoutSection.expanded = expand;
+                            authSection.expanded = expand;
+                            sizingSection.expanded = expand;
                         }
                     }
                 }
 
-                // Authentication Section
-                SectionContainer {
-                    alignTop: true
+                CollapsibleSection {
+                    id: layoutSection
 
-                    StyledText {
-                        text: qsTr("Authentication")
-                        font.pointSize: Appearance.font.size.bodyMedium
-                    }
+                    title: qsTr("Appearance")
+                    description: qsTr("Side panels show weather, media, system resources and notifications")
+                    expanded: true
+                    showBackground: true
 
-                    SwitchRow {
-                        label: qsTr("Fingerprint unlock")
-                        checked: root.enableFprint
-                        onToggled: checked => {
-                            root.enableFprint = checked;
-                            root.saveConfig();
+                    ColumnLayout {
+                        spacing: Appearance.spacing.sm
+                        Layout.fillWidth: true
+
+                        SwitchRow {
+                            label: qsTr("Show side panels")
+                            checked: root.showExtras
+                            onToggled: checked => {
+                                root.showExtras = checked;
+                                root.saveConfig();
+                            }
                         }
-                    }
 
-                    SectionContainer {
-                        contentSpacing: Appearance.spacing.lg
-
-                        SliderInput {
-                            Layout.fillWidth: true
-
-                            label: qsTr("Max fingerprint attempts")
-                            value: root.maxFprintTries
-                            from: 1
-                            to: 10
-                            stepSize: 1
-                            validator: IntValidator { bottom: 1; top: 10 }
-                            formatValueFunction: val => Math.round(val).toString()
-                            parseValueFunction: text => parseInt(text)
-
-                            onValueModified: newValue => {
-                                root.maxFprintTries = Math.round(newValue);
+                        SwitchRow {
+                            label: qsTr("Tint avatar with colour scheme")
+                            checked: root.recolourLogo
+                            onToggled: checked => {
+                                root.recolourLogo = checked;
                                 root.saveConfig();
                             }
                         }
                     }
                 }
 
-                // Sizing Section
-                SectionContainer {
-                    alignTop: true
+                CollapsibleSection {
+                    id: authSection
 
-                    StyledText {
-                        text: qsTr("Sizing")
-                        font.pointSize: Appearance.font.size.bodyMedium
+                    title: qsTr("Authentication")
+                    description: qsTr("Configure fingerprint reader and authentication behaviour")
+                    expanded: true
+                    showBackground: true
+
+                    ColumnLayout {
+                        spacing: Appearance.spacing.sm
+                        Layout.fillWidth: true
+
+                        SwitchRow {
+                            label: qsTr("Fingerprint unlock")
+                            checked: root.enableFprint
+                            onToggled: checked => {
+                                root.enableFprint = checked;
+                                root.saveConfig();
+                            }
+                        }
+
+                        SectionContainer {
+                            contentSpacing: Appearance.spacing.lg
+
+                            SliderInput {
+                                Layout.fillWidth: true
+
+                                label: qsTr("Max fingerprint attempts")
+                                value: root.maxFprintTries
+                                from: 1
+                                to: 10
+                                stepSize: 1
+                                validator: IntValidator { bottom: 1; top: 10 }
+                                formatValueFunction: val => Math.round(val).toString()
+                                parseValueFunction: text => parseInt(text)
+
+                                onValueModified: newValue => {
+                                    root.maxFprintTries = Math.round(newValue);
+                                    root.saveConfig();
+                                }
+                            }
+                        }
                     }
+                }
+
+                CollapsibleSection {
+                    id: sizingSection
+
+                    title: qsTr("Dimensions")
+                    description: qsTr("Size and proportions of the lock screen panel on your display")
+                    expanded: true
+                    showBackground: true
 
                     SectionContainer {
                         contentSpacing: Appearance.spacing.lg
@@ -198,16 +231,18 @@ Item {
                         SliderInput {
                             Layout.fillWidth: true
 
-                            label: qsTr("Height scale")
-                            value: root.heightMult
-                            from: 0.3
-                            to: 1.0
-                            stepSize: 0.05
-                            decimals: 2
-                            validator: DoubleValidator { bottom: 0.3; top: 1.0; decimals: 2 }
+                            label: qsTr("Screen coverage")
+                            value: root.heightMult * 100
+                            from: 30
+                            to: 100
+                            stepSize: 5
+                            suffix: "%"
+                            validator: IntValidator { bottom: 30; top: 100 }
+                            formatValueFunction: val => Math.round(val).toString()
+                            parseValueFunction: text => parseInt(text)
 
                             onValueModified: newValue => {
-                                root.heightMult = newValue;
+                                root.heightMult = newValue / 100;
                                 root.saveConfig();
                             }
                         }
@@ -215,7 +250,7 @@ Item {
                         SliderInput {
                             Layout.fillWidth: true
 
-                            label: qsTr("Aspect ratio")
+                            label: qsTr("Width-to-height ratio")
                             value: root.ratio
                             from: 1.0
                             to: 2.5
