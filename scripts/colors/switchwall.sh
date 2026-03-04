@@ -2,11 +2,15 @@
 
 # switchwall.sh — Generate Material You colors from a wallpaper image
 #
-# Orchestrates the full color pipeline:
+# Orchestrates the full color pipeline (same as end-4 dotfiles):
 #   1. Set GNOME color-scheme (dark/light)
-#   2. Run matugen for GTK/Qt theming
-#   3. Generate material_colors.scss (terminal + shell palette)
-#   4. Apply colors to terminals, GTK, KDE
+#   2. Generate material_colors.scss via Python materialyoucolor
+#   3. Run matugen templates (~/.config/matugen/config.toml)
+#   4. Apply terminal escape sequences
+#   5. Apply Kvantum Qt theme colors
+#   6. Apply VS Code accent color
+#
+# Shell-side matugen JSON is handled by QML (Schemes.qml dynamicSchemeGenerator).
 #
 # Usage: switchwall.sh [--mode dark|light] [--type scheme-type] <image_path>
 
@@ -17,6 +21,7 @@ PIDFILE="/run/user/$(id -u)/switchwall.pid"
 VALID_SCHEME_TYPES=(
     scheme-content scheme-expressive scheme-fidelity scheme-fruit-salad
     scheme-monochrome scheme-neutral scheme-rainbow scheme-tonal-spot
+    scheme-vibrant
 )
 
 # Set GNOME desktop color-scheme to match the selected mode.
@@ -48,20 +53,54 @@ acquire_lock() {
     trap 'rm -f "$PIDFILE"' EXIT
 }
 
-# Run the color generator, producing material_colors.scss.
+# Activate Python virtual environment
+activate_venv() {
+    if [[ -n "$PYTHON_VENV" ]]; then
+        local venv_path
+        venv_path=$(eval echo "$PYTHON_VENV")
+        if [[ -f "$venv_path/bin/activate" ]]; then
+            source "$venv_path/bin/activate"
+            return 0
+        fi
+    fi
+    warn "Python venv not found (set ILLOGICAL_IMPULSE_VIRTUAL_ENV); using system Python"
+    return 0
+}
+
+# Run the Python color generator, producing material_colors.scss.
 generate_colors() {
-    local -a args=("$@")
+    local -a py_args=("$@")
 
-    if ! command -v matugen &>/dev/null; then
-        die "matugen not found — install it to generate colors"
-    fi
-    if ! command -v jq &>/dev/null; then
-        die "jq not found — install it to generate colors"
-    fi
+    activate_venv
 
-    if ! bash "$SCRIPT_DIR/generate_colors_matugen.sh" "${args[@]}" > "$SCSS_FILE" 2>/dev/null; then
+    if ! python3 "$SCRIPT_DIR/generate_colors_material.py" "${py_args[@]}" > "$SCSS_FILE" 2>/dev/null; then
         die "Color generation failed"
     fi
+}
+
+# Run matugen to process user templates from ~/.config/matugen/config.toml
+run_matugen_templates() {
+    local imgpath="$1" mode="$2" scheme_type="$3"
+
+    if ! command -v matugen &>/dev/null; then
+        warn "matugen not found — skipping template processing"
+        return
+    fi
+
+    matugen image "$imgpath" --mode "$mode" --type "$scheme_type" &>/dev/null &
+}
+
+# Post-processing: KDE/Dolphin colors + VS Code accent color
+post_process() {
+    local scheme_type="$1"
+
+    # Apply KDE Material You colors (Dolphin, kdeglobals, etc.)
+    local kde_wrapper="$SCRIPT_DIR/kde/kde-material-you-colors-wrapper.sh"
+    if [[ -f "$kde_wrapper" ]]; then
+        "$kde_wrapper" --scheme-variant "$scheme_type" &
+    fi
+
+    "$SCRIPT_DIR/code/material-code-set-color.sh" &
 }
 
 switch() {
@@ -84,34 +123,34 @@ switch() {
     # -- 1. Desktop theme mode --
     set_desktop_mode "$mode"
 
-    # -- 2. Matugen (GTK / Qt templates) --
-    local matugen_pid=""
-    if command -v matugen &>/dev/null; then
-        matugen image "$imgpath" --mode "$mode" --type "$scheme_type" &
-        matugen_pid=$!
-    else
-        log "matugen not found, skipping GTK/Qt template generation"
-    fi
+    # Build args for Python generate_colors_material.py
+    local -a py_args=(
+        --path "$imgpath"
+        --mode "$mode"
+        --scheme "$scheme_type"
+        --termscheme "$TERMINAL_SCHEME"
+        --blend_bg_fg
+        --cache "$GENERATED_DIR/color.txt"
+    )
 
-    # -- 3. Generate material_colors.scss --
-    generate_colors \
-        --path   "$imgpath" \
-        --mode   "$mode" \
-        --scheme "$scheme_type" \
-        --termscheme "$TERMINAL_SCHEME" \
-        --blend_bg_fg \
-        --cache  "$GENERATED_DIR/color.txt" \
-    || true
+    # -- 2. Generate material_colors.scss via Python --
+    generate_colors "${py_args[@]}" || true
 
-    # -- 4. Wait for matugen before applying --
-    if [[ -n "$matugen_pid" ]]; then
-        wait "$matugen_pid" 2>/dev/null || true
-    fi
+    # -- 3. Run matugen templates (user define matugen templates) --
+    run_matugen_templates "$imgpath" "$mode" "$scheme_type"
 
-    # -- 5. Apply colours (terminal, GTK, KDE) --
+    # -- 4. Apply terminal escape sequences --
     if [[ -f "$SCRIPT_DIR/applycolor.sh" ]]; then
         "$SCRIPT_DIR/applycolor.sh"
     fi
+
+    # -- 5. Apply Kvantum Qt theme colors --
+    if [[ -f "$SCRIPT_DIR/kvantum/materialQT.sh" ]]; then
+        bash "$SCRIPT_DIR/kvantum/materialQT.sh" &
+    fi
+
+    # -- 6. KDE/Dolphin colors + VS Code --
+    post_process "$scheme_type"
 }
 
 parse_args() {

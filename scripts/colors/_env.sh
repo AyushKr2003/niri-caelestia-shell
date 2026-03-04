@@ -16,6 +16,9 @@ SHELL_CONFIG_FILE="$CONFIG_DIR/shell.json"
 GENERATED_DIR="$STATE_DIR/generated"
 SCSS_FILE="$GENERATED_DIR/material_colors.scss"
 
+# Python virtual environment for materialyoucolor and friends
+PYTHON_VENV="${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}"
+
 mkdir -p "$GENERATED_DIR"
 
 # Read a JSON value from shell.json. Falls back to $2 if jq or file is missing.
