@@ -11,80 +11,72 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // Properties
-    required property string entryId
-    required property string entryText
-    property bool isImageEntry: false
-    property bool selected: false
+    required property var list
+    required property var modelData
 
-    // Signals
-    signal activated()
-    signal deleteRequested()
+    readonly property string entryId: modelData?.entryId ?? ""
+    readonly property string entryText: modelData?.entryText ?? ""
+    readonly property bool isImageEntry: modelData?.isImage ?? false
 
-    // Layout
-    implicitWidth: ListView.view ? ListView.view.width : 600
-    implicitHeight: isImageEntry ? 160 : Config.launcher.sizes.itemHeight
+    readonly property string displayText: isImageEntry ? "image" : entryText
 
-    // Main interaction layer
+    function onClicked(): void {
+        Quickshell.execDetached(["sh", "-c", "cliphist decode '" + root.entryId + "' | wl-copy"]);
+        root.list.visibilities.launcher = false;
+    }
+
+    implicitHeight: isImageEntry ? Config.launcher.sizes.itemHeight + 120 : Config.launcher.sizes.itemHeight
+
+    anchors.left: parent?.left
+    anchors.right: parent?.right
+
     StateLayer {
-        id: stateLayer
         radius: Appearance.rounding.small
 
         function onClicked(): void {
-            root.activated()
+            root.onClicked();
         }
-    }
-
-    // Selection highlight
-    StyledRect {
-        anchors.fill: parent
-        radius: Appearance.rounding.small
-        color: root.selected ? Qt.alpha(Colours.palette.m3primary, 0.12) : "transparent"
-        border.color: root.selected ? Colours.palette.m3primary : "transparent"
-        border.width: root.selected ? 1 : 0
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Appearance.padding.sm
+        anchors.leftMargin: Appearance.padding.lg
+        anchors.rightMargin: Appearance.padding.lg
+        anchors.topMargin: Appearance.padding.sm
+        anchors.bottomMargin: Appearance.padding.sm
         spacing: Appearance.spacing.sm
 
         /* IMAGE PREVIEW */
         StyledClippingRect {
             id: imageContainer
             visible: root.isImageEntry
-            Layout.preferredHeight: root.isImageEntry ? 100 : 0
             Layout.fillWidth: true
+            Layout.preferredHeight: root.isImageEntry ? 100 : 0
             radius: Appearance.rounding.small
             color: Colours.tPalette.m3surfaceContainerLow
 
-            // Track if we've started loading
             property bool imageReady: false
-            property string imagePath: "/tmp/cliphist-" + root.entryId + ".png"
+            property string imagePath: "/tmp/cliphist-launcher-" + root.entryId + ".png"
 
             Component.onCompleted: {
                 if (root.isImageEntry && root.entryId) {
-                    // Decode the image first, then load after a delay
                     Quickshell.execDetached([
                         "sh", "-c",
                         "cliphist decode " + root.entryId + " > " + imagePath
-                    ])
-                    imageLoadTimer.start()
+                    ]);
+                    imageLoadTimer.start();
                 }
             }
 
             Timer {
                 id: imageLoadTimer
                 interval: 200
-                onTriggered: {
-                    imageContainer.imageReady = true
-                }
+                onTriggered: imageContainer.imageReady = true
             }
 
             Image {
                 id: previewImage
                 anchors.centerIn: parent
-                // Only set source after timer fires to give cliphist time to write the file
                 source: imageContainer.imageReady ? "file://" + imageContainer.imagePath : ""
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
@@ -93,10 +85,9 @@ Item {
                 height: parent.height - Appearance.padding.md * 2
                 smooth: true
 
-                // Retry loading if it fails initially
                 onStatusChanged: {
                     if (status === Image.Error && retryTimer.retryCount < 3) {
-                        retryTimer.start()
+                        retryTimer.start();
                     }
                 }
 
@@ -105,28 +96,27 @@ Item {
                     property int retryCount: 0
                     interval: 300
                     onTriggered: {
-                        retryCount++
-                        // Force reload by toggling source
-                        const oldSource = previewImage.source
-                        previewImage.source = ""
-                        previewImage.source = oldSource
+                        retryCount++;
+                        const oldSource = previewImage.source;
+                        previewImage.source = "";
+                        previewImage.source = oldSource;
                     }
                 }
             }
 
-            // Loading indicator
+            // Loading spinner
             StyledRect {
                 visible: root.isImageEntry && (previewImage.status === Image.Loading || !imageContainer.imageReady)
                 anchors.centerIn: parent
-                width: 40
-                height: 40
+                width: 32
+                height: 32
                 radius: Appearance.rounding.full
                 color: Colours.palette.m3surfaceContainerHigh
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: "progress_activity"
-                    font.pointSize: Appearance.font.size.bodyLarge
+                    font.pointSize: Appearance.font.size.bodyMedium
                     color: Colours.palette.m3primary
 
                     RotationAnimation on rotation {
@@ -139,24 +129,12 @@ Item {
             }
 
             // Error state
-            Column {
+            MaterialIcon {
                 visible: root.isImageEntry && previewImage.status === Image.Error
                 anchors.centerIn: parent
-                spacing: Appearance.spacing.sm
-
-                MaterialIcon {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "broken_image"
-                    font.pointSize: Appearance.font.size.headlineLarge
-                    color: Colours.palette.m3outline
-                }
-
-                StyledText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: qsTr("Image Preview")
-                    font.pointSize: Appearance.font.size.labelLarge
-                    color: Colours.palette.m3outline
-                }
+                text: "broken_image"
+                font.pointSize: Appearance.font.size.headlineLarge
+                color: Colours.palette.m3outline
             }
         }
 
@@ -166,26 +144,30 @@ Item {
             Layout.fillHeight: !root.isImageEntry
             spacing: Appearance.spacing.lg
 
-            // Icon indicator
+            // Icon
             MaterialIcon {
                 text: root.isImageEntry ? "image" : "content_paste"
-                font.pointSize: Appearance.font.size.bodyLarge
+                font.pointSize: Appearance.font.size.headlineLarge
                 color: root.isImageEntry ? Colours.palette.m3tertiary : Colours.palette.m3primary
+                Layout.alignment: Qt.AlignVCenter
             }
 
+            // Text content
             StyledText {
                 Layout.fillWidth: true
-                text: root.entryText
+                Layout.alignment: Qt.AlignVCenter
+                text: root.displayText
                 font.pointSize: Appearance.font.size.bodySmall
                 elide: Text.ElideRight
                 maximumLineCount: 1
+                color: root.isImageEntry ? Colours.palette.m3outline : Colours.palette.m3onSurface
             }
 
-            /* COPY BUTTON */
+            // Copy button
             StyledRect {
-                id: copyButton
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
+                Layout.alignment: Qt.AlignVCenter
                 radius: Appearance.rounding.small
                 color: "transparent"
 
@@ -195,11 +177,11 @@ Item {
 
                     function onClicked(): void {
                         Quickshell.execDetached([
-                            "sh", "-c", 
+                            "sh", "-c",
                             "cliphist decode '" + root.entryId + "' | wl-copy"
-                        ])
-                        copyFeedback.opacity = 1
-                        copyFeedbackTimer.start()
+                        ]);
+                        copyFeedback.opacity = 1;
+                        copyFeedbackTimer.start();
                     }
                 }
 
@@ -240,11 +222,11 @@ Item {
                 }
             }
 
-            /* DELETE BUTTON */
+            // Delete button
             StyledRect {
-                id: deleteButton
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
+                Layout.alignment: Qt.AlignVCenter
                 radius: Appearance.rounding.small
                 color: "transparent"
 
@@ -253,7 +235,8 @@ Item {
                     color: Colours.palette.m3error
 
                     function onClicked(): void {
-                        root.deleteRequested()
+                        Quickshell.execDetached(["cliphist", "delete", root.entryId]);
+                        root.list.removeClipEntry(root.entryId);
                     }
                 }
 

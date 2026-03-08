@@ -59,6 +59,15 @@ Searcher {
             }
         },
         Action {
+            name: qsTr("Clipboard")
+            desc: qsTr("Search clipboard history")
+            icon: "content_paste"
+
+            function onClicked(list: AppList): void {
+                root.autocomplete(list, "clip");
+            }
+        },
+        Action {
             name: qsTr("Transparency")
             desc: qsTr("Change shell transparency")
             icon: "opacity"

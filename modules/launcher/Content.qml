@@ -71,6 +71,7 @@ Item {
                     switch (list.activeMode) {
                     case "actions": return "terminal";
                     case "calc": return "calculate";
+                    case "clip": return "content_paste";
                     case "scheme": return "palette";
                     case "variant": return "format_paint";
                     case "wallpapers": return "wallpaper";
@@ -87,6 +88,7 @@ Item {
                     switch (list.activeMode) {
                     case "actions": return qsTr("Actions");
                     case "calc": return qsTr("Calculator");
+                    case "clip": return qsTr("Clipboard");
                     case "scheme": return qsTr("Colour Scheme");
                     case "variant": return qsTr("Variant");
                     case "wallpapers": return qsTr("Wallpapers");
@@ -154,6 +156,8 @@ Item {
                     } else if (text.startsWith(Config.launcher.actionPrefix)) {
                         if (text.startsWith(`${Config.launcher.actionPrefix}calc `))
                             currentItem.onClicked();
+                        else if (text.startsWith(`${Config.launcher.actionPrefix}clip `))
+                            currentItem.onClicked();
                         else
                             currentItem.modelData.onClicked(list.currentList);
                     } else {
@@ -192,9 +196,13 @@ Item {
                 target: root.visibilities
 
                 function onLauncherChanged(): void {
-                    if (root.visibilities.launcher)
+                    if (root.visibilities.launcher) {
                         search.focus = true;
-                    else {
+                        if (root.visibilities.clipboardRequested) {
+                            search.text = Config.launcher.actionPrefix + "clip ";
+                            root.visibilities.clipboardRequested = false;
+                        }
+                    } else {
                         search.text = "";
                         const current = list.currentList;
                         if (current)

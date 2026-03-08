@@ -30,49 +30,6 @@ Scope {
         }
     }
 
-    // CustomShortcut {
-    //     name: "controlCenter"
-    //     description: "Open control center"
-    //     onPressed: WindowFactory.create()
-    // }
-
-    // CustomShortcut {
-    //     name: "showall"
-    //     description: "Toggle launcher, dashboard and osd"
-    //     onPressed: {
-    //         const v = Visibilities.getForActive();
-    //         v.launcher = v.dashboard = v.osd = v.utilities = !(v.launcher || v.dashboard || v.osd || v.utilities);
-    //     }
-    // }
-
-    // CustomShortcut {
-    //     name: "session"
-    //     description: "Toggle session menu"
-    //     onPressed: {
-    //         const visibilities = Visibilities.getForActive();
-    //         visibilities.session = !visibilities.session;
-    //     }
-    // }
-
-    // CustomShortcut {
-    //     name: "launcher"
-    //     description: "Toggle launcher"
-    //     onPressed: root.launcherInterrupted = false
-    //     onReleased: {
-    //         if (!root.launcherInterrupted) {
-    //             const visibilities = Visibilities.getForActive();
-    //             visibilities.launcher = !visibilities.launcher;
-    //         }
-    //         root.launcherInterrupted = false;
-    //     }
-    // }
-
-    // CustomShortcut {
-    //     name: "launcherInterrupt"
-    //     description: "Interrupt launcher keybind"
-    //     onPressed: root.launcherInterrupted = true
-    // }
-
     IpcHandler {
         target: "drawers"
 
@@ -116,6 +73,31 @@ Scope {
 
         function error(title: string, message: string, icon: string): void {
             Toaster.toast(title, message, icon, Toast.Error);
+        }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+
+        function open(): void {
+            const visibilities = Visibilities.getForActive()
+            visibilities.clipboardRequested = true
+            visibilities.launcher = true
+        }
+
+        function close(): void {
+            const visibilities = Visibilities.getForActive()
+            visibilities.launcher = false
+        }
+
+        function toggle(): void {
+            const visibilities = Visibilities.getForActive()
+            if (visibilities.launcher) {
+                visibilities.launcher = false
+            } else {
+                visibilities.clipboardRequested = true
+                visibilities.launcher = true
+            }
         }
     }
 }

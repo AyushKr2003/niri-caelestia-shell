@@ -7,7 +7,6 @@ import qs.modules.launcher as Launcher
 import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
-import qs.modules.clipboard as Clipboard
 import qs.modules.quicktoggles as QuickToggles
 import QtQuick
 import QtQuick.Shapes
@@ -73,12 +72,6 @@ Shape {
         startY: root.height
     }
 
-    Clipboard.Background {
-        wrapper: root.panels.clipboard
-
-        startX: root.width
-        startY: root.height
-    }
 
     QuickToggles.QuickTogglesBackground {
         wrapper: root.panels.quicktoggles
