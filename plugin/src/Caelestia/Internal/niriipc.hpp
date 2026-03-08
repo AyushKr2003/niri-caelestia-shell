@@ -5,12 +5,35 @@
 #include <qhash.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
-#include <qobject.h>
-#include <qqmlintegration.h>
-#include <qtimer.h>
-#include <qvariant.h>
+#include <QAbstractListModel>
+#include <QObject>
+#include <QtQmlIntegration>
+#include <QTimer>
+#include <QVariant>
+#include <QList>
 
 namespace caelestia {
+
+class NiriListModel : public QAbstractListModel {
+    Q_OBJECT
+public:
+    enum Roles { ObjectRole = Qt::UserRole + 1 };
+
+    explicit NiriListModel(QObject* parent = nullptr);
+
+    QHash<int, QByteArray> roleNames() const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+
+    void resetData(const QVariantList& items);
+    void appendItem(const QVariantMap& item);
+    void setItem(int idx, const QVariantMap& item);
+    void removeItem(int idx);
+    const QVariantList& items() const;
+
+private:
+    QVariantList m_items;
+};
 
 /// NiriIpc — QML singleton providing native IPC access to the niri compositor.
 ///
@@ -26,6 +49,7 @@ class NiriIpc : public QObject {
     Q_PROPERTY(bool available READ available NOTIFY availableChanged)
 
     // ── Workspaces ──
+    Q_PROPERTY(QAbstractListModel* workspacesModel READ workspacesModel CONSTANT)
     Q_PROPERTY(QVariantList workspaces READ workspaces NOTIFY workspacesChanged)
     Q_PROPERTY(int focusedWorkspaceIndex READ focusedWorkspaceIndex NOTIFY focusedWorkspaceChanged)
     Q_PROPERTY(int focusedWorkspaceId READ focusedWorkspaceId NOTIFY focusedWorkspaceChanged)
@@ -34,6 +58,7 @@ class NiriIpc : public QObject {
     Q_PROPERTY(QVariantMap workspaceHasWindows READ workspaceHasWindows NOTIFY workspaceHasWindowsChanged)
 
     // ── Windows ──
+    Q_PROPERTY(QAbstractListModel* windowsModel READ windowsModel CONSTANT)
     Q_PROPERTY(QVariantList windows READ windows NOTIFY windowsChanged)
     Q_PROPERTY(int focusedWindowIndex READ focusedWindowIndex NOTIFY focusedWindowChanged)
     Q_PROPERTY(QString focusedWindowId READ focusedWindowId NOTIFY focusedWindowChanged)
@@ -62,6 +87,7 @@ public:
     // ── Property getters ──
     [[nodiscard]] bool available() const;
 
+    [[nodiscard]] QAbstractListModel* workspacesModel() const;
     [[nodiscard]] QVariantList workspaces() const;
     [[nodiscard]] int focusedWorkspaceIndex() const;
     [[nodiscard]] int focusedWorkspaceId() const;
@@ -69,6 +95,7 @@ public:
     [[nodiscard]] QVariantList currentOutputWorkspaces() const;
     [[nodiscard]] QVariantMap workspaceHasWindows() const;
 
+    [[nodiscard]] QAbstractListModel* windowsModel() const;
     [[nodiscard]] QVariantList windows() const;
     [[nodiscard]] int focusedWindowIndex() const;
     [[nodiscard]] QString focusedWindowId() const;
@@ -94,6 +121,9 @@ public:
 
     // ── Workspace Helpers ──
     Q_INVOKABLE int getWorkspaceIdxById(int workspaceId) const;
+    Q_INVOKABLE QVariantList getWindowsByWorkspaceId(int wsId) const;
+    Q_INVOKABLE QVariantList getWindowsByWorkspaceIndex(int index) const;
+    Q_INVOKABLE QVariantList getActiveWorkspaceWindows() const;
 
 signals:
     void availableChanged();
@@ -144,7 +174,7 @@ private:
     bool m_available = false;
 
     // Workspace state
-    QVariantList m_workspaces;
+    NiriListModel* m_workspacesModel;
     int m_focusedWorkspaceIndex = -1;
     int m_focusedWorkspaceId = -1;
     QString m_focusedMonitorName;
@@ -152,7 +182,7 @@ private:
     QVariantMap m_workspaceHasWindows;
 
     // Window state
-    QVariantList m_windows;
+    NiriListModel* m_windowsModel;
     QHash<qint64, int> m_windowIndex; // window ID -> index in m_windows for O(1) lookup
     bool m_windowsSortDirty = false;
     int m_focusedWindowIndex = -1;

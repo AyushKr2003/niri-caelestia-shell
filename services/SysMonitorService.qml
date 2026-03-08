@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import Caelestia.Services
 
 Singleton {
     id: root
@@ -287,14 +288,19 @@ done | awk -F'|' '!seen[\$6]++ {print \$0}'
     function updateAllStats() {
         if (refCount > 0) {
             isUpdating = true;
-            unifiedStatsProcess.running = true;
+            SysMonitor.updateAll();
             updateGpuStats();
+            // trigger history pushes
+            addToHistory(cpuHistory, cpuUsage);
+            addToHistory(memoryHistory, memoryUsage);
+            isUpdating = false;
         }
     }
 
     function setSortBy(newSortBy) {
         if (newSortBy !== sortBy) {
             sortBy = newSortBy;
+            SysMonitor.sortBy = newSortBy;
             sortProcessesInPlace();
         }
     }
@@ -377,399 +383,107 @@ done | awk -F'|' '!seen[\$6]++ {print \$0}'
         return Math.max(0, Math.min(100, (usedDiff / totalDiff) * 100));
     }
 
-    function parseUnifiedStats(text) {
-        function num(x) {
-            return (typeof x === "number" && !isNaN(x)) ? x : 0;
-        }
-
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (error) {
-            console.error("SysMonitorService: Failed to parse JSON:", error, "Raw text:", text.slice(0, 300));
-            isUpdating = false;
-            return;
-        }
-
-        if (data.memory) {
-            const m = data.memory;
-            totalMemoryKB = num(m.total);
-            const free = num(m.free);
-            const buf = num(m.buffers);
-            const cached = num(m.cached);
-            const shared = num(m.shared);
+    Connections {
+        target: SysMonitor
+        
+        function onMemoryChanged() {
+            let m = SysMonitor.memory;
+            totalMemoryKB = m.total || 0;
+            const free = m.free || 0;
+            const buf = m.buffers || 0;
+            const cached = m.cached || 0;
             usedMemoryKB = totalMemoryKB - free - buf - cached;
-            totalSwapKB = num(m.swaptotal);
-            usedSwapKB = num(m.swaptotal) - num(m.swapfree);
+            totalSwapKB = m.swaptotal || 0;
+            usedSwapKB = (m.swaptotal || 0) - (m.swapfree || 0);
             totalMemoryMB = totalMemoryKB / 1024;
             usedMemoryMB = usedMemoryKB / 1024;
             freeMemoryMB = (totalMemoryKB - usedMemoryKB) / 1024;
-            availableMemoryMB = num(m.available) ? num(m.available) / 1024 : (free + buf + cached) / 1024;
+            availableMemoryMB = m.available ? m.available / 1024 : (free + buf + cached) / 1024;
             memoryUsage = totalMemoryKB > 0 ? (usedMemoryKB / totalMemoryKB) * 100 : 0;
         }
+        
+        function onCpuChanged() {
+            let data = SysMonitor.cpu;
+            cpuCores = data.count || 1;
+            cpuCount = data.count || 1;
+            cpuModel = data.model || "";
+            cpuFrequency = data.frequency || 0;
+            cpuTemperature = data.temperature || 0;
 
-        if (data.cpu) {
-            cpuCores = data.cpu.count || 1;
-            cpuCount = data.cpu.count || 1;
-            cpuModel = data.cpu.model || "";
-            cpuFrequency = data.cpu.frequency || 0;
-            cpuTemperature = data.cpu.temperature || 0;
-
-            if (data.cpu.total && data.cpu.total.length >= 8) {
-                const currentStats = data.cpu.total;
-                const usage = calculateCpuUsage(currentStats, lastCpuStats);
+            if (data.total && data.total.length >= 8) {
+                // Ensure data.total and lastCpuStats are arrays
+                const usage = calculateCpuUsage(Array.from(data.total), lastCpuStats ? Array.from(lastCpuStats) : null);
                 cpuUsage = usage;
                 totalCpuUsage = usage;
-                lastCpuStats = [...currentStats];
+                lastCpuStats = Array.from(data.total);
             }
 
-            if (data.cpu.cores) {
+            if (data.cores) {
                 const coreUsages = [];
-                for (let i = 0; i < data.cpu.cores.length; i++) {
-                    const currentCoreStats = data.cpu.cores[i];
+                for (let i = 0; i < data.cores.length; i++) {
+                    const currentCoreStats = data.cores[i];
                     if (currentCoreStats && currentCoreStats.length >= 8) {
-                        let lastCoreStats = null;
-                        if (lastPerCoreStats && lastPerCoreStats[i]) {
-                            lastCoreStats = lastPerCoreStats[i];
-                        }
-
-                        const usage = calculateCpuUsage(currentCoreStats, lastCoreStats);
-                        coreUsages.push(usage);
+                        let lastCoreStats = lastPerCoreStats && lastPerCoreStats[i] ? lastPerCoreStats[i] : null;
+                        coreUsages.push(calculateCpuUsage(Array.from(currentCoreStats), lastCoreStats ? Array.from(lastCoreStats) : null));
                     }
                 }
-
                 if (JSON.stringify(perCoreCpuUsage) !== JSON.stringify(coreUsages)) {
-                    // Store previous values before updating current ones
                     perCoreCpuUsagePrev = [...perCoreCpuUsage];
                     perCoreCpuUsage = coreUsages;
                 }
-
-                lastPerCoreStats = data.cpu.cores.map(core => [...core]);
+                lastPerCoreStats = data.cores.map(core => Array.from(core));
             }
         }
-
-        if (data.network) {
-            let totalRx = 0;
-            let totalTx = 0;
-            for (const iface of data.network) {
-                totalRx += iface.rx;
-                totalTx += iface.tx;
-            }
+        
+        function onNetworkChanged() {
+            let n = SysMonitor.network;
+            let totalRx = 0, totalTx = 0;
+            for(let iface of n) { totalRx += iface.rx; totalTx += iface.tx; }
             if (lastNetworkStats) {
                 const timeDiff = updateInterval / 1000;
-                const rxDiff = totalRx - lastNetworkStats.rx;
-                const txDiff = totalTx - lastNetworkStats.tx;
-                networkRxRate = Math.max(0, rxDiff / timeDiff);
-                networkTxRate = Math.max(0, txDiff / timeDiff);
+                networkRxRate = Math.max(0, (totalRx - lastNetworkStats.rx) / timeDiff);
+                networkTxRate = Math.max(0, (totalTx - lastNetworkStats.tx) / timeDiff);
                 addToHistory(networkHistory.rx, networkRxRate / 1024);
                 addToHistory(networkHistory.tx, networkTxRate / 1024);
             }
-            lastNetworkStats = {
-                "rx": totalRx,
-                "tx": totalTx
-            };
+            lastNetworkStats = { "rx": totalRx, "tx": totalTx };
         }
-
-        if (data.disk) {
-            let totalRead = 0;
-            let totalWrite = 0;
-            for (const disk of data.disk) {
-                totalRead += disk.read * 512;
-                totalWrite += disk.write * 512;
-            }
+        
+        function onDiskChanged() {
+            let n = SysMonitor.disk;
+            let totalRead = 0, totalWrite = 0;
+            for(let d of n) { totalRead += d.read * 512; totalWrite += d.write * 512; }
             if (lastDiskStats) {
                 const timeDiff = updateInterval / 1000;
-                const readDiff = totalRead - lastDiskStats.read;
-                const writeDiff = totalWrite - lastDiskStats.write;
-                diskReadRate = Math.max(0, readDiff / timeDiff);
-                diskWriteRate = Math.max(0, writeDiff / timeDiff);
+                diskReadRate = Math.max(0, (totalRead - lastDiskStats.read) / timeDiff);
+                diskWriteRate = Math.max(0, (totalWrite - lastDiskStats.write) / timeDiff);
                 addToHistory(diskHistory.read, diskReadRate / (1024 * 1024));
                 addToHistory(diskHistory.write, diskWriteRate / (1024 * 1024));
             }
-            lastDiskStats = {
-                "read": totalRead,
-                "write": totalWrite
-            };
+            lastDiskStats = { "read": totalRead, "write": totalWrite };
         }
-
-        if (data.processes) {
-            const newProcesses = [];
-            for (const proc of data.processes) {
-                newProcesses.push({
-                    "pid": proc.pid,
-                    "ppid": proc.ppid,
-                    "cpu": proc.cpu,
-                    "memoryPercent": proc.memoryPercent,
-                    "memoryKB": proc.memoryKB,
-                    "command": proc.command,
-                    "fullCommand": proc.fullCommand,
-                    "displayName": proc.command.length > 15 ? proc.command.substring(0, 15) + "..." : proc.command
-                });
-            }
-            processes = newProcesses;
+        
+        function onProcessesChanged() {
+            processes = SysMonitor.processes;
             sortProcessesInPlace();
         }
-
-        if (data.system) {
-            kernelVersion = data.system.kernel || "";
-            distribution = data.system.distro || "";
-            hostname = data.system.hostname || "";
-            architecture = data.system.arch || "";
-            loadAverage = data.system.loadavg || "";
-            processCount = data.system.processes || 0;
-            threadCount = data.system.threads || 0;
-            bootTime = data.system.boottime || "";
-            motherboard = data.system.motherboard || "";
-            biosVersion = data.system.bios || "";
+        
+        function onSystemChanged() {
+            let s = SysMonitor.system;
+            kernelVersion = s.kernel || "";
+            distribution = s.distro || "";
+            hostname = s.hostname || "";
+            architecture = s.arch || "";
+            loadAverage = s.loadavg || "";
+            processCount = s.processes || 0;
+            threadCount = s.threads || 0;
+            bootTime = s.boottime || "";
+            motherboard = s.motherboard || "";
+            biosVersion = s.bios || "";
         }
-
-        if (data.diskmounts) {
-            diskMounts = data.diskmounts;
-        }
-
-        addToHistory(cpuHistory, cpuUsage);
-        addToHistory(memoryHistory, memoryUsage);
-
-        isUpdating = false;
-    }
-
-    function getProcessIcon(command) {
-        const cmd = command.toLowerCase();
-        if (cmd.includes("firefox") || cmd.includes("chrome") || cmd.includes("browser"))
-            return "web";
-        if (cmd.includes("code") || cmd.includes("editor") || cmd.includes("vim"))
-            return "code";
-        if (cmd.includes("terminal") || cmd.includes("bash") || cmd.includes("zsh"))
-            return "terminal";
-        if (cmd.includes("music") || cmd.includes("audio") || cmd.includes("spotify"))
-            return "music_note";
-        if (cmd.includes("video") || cmd.includes("vlc") || cmd.includes("mpv"))
-            return "play_circle";
-        if (cmd.includes("systemd") || cmd.includes("kernel") || cmd.includes("kthread"))
-            return "settings";
-        return "memory";
-    }
-
-    function formatCpuUsage(cpu) {
-        return (cpu || 0).toFixed(1) + "%";
-    }
-
-    function formatMemoryUsage(memoryKB) {
-        const mem = memoryKB || 0;
-        if (mem < 1024)
-            return mem.toFixed(0) + " KB";
-        else if (mem < 1024 * 1024)
-            return (mem / 1024).toFixed(1) + " MB";
-        else
-            return (mem / (1024 * 1024)).toFixed(1) + " GB";
-    }
-
-    function formatSystemMemory(memoryKB) {
-        const mem = memoryKB || 0;
-        if (mem < 1024 * 1024)
-            return (mem / 1024).toFixed(0) + " MB";
-        else
-            return (mem / (1024 * 1024)).toFixed(1) + " GB";
-    }
-
-    Timer {
-        id: updateTimer
-        interval: root.updateInterval
-        running: root.refCount > 0 && !IdleService.isIdle
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.updateAllStats()
-    }
-
-    Connections {
-        target: IdleService
-        function onIdleChanged(idle) {
-            if (idle) {
-                console.log("SysMonitorService: System idle, pausing monitoring");
-            } else {
-                console.log("SysMonitorService: System active, resuming monitoring");
-                if (root.refCount > 0) {
-                    root.updateAllStats();
-                }
-            }
-        }
-    }
-
-    readonly property string scriptBody: `set -Eeuo pipefail
-trap 'echo "ERR at line $LINENO: $BASH_COMMAND (exit $?)" >&2' ERR
-
-sort_key=\${1:-cpu}
-max_procs=\${2:-20}
-
-json_escape() { sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g' -e ':a;N;$!ba;s/\\n/\\\\n/g'; }
-
-printf "{"
-
-mem_line="$(awk '/^MemTotal:/{t=$2}
-                 /^MemFree:/{f=$2}
-                 /^MemAvailable:/{a=$2}
-                 /^Buffers:/{b=$2}
-                 /^Cached:/{c=$2}
-                 /^Shmem:/{s=$2}
-                 /^SwapTotal:/{st=$2}
-                 /^SwapFree:/{sf=$2}
-                 END{printf "%d %d %d %d %d %d %d %d",t,f,a,b,c,s,st,sf}' /proc/meminfo)"
-read -r MT MF MA BU CA SH ST SF <<< "$mem_line"
-printf '"memory":{"total":%d,"free":%d,"available":%d,"buffers":%d,"cached":%d,"shared":%d,"swaptotal":%d,"swapfree":%d},' \\
-       "$MT" "$MF" "$MA" "$BU" "$CA" "$SH" "$ST" "$SF"
-
-cpu_count=$(nproc)
-cpu_model=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//' | json_escape || echo 'Unknown')
-cpu_freq=$(awk -F: '/cpu MHz/{gsub(/ /,"",$2);print $2;exit}' /proc/cpuinfo || echo 0)
-cpu_temp=$(if [ -r /sys/class/thermal/thermal_zone0/temp ]; then
-             awk '{printf "%.1f",$1/1000}' /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0
-           else echo 0; fi)
-
-printf '"cpu":{"count":%d,"model":"%s","frequency":%s,"temperature":%s,' \\
-       "$cpu_count" "$cpu_model" "$cpu_freq" "$cpu_temp"
-
-printf '"total":'
-awk 'NR==1 {printf "[%d,%d,%d,%d,%d,%d,%d,%d]", $2,$3,$4,$5,$6,$7,$8,$9; exit}' /proc/stat
-
-printf ',"cores":['
-cpu_cores=$(nproc)
-awk -v n="$cpu_cores" 'BEGIN{c=0}
-     /^cpu[0-9]+/ {
-       if(c>0) printf ",";
-       printf "[%d,%d,%d,%d,%d,%d,%d,%d]", $2,$3,$4,$5,$6,$7,$8,$9;
-       c++;
-       if(c==n) exit
-     }' /proc/stat
-printf ']},'
-
-printf '"network":['
-tmp_net=$(mktemp)
-grep -E '(wlan|eth|enp|wlp|ens|eno)' /proc/net/dev > "$tmp_net" || true
-nfirst=1
-while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    iface=$(echo "$line" | awk '{print $1}' | sed 's/://')
-    rx_bytes=$(echo "$line" | awk '{print $2}')
-    tx_bytes=$(echo "$line" | awk '{print $10}')
-    [ $nfirst -eq 1 ] || printf ","
-    printf '{"name":"%s","rx":%d,"tx":%d}' "$iface" "$rx_bytes" "$tx_bytes"
-    nfirst=0
-done < "$tmp_net"
-rm -f "$tmp_net"
-printf '],'
-
-printf '"disk":['
-tmp_disk=$(mktemp)
-grep -E ' (sd[a-z]+|nvme[0-9]+n[0-9]+|vd[a-z]+|dm-[0-9]+|mmcblk[0-9]+) ' /proc/diskstats > "$tmp_disk" || true
-dfirst=1
-while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    name=$(echo "$line" | awk '{print $3}')
-    read_sectors=$(echo "$line" | awk '{print $6}')
-    write_sectors=$(echo "$line" | awk '{print $10}')
-    [ $dfirst -eq 1 ] || printf ","
-    printf '{"name":"%s","read":%d,"write":%d}' "$name" "$read_sectors" "$write_sectors"
-    dfirst=0
-done < "$tmp_disk"
-rm -f "$tmp_disk"
-printf '],'
-
-printf '"processes":['
-case "$sort_key" in
-    cpu)    SORT_OPT="--sort=-pcpu" ;;
-    memory) SORT_OPT="--sort=-pmem" ;;
-    name)   SORT_OPT="--sort=+comm" ;;
-    pid)    SORT_OPT="--sort=+pid" ;;
-    *)      SORT_OPT="--sort=-pcpu" ;;
-esac
-
-tmp_ps=$(mktemp)
-ps -eo pid,ppid,pcpu,pmem,rss,comm,cmd --no-headers $SORT_OPT | head -n "$max_procs" > "$tmp_ps" || true
-pfirst=1
-while IFS=' ' read -r pid ppid cpu memp memk comm rest; do
-    [ -z "$pid" ] && continue
-    cmd=$(printf "%s" "$rest" | json_escape)
-    [ $pfirst -eq 1 ] || printf ","
-    printf '{"pid":%s,"ppid":%s,"cpu":%s,"memoryPercent":%s,"memoryKB":%s,"command":"%s","fullCommand":"%s"}' \\
-           "$pid" "$ppid" "$cpu" "$memp" "$memk" "$comm" "$cmd"
-    pfirst=0
-done < "$tmp_ps"
-rm -f "$tmp_ps"
-printf '],'
-
-dmip="/sys/class/dmi/id"
-[ -d "$dmip" ] || dmip="/sys/devices/virtual/dmi/id"
-mb_vendor=$([ -r "$dmip/board_vendor" ] && cat "$dmip/board_vendor" | json_escape || echo "Unknown")
-mb_name=$([ -r "$dmip/board_name" ] && cat "$dmip/board_name" | json_escape || echo "")
-bios_ver=$([ -r "$dmip/bios_version" ] && cat "$dmip/bios_version" | json_escape || echo "Unknown")
-bios_date=$([ -r "$dmip/bios_date" ] && cat "$dmip/bios_date" | json_escape || echo "")
-
-kern_ver=$(uname -r | json_escape)
-distro=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d '"' | json_escape || echo 'Unknown')
-host_name=$(hostname | json_escape)
-arch_name=$(uname -m)
-load_avg=$(cut -d' ' -f1-3 /proc/loadavg)
-proc_count=$(( $(ps aux | wc -l) - 1 ))
-thread_count=$(ps -eL | wc -l)
-boot_time=$(who -b 2>/dev/null | awk '{print $3, $4}' | json_escape || echo 'Unknown')
-
-printf '"system":{"kernel":"%s","distro":"%s","hostname":"%s","arch":"%s","loadavg":"%s","processes":%d,"threads":%d,"boottime":"%s","motherboard":"%s %s","bios":"%s %s"},' \\
-    "$kern_ver" "$distro" "$host_name" "$arch_name" "$load_avg" "$proc_count" "$thread_count" "$boot_time" "$mb_vendor" "$mb_name" "$bios_ver" "$bios_date"
-
-printf '"diskmounts":['
-tmp_mounts=$(mktemp)
-df -h --output=source,target,fstype,size,used,avail,pcent | tail -n +2 | grep -vE '^(tmpfs|devtmpfs)' | head -n 10 > "$tmp_mounts" || true
-mfirst=1
-while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    device=$(echo "$line" | awk '{print $1}' | json_escape)
-    mount=$(echo "$line" | awk '{print $2}' | json_escape)
-    fstype=$(echo "$line" | awk '{print $3}')
-    size=$(echo "$line" | awk '{print $4}')
-    used=$(echo "$line" | awk '{print $5}')
-    avail=$(echo "$line" | awk '{print $6}')
-    percent=$(echo "$line" | awk '{print $7}')
-    [ $mfirst -eq 1 ] || printf ","
-    printf '{"device":"%s","mount":"%s","fstype":"%s","size":"%s","used":"%s","avail":"%s","percent":"%s"}' \\
-           "$device" "$mount" "$fstype" "$size" "$used" "$avail" "$percent"
-    mfirst=0
-done < "$tmp_mounts"
-rm -f "$tmp_mounts"
-printf ']'
-
-printf "}\\n"`
-
-    Process {
-        id: unifiedStatsProcess
-        command: ["bash", "-c", "bash -s \"$1\" \"$2\" <<'QS_EOF'\\n" + root.scriptBody + "\\nQS_EOF\\n", "qsmon", root.sortBy, root.maxProcesses]
-        running: false
-        onExited: exitCode => {
-            if (exitCode !== 0) {
-                console.warn("Unified stats process failed with exit code:", exitCode);
-                root.isUpdating = false;
-            }
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim()) {
-                    const fullText = text.trim();
-                    const lastBraceIndex = fullText.lastIndexOf('}');
-                    if (lastBraceIndex === -1) {
-                        console.error("SysMonitorService: No JSON object found in output.", fullText);
-                        root.isUpdating = false;
-                        return;
-                    }
-                    const jsonText = fullText.substring(0, lastBraceIndex + 1);
-
-                    try {
-                        const data = JSON.parse(jsonText);
-                        root.parseUnifiedStats(jsonText);
-                    } catch (e) {
-                        root.isUpdating = false;
-                        return;
-                    }
-                }
-            }
+        
+        function onDiskmountsChanged() {
+            diskMounts = SysMonitor.diskmounts;
         }
     }
 

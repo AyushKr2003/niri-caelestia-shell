@@ -7,6 +7,7 @@ qml_module(caelestia-services
         audiocollector.hpp audiocollector.cpp
         audioprovider.hpp audioprovider.cpp
         cavaprovider.hpp cavaprovider.cpp
+        sysmonitor.hpp sysmonitor.cpp
     LIBRARIES
         PkgConfig::Pipewire
         PkgConfig::Aubio

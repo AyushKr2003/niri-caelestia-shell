@@ -4,6 +4,7 @@ import qs.config
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import Caelestia.Services
 
 Singleton {
     id: root
@@ -84,36 +85,23 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            stat.reload();
-            meminfo.reload();
-            storage.running = true;
+            SysMonitor.updateAll();
             gpuUsage.running = true;
             sensors.running = true;
         }
     }
-
-    // One-time CPU info detection (name)
-    FileView {
-        id: cpuinfoInit
-
-        path: "/proc/cpuinfo"
-        onLoaded: {
-            const nameMatch = text().match(/model name\s*:\s*(.+)/);
-            if (nameMatch)
-                root.cpuName = root.cleanCpuName(nameMatch[1]);
-        }
-    }
-
-    FileView {
-        id: stat
-
-        path: "/proc/stat"
-        onLoaded: {
-            const data = text().match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
-            if (data) {
-                const stats = data.slice(1).map(n => parseInt(n, 10));
-                const total = stats.reduce((a, b) => a + b, 0);
-                const idle = stats[3] + (stats[4] ?? 0);
+    
+    Connections {
+        target: SysMonitor
+        
+        function onCpuChanged() {
+            let data = SysMonitor.cpu;
+            root.cpuName = root.cleanCpuName(data.model || "");
+            
+            if (data.total && data.total.length >= 8) {
+                const totalArray = Array.from(data.total);
+                const total = totalArray.reduce((a, b) => a + b, 0);
+                const idle = totalArray[3] + (totalArray[4] || 0);
 
                 const totalDiff = total - root.lastCpuTotal;
                 const idleDiff = idle - root.lastCpuIdle;
@@ -123,107 +111,32 @@ Singleton {
                 root.lastCpuIdle = idle;
             }
         }
-    }
-
-    FileView {
-        id: meminfo
-
-        path: "/proc/meminfo"
-        onLoaded: {
-            const data = text();
-            root.memTotal = parseInt(data.match(/MemTotal: *(\d+)/)[1], 10) || 1;
-            root.memUsed = (root.memTotal - parseInt(data.match(/MemAvailable: *(\d+)/)[1], 10)) || 0;
+        
+        function onMemoryChanged() {
+            let m = SysMonitor.memory;
+            root.memTotal = m.total || 1;
+            const free = m.free || 0;
+            const buf = m.buffers || 0;
+            const cached = m.cached || 0;
+            root.memUsed = (root.memTotal - (m.available || (free + buf + cached)));
         }
-    }
-
-    Process {
-        id: storage
-
-        // Get physical disks with aggregated usage from their partitions
-        // lsblk outputs: NAME SIZE TYPE FSUSED FSSIZE in bytes
-        command: ["lsblk", "-b", "-o", "NAME,SIZE,TYPE,FSUSED,FSSIZE", "-P"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const diskMap = {};  // Map disk name -> { name, totalSize, used, fsTotal }
-                const lines = text.trim().split("\n");
-
-                for (const line of lines) {
-                    if (line.trim() === "")
-                        continue;
-
-                    // Parse KEY="VALUE" format
-                    const nameMatch = line.match(/NAME="([^"]+)"/);
-                    const sizeMatch = line.match(/SIZE="([^"]+)"/);
-                    const typeMatch = line.match(/TYPE="([^"]+)"/);
-                    const fsusedMatch = line.match(/FSUSED="([^"]*)"/);
-                    const fssizeMatch = line.match(/FSSIZE="([^"]*)"/);
-
-                    if (!nameMatch || !typeMatch)
-                        continue;
-
-                    const name = nameMatch[1];
-                    const type = typeMatch[1];
-                    const size = parseInt(sizeMatch?.[1] || "0", 10);
-                    const fsused = parseInt(fsusedMatch?.[1] || "0", 10);
-                    const fssize = parseInt(fssizeMatch?.[1] || "0", 10);
-
-                    if (type === "disk") {
-                        // Skip zram (swap) devices
-                        if (name.startsWith("zram"))
-                            continue;
-
-                        // Initialize disk entry
-                        if (!diskMap[name]) {
-                            diskMap[name] = {
-                                name: name,
-                                totalSize: size,
-                                used: 0,
-                                fsTotal: 0
-                            };
-                        }
-                    } else if (type === "part") {
-                        // Find parent disk (remove trailing numbers/p+numbers)
-                        let parentDisk = name.replace(/p?\d+$/, "");
-                        // For nvme devices like nvme0n1p1, parent is nvme0n1
-                        if (name.match(/nvme\d+n\d+p\d+/))
-                            parentDisk = name.replace(/p\d+$/, "");
-
-                        // Aggregate partition usage to parent disk
-                        if (diskMap[parentDisk]) {
-                            diskMap[parentDisk].used += fsused;
-                            diskMap[parentDisk].fsTotal += fssize;
-                        }
-                    }
-                }
-
-                // Convert map to sorted array
-                const diskList = [];
-                let totalUsed = 0;
-                let totalSize = 0;
-
-                for (const diskName of Object.keys(diskMap).sort()) {
-                    const disk = diskMap[diskName];
-                    // Use filesystem total if available, otherwise use disk size
-                    const total = disk.fsTotal > 0 ? disk.fsTotal : disk.totalSize;
-                    const used = disk.used;
-                    const perc = total > 0 ? used / total : 0;
-
-                    // Convert bytes to KiB for consistency with formatKib
+        
+        function onDiskmountsChanged() {
+            let mounts = SysMonitor.diskmounts;
+            let diskList = [];
+            for (let mount of mounts) {
+                if (mount.fstype !== "tmpfs" && mount.fstype !== "devtmpfs") {
+                    // C++ provides size in GB. We format disks in KiB, so GB * 1024 * 1024.
                     diskList.push({
-                        mount: disk.name  // Using 'mount' property for compatibility
-                        ,
-                        used: used / 1024,
-                        total: total / 1024,
-                        free: (total - used) / 1024,
-                        perc: perc
+                        mount: mount.device,
+                        used: mount.used * 1024 * 1024,
+                        total: mount.size * 1024 * 1024,
+                        free: mount.avail * 1024 * 1024,
+                        perc: mount.percent / 100.0
                     });
-
-                    totalUsed += used;
-                    totalSize += total;
                 }
-
-                root.disks = diskList;
             }
+            root.disks = diskList;
         }
     }
 
@@ -299,13 +212,13 @@ Singleton {
             })
         stdout: StdioCollector {
             onStreamFinished: {
-                let cpuTemp = text.match(/(?:Package id [0-9]+|Tdie):\s+((\+|-)[0-9.]+)(°| )C/);
-                if (!cpuTemp)
+                let cpuTempMatch = text.match(/(?:Package id [0-9]+|Tdie):\s+((\+|-)[0-9.]+)(°| )C/);
+                if (!cpuTempMatch)
                     // If AMD Tdie pattern failed, try fallback on Tctl
-                    cpuTemp = text.match(/Tctl:\s+((\+|-)[0-9.]+)(°| )C/);
+                    cpuTempMatch = text.match(/Tctl:\s+((\+|-)[0-9.]+)(°| )C/);
 
-                if (cpuTemp)
-                    root.cpuTemp = parseFloat(cpuTemp[1]);
+                if (cpuTempMatch)
+                    root.cpuTemp = parseFloat(cpuTempMatch[1]);
 
                 if (root.gpuType !== "GENERIC")
                     return;
