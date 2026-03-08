@@ -24,7 +24,7 @@ StyledRect {
     Timer {
         id: undoTimer
         interval: 3000
-        onTriggered: root.modelData.notification.dismiss()
+        onTriggered: Notifs.discardNotification(root.modelData.notificationId)
     }
 
     function startDismiss(): void {
@@ -66,24 +66,24 @@ StyledRect {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         preventStealing: true
 
-        onEntered: root.modelData.timer.stop()
+        onEntered: root.modelData.timer?.stop()
         onExited: {
             if (!pressed)
-                root.modelData.timer.start();
+                root.modelData.timer?.start();
         }
 
         drag.target: parent
         drag.axis: Drag.XAxis
 
         onPressed: event => {
-            root.modelData.timer.stop();
+            root.modelData.timer?.stop();
             startY = event.y;
             if (event.button === Qt.MiddleButton)
-                root.modelData.notification.dismiss();
+                Notifs.discardNotification(root.modelData.notificationId);
         }
         onReleased: event => {
             if (!containsMouse)
-                root.modelData.timer.start();
+                root.modelData.timer?.start();
 
             if (Math.abs(root.x) < Config.notifs.sizes.width * Config.notifs.clearThreshold)
                 root.x = 0;
@@ -103,7 +103,7 @@ StyledRect {
 
             const actions = root.modelData.actions;
             if (actions?.length === 1)
-                actions[0].invoke();
+                Notifs.attemptInvokeAction(root.modelData.notificationId, actions[0].identifier);
         }
 
         Item {
@@ -381,7 +381,7 @@ StyledRect {
                         color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondary : Colours.palette.m3onSurface
 
                         function onClicked(): void {
-                            root.modelData.actions[0].invoke();
+                            Notifs.attemptInvokeAction(root.modelData.notificationId, root.modelData.actions[0].identifier);
                         }
                     }
 
@@ -481,8 +481,9 @@ StyledRect {
                 Action {
                     modelData: QtObject {
                         readonly property string text: qsTr("Close")
+                        readonly property string identifier: ""
                         function invoke(): void {
-                            root.modelData.notification.dismiss();
+                            Notifs.discardNotification(root.modelData.notificationId);
                         }
                     }
                 }
@@ -569,7 +570,12 @@ StyledRect {
             color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondary : Colours.palette.m3onSurface
 
             function onClicked(): void {
-                action.modelData.invoke();
+                // Route through service if this is a real notification action
+                // (has identifier); otherwise call invoke() directly (e.g. Close button)
+                if (action.modelData.identifier !== undefined && action.modelData.identifier !== "")
+                    Notifs.attemptInvokeAction(root.modelData.notificationId, action.modelData.identifier);
+                else
+                    action.modelData.invoke();
             }
         }
 

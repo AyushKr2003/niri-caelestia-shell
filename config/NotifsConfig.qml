@@ -3,6 +3,8 @@ import Quickshell.Io
 JsonObject {
     property bool expire: true
     property int defaultExpireTimeout: 5000
+    /** Fallback popup duration (ms) when the server sends expireTimeout = -1. */
+    property int popupTimeout: 7000
     property real clearThreshold: 0.3
     property int expandThreshold: 20
     property bool actionOnClick: false

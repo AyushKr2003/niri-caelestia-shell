@@ -96,9 +96,7 @@ Item {
                     color: Colours.palette.m3error
 
                     function onClicked(): void {
-                        const all = [...Notifs.list];
-                        for (const notif of all)
-                            notif.notification.dismiss();
+                        Notifs.discardAllNotifications();
                         root.cleared();
                     }
                 }
@@ -387,7 +385,8 @@ Item {
                         color: Colours.palette.m3onSurface
 
                         function onClicked(): void {
-                            notifItem.notif?.notification?.dismiss();
+                            if (notifItem.notif)
+                                Notifs.discardNotification(notifItem.notif.notificationId);
                         }
                     }
 
