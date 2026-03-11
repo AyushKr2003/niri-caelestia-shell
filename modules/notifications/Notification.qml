@@ -43,13 +43,19 @@ StyledRect {
     implicitWidth: Config.notifs.sizes.width
     implicitHeight: inner.implicitHeight
 
-    x: Config.notifs.sizes.width
-    Component.onCompleted: x = 0
+    property real animX: Config.notifs.sizes.width
+    x: 0
 
-    Behavior on x {
+    Component.onCompleted: animX = 0
+
+    Behavior on animX {
         Anim {
             easing.bezierCurve: Appearance.anim.curves.emphasizedDecel
         }
+    }
+
+    transform: Translate {
+        x: root.animX
     }
 
     RetainableLock {

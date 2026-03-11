@@ -104,9 +104,9 @@ Singleton {
 
     function serializeAppearance(): var {
         return {
-            rounding: { scale: appearance.rounding.scale },
-            spacing: { scale: appearance.spacing.scale },
-            padding: { scale: appearance.padding.scale },
+            rounding: { scale: 1.0 },
+            spacing: { scale: 1.0 },
+            padding: { scale: 1.0 },
             font: {
                 family: {
                     sans: appearance.font.family.sans,
@@ -114,10 +114,10 @@ Singleton {
                     material: appearance.font.family.material,
                     clock: appearance.font.family.clock
                 },
-                size: { scale: appearance.font.size.scale }
+                size: { scale: 1.0 }
             },
             anim: {
-                durations: { scale: appearance.anim.durations.scale }
+                durations: { scale: 1.0 }
             },
             transparency: {
                 enabled: appearance.transparency.enabled,

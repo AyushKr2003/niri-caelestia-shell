@@ -104,20 +104,28 @@ Item {
         }
     }
 
-    Behavior on x {
+    property real animX: x
+    property real animY: y
+
+    Behavior on animX {
         Anim {
             duration: root.animLength
             easing.bezierCurve: root.animCurve
         }
     }
 
-    Behavior on y {
+    Behavior on animY {
         enabled: root.implicitWidth > 0
 
         Anim {
             duration: root.animLength
             easing.bezierCurve: root.animCurve
         }
+    }
+
+    transform: Translate {
+        x: root.animX - root.x
+        y: root.animY - root.y
     }
 
     Behavior on implicitWidth {

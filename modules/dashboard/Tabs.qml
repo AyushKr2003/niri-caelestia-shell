@@ -55,8 +55,9 @@ Item {
         implicitWidth: bar.currentItem.implicitWidth
         implicitHeight: Config.dashboard.sizes.tabIndicatorHeight
 
-        x: {
+        property real animX: {
             const tab = bar.currentItem;
+            if (!tab) return 0;
             const width = (root.nonAnimWidth - bar.spacing * (bar.count - 1)) / bar.count;
             return width * tab.TabBar.index + (width - tab.implicitWidth) / 2;
         }
@@ -73,8 +74,12 @@ Item {
             radius: Appearance.rounding.full
         }
 
-        Behavior on x {
+        Behavior on animX {
             Anim {}
+        }
+        
+        transform: Translate {
+            x: indicator.animX
         }
 
         Behavior on implicitWidth {
