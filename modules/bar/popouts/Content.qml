@@ -121,6 +121,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
 
+        asynchronous: true
         opacity: 0
         scale: 0.8
         active: false

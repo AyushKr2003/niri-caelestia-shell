@@ -232,6 +232,7 @@ ColumnLayout {
         Layout.topMargin: root.firstEnabled === this ? root.vPadding : 0
         Layout.bottomMargin: root.lastEnabled === this ? root.vPadding : 0
 
+        asynchronous: true
         visible: enabled
         active: enabled
     }
