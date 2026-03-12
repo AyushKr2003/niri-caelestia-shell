@@ -30,6 +30,7 @@ SysMonitor::SysMonitor(QObject* parent) : QObject(parent) {
     connect(&m_timer, &QTimer::timeout, this, &SysMonitor::updateAll);
     m_timer.setInterval(m_updateInterval);
     updateSystemOnce(); // Static info
+    updateCpu(); // Initial CPU info
     updateGpuOnce(); // Static GPU info
 }
 
@@ -139,17 +140,18 @@ void SysMonitor::updateMemory() {
 }
 
 void SysMonitor::updateCpu() {
+    // 1. Parse /proc/stat for usage and core count
     QFile file("/proc/stat");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
 
     QByteArray content = file.readAll();
+    file.close();
     QTextStream in(&content);
     QVariantList total;
     QVariantList cores;
     int count = 0;
 
     QRegularExpression spaceRe("\\s+");
-
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
         if (line.isEmpty()) continue;
@@ -166,25 +168,43 @@ void SysMonitor::updateCpu() {
         }
     }
 
-    QVariantMap newCpu;
+    QVariantMap newCpu = m_cpu;
     newCpu.insert("total", total);
     newCpu.insert("cores", cores);
     newCpu.insert("count", count);
 
+    // 2. Parse /proc/cpuinfo for model and frequency (if missing)
+    if (newCpu.value("model").toString().isEmpty()) {
+        QProcess grep;
+        grep.start("sh", QStringList() << "-c" << "grep -m1 'model name' /proc/cpuinfo | cut -d: -f2");
+        grep.waitForFinished(500);
+        QString model = QString::fromUtf8(grep.readAllStandardOutput()).trimmed();
+        if (!model.isEmpty()) {
+            newCpu.insert("model", model);
+        } else {
+            // ARM fallback
+            QProcess arm;
+            arm.start("sh", QStringList() << "-c" << "grep -m1 'Hardware' /proc/cpuinfo | cut -d: -f2");
+            arm.waitForFinished(500);
+            model = QString::fromUtf8(arm.readAllStandardOutput()).trimmed();
+            if (!model.isEmpty()) newCpu.insert("model", model);
+        }
+    }
+
+    // 3. Frequency
     QFile clk("/proc/cpuinfo");
     if (clk.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QTextStream c(&clk);
         while (!c.atEnd()) {
             QString l = c.readLine();
-            if (l.startsWith("model name")) {
-                newCpu.insert("model", l.section(":", 1).trimmed());
-            } else if (l.startsWith("cpu MHz")) {
-                newCpu.insert("frequency", l.section(":", 1).trimmed().toDouble());
+            if (l.contains("cpu MHz", Qt::CaseInsensitive)) {
+                newCpu.insert("frequency", l.section(':', 1).trimmed().toDouble());
+                break;
             }
         }
     }
     
-    // Get temperature (/sys/class/hwmon/hwmonN)
+    // 4. Temperature
     bool tempFound = false;
     QDir hwmonDir("/sys/class/hwmon");
     for (const QString& hwmonD : hwmonDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
@@ -192,7 +212,6 @@ void SysMonitor::updateCpu() {
         if (nameF.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QString hwName = QString::fromUtf8(nameF.readAll().trimmed());
             if (hwName == "coretemp" || hwName == "k10temp" || hwName == "zenpower") {
-                // Find temp1_input or Tctl/Tdie equivalent
                 QDir hwD(hwmonDir.absoluteFilePath(hwmonD));
                 QStringList inputs = hwD.entryList(QStringList() << "temp*_input", QDir::Files);
                 if (!inputs.isEmpty()) {
@@ -208,18 +227,22 @@ void SysMonitor::updateCpu() {
     }
     
     if (!tempFound) {
-        // Fallback to thermal_zone0
         QFile tmp("/sys/class/thermal/thermal_zone0/temp");
         if (tmp.open(QIODevice::ReadOnly | QIODevice::Text)) {
             newCpu.insert("temperature", tmp.readAll().trimmed().toDouble() / 1000.0);
-        } else {
+        } else if (!newCpu.contains("temperature")) {
             newCpu.insert("temperature", 0.0);
         }
     }
 
-    m_cpu = newCpu;
-    emit cpuChanged();
+    if (m_cpu != newCpu) {
+        m_cpu = newCpu;
+        emit cpuChanged();
+    }
 }
+
+
+
 
 void SysMonitor::updateNetwork() {
     QFile file("/proc/net/dev");

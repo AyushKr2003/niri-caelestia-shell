@@ -21,7 +21,7 @@ Singleton {
     property real totalCpuUsage: 0
     property int cpuCores: 1
     property int cpuCount: 1
-    property string cpuModel: ""
+    property string cpuModel: SysMonitor.cpu.model || ""
     property real cpuFrequency: 0
     property real cpuTemperature: 0
     property var perCoreCpuUsage: []
@@ -235,9 +235,9 @@ Singleton {
         
         function onCpuChanged() {
             let data = SysMonitor.cpu;
+            cpuModel = data.model || "";
             cpuCores = data.count || 1;
             cpuCount = data.count || 1;
-            cpuModel = data.model || "";
             cpuFrequency = data.frequency || 0;
             cpuTemperature = data.temperature || 0;
 
@@ -321,11 +321,5 @@ Singleton {
     function debug() {
         SysMonitorService.addRef();
         SysMonitorService.updateAllStats();
-        console.log("GPUS:", JSON.stringify(SysMonitorService.gpus));
     }
-
-    // Component.onCompleted: {
-    // Qt.callLater(debug)
-    // }
-
 }

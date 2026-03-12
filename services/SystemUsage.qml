@@ -10,9 +10,9 @@ Singleton {
     id: root
 
     // CPU properties
-    property string cpuName: ""
+    property string cpuName: cleanCpuName(SysMonitor.cpu.model || "")
     property real cpuPerc
-    property real cpuTemp
+    property real cpuTemp: SysMonitor.cpu.temperature || 0
 
     // GPU properties
     readonly property string gpuType: Config.services.gpuType.toUpperCase() || SysMonitor.gpu.type || "NONE"
