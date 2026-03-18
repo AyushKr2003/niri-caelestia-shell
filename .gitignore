@@ -8,8 +8,53 @@
 .github/chatmodes/prompt-engineer.chatmode.md
 build/
 .cache/
-// ...existing code...
 REVIEW.md
 TODO.md
 task.md
+
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+*.spec
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Downloaded wallpapers (don't commit images)
+wallpapers/
+*.jpg
+*.jpeg
+*.png
+*.webp
+
+# IDE / Editor
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+desktop.ini

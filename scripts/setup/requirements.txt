@@ -62,3 +62,6 @@ tqdm==4.67.1
     # via -r sdata/uv/requirements.in
 wheel==0.45.1
     # via -r sdata/uv/requirements.in
+requests==2.31.0
+beautifulsoup4==4.12.0
+lxml==5.0.0
