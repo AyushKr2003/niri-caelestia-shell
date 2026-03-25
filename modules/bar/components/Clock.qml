@@ -42,7 +42,7 @@ StyledRect {
             horizontalAlignment: StyledText.AlignHCenter
             text: Time.format("ddd\nd")
             font.pointSize: Appearance.font.size.smaller
-            font.family: Appearance.font.family.sans
+            font.family: Appearance.font.family.mono
             color: root.colour
         }
 
