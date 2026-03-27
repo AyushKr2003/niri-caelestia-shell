@@ -78,6 +78,12 @@ Variants {
                 }
                 return src;
             }
+
+            // RAM Optimization: Scale down significantly before blurring.
+            // Since the image is blurred by 0.8 (heavy), we don't need full resolution.
+            sourceSize.width: backdropWindow.width / 4
+            sourceSize.height: backdropWindow.height / 4
+
             asynchronous: true
             cache: true
             smooth: true

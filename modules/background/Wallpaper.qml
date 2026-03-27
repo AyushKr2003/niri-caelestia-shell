@@ -181,6 +181,11 @@ Item {
                 const src = Wallpapers.getColorSource(item.path);
                 return CUtils.exists(src) ? src : "";
             }
+
+            // RAM Optimization: Ensure we don't load more than screen resolution
+            sourceSize.width: root.width
+            sourceSize.height: root.height
+
             visible: item.isVideo
             opacity: 1
             z: 1
@@ -211,7 +216,6 @@ Item {
 
         MediaPlayer {
             id: player
-            source: item.isVideo ? (item.path.startsWith("/") ? "file://" + item.path : item.path) : ""
             videoOutput: videoOutput
             loops: MediaPlayer.Infinite
 
@@ -236,6 +240,7 @@ Item {
                 PropertyChanges {
                     item.opacity: 1
                     item.scale: 1
+                    player.source: item.isVideo ? (item.path.startsWith("/") ? "file://" + item.path : item.path) : ""
                 }
 
                 StateChangeScript {
@@ -243,7 +248,8 @@ Item {
                         console.log("Img visible state activated for", item.path);
                         if (item.isVideo) {
                             console.log("Starting video playback");
-                            player.play();
+                            // Small delay to ensure source is applied before play()
+                            Qt.callLater(() => player.play());
                         }
                     }
                 }
@@ -260,8 +266,9 @@ Item {
                 StateChangeScript {
                     script: {
                         if (item.isVideo) {
-                            console.log("Pausing video playback");
-                            player.pause();
+                            console.log("Releasing video resources for hidden item");
+                            player.stop();
+                            player.source = "";
                         }
                     }
                 }
