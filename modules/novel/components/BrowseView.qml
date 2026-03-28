@@ -19,7 +19,7 @@ Item {
     function reset() {
         console.log("[NovelBrowseView] Resetting search and filters")
         searchBar.text = ""
-        searchBar.visible = false
+        searchBar.isSearchActive = false
         currentFilter = "hot"
         Novel.clearNovelList()
         Novel.fetchHot()
@@ -30,7 +30,7 @@ Item {
     function _switchFilter(f) {
         if (currentFilter === f) return
         currentFilter = f
-        searchBar.visible = false
+        searchBar.isSearchActive = false
         searchBar.text = ""
         Novel.clearNovelList()
         if (f === "hot") Novel.fetchHot()
@@ -55,7 +55,7 @@ Item {
                 // Title (hidden while search bar is open)
                 RowLayout {
                     spacing: Appearance.spacing.md
-                    visible: !searchBar.visible
+                    visible: !searchBar.isSearchActive
                     Layout.fillWidth: true
 
                     MaterialIcon {
@@ -75,7 +75,7 @@ Item {
                 // Search bar (shown when search icon is tapped)
                 StyledRect {
                     id: searchBarContainer
-                    visible: searchBar.visible
+                    visible: searchBar.isSearchActive
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
                     color: c.m3surfaceContainer
@@ -98,16 +98,16 @@ Item {
 
                         StyledTextField {
                             id: searchBar
-                            property bool visible: false
+                            property bool isSearchActive: false
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
                             placeholderText: qsTr("Search novels...")
                             text: ""
                             
-                            onTextChanged: if (searchBar.visible) searchDebounce.restart()
+                            onTextChanged: if (searchBar.isSearchActive) searchDebounce.restart()
                             
                             Keys.onEscapePressed: {
-                                visible = false
+                                isSearchActive = false
                                 text = ""
                                 browseView.currentFilter = "hot"
                                 Novel.fetchHot()
@@ -118,7 +118,7 @@ Item {
                             type: IconButton.Ghost
                             icon: "close"
                             onClicked: {
-                                searchBar.visible = false
+                                searchBar.isSearchActive = false
                                 searchBar.text = ""
                                 browseView.currentFilter = "hot"
                                 Novel.fetchHot()
@@ -145,7 +145,7 @@ Item {
 
                 // ── Provider dropdown button ──────────────────────────────────
                 Item {
-                    visible: !searchBar.visible
+                    visible: !searchBar.isSearchActive
                     width: 160
                     height: 40
 
@@ -228,11 +228,11 @@ Item {
 
                 IconButton {
                     id: searchToggle
-                    visible: !searchBar.visible
+                    visible: !searchBar.isSearchActive
                     type: IconButton.Tonal
                     icon: "search"
                     onClicked: {
-                        searchBar.visible = true
+                        searchBar.isSearchActive = true
                         searchBar.forceActiveFocus()
                     }
                 }

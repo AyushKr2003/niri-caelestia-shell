@@ -21,7 +21,7 @@ Item {
     function reset() {
         console.log("[MangaBrowseView] Resetting search and filters")
         searchBar.text = ""
-        searchBar.visible = false
+        searchBar.isSearchActive = false
         currentTagId = ""
         Manga.clearMangaList()
         Manga.fetchByOrigin("", true)
@@ -67,7 +67,7 @@ Item {
                 // Search bar
                 StyledRect {
                     id: searchBarContainer
-                    visible: searchBar.visible
+                    visible: searchBar.isSearchActive
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
                     color: c.m3surfaceContainer
@@ -90,16 +90,16 @@ Item {
 
                         StyledTextField {
                             id: searchBar
-                            property bool visible: false
+                            property bool isSearchActive: false
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
                             placeholderText: qsTr("Search titles...")
                             text: ""
                             
-                            onTextChanged: if (searchBar.visible) searchDebounce.restart()
+                            onTextChanged: if (searchBar.isSearchActive) searchDebounce.restart()
                             
                             Keys.onEscapePressed: {
-                                visible = false
+                                isSearchActive = false
                                 text = ""
                                 Manga.fetchByOrigin(browseView.currentTagId, true)
                             }
@@ -109,7 +109,7 @@ Item {
                             type: IconButton.Ghost
                             icon: "close"
                             onClicked: {
-                                searchBar.visible = false
+                                searchBar.isSearchActive = false
                                 searchBar.text = ""
                                 Manga.fetchByOrigin(browseView.currentTagId, true)
                             }
@@ -131,11 +131,11 @@ Item {
 
                 IconButton {
                     id: searchToggle
-                    visible: !searchBar.visible
+                    visible: !searchBar.isSearchActive
                     type: IconButton.Tonal
                     icon: "search"
                     onClicked: {
-                        searchBar.visible = true
+                        searchBar.isSearchActive = true
                         searchBar.forceActiveFocus()
                     }
                 }
