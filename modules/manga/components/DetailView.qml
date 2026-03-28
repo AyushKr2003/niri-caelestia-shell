@@ -26,6 +26,39 @@ Item {
     readonly property bool _inLibrary:
         Manga.currentManga ? Manga.isInLibrary(Manga.currentManga.id) : false
 
+    property bool _sortAscending: false
+    property string _chapterFilter: ""
+
+    function reset() {
+        console.log("[MangaDetailView] Resetting filters")
+        _chapterFilter = ""
+        _sortAscending = false
+    }
+
+    readonly property var _processedChapters: {
+        if (!Manga.currentManga) return []
+        let chapters = Manga.currentManga.chapters.slice()
+        
+        // Filter
+        if (detailView._chapterFilter.trim() !== "") {
+            const f = detailView._chapterFilter.trim().toLowerCase()
+            chapters = chapters.filter(ch => {
+                const num = detailView.formatChapter(ch.chapter).toLowerCase()
+                const title = (ch.title || "").toLowerCase()
+                return num.includes(f) || title.includes(f)
+            })
+        }
+
+        // Sort
+        chapters.sort((a, b) => {
+            const numA = parseFloat(detailView.formatChapter(a.chapter)) || 0
+            const numB = parseFloat(detailView.formatChapter(b.chapter)) || 0
+            return detailView._sortAscending ? numA - numB : numB - numA
+        })
+
+        return chapters
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -215,6 +248,47 @@ Item {
             }
         }
 
+        // ── Search & Sort bar ────────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true; height: 48
+            color: c.m3surfaceContainerLow
+            visible: Manga.currentManga !== null
+
+            RowLayout {
+                anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.sm }
+                spacing: Appearance.spacing.sm
+
+                MaterialIcon {
+                    text: "search"
+                    font.pointSize: 18
+                    color: c.m3onSurfaceVariant; opacity: 0.5
+                }
+
+                StyledInputField {
+                    id: chapterSearch
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Filter chapters...")
+                    text: detailView._chapterFilter
+                    onTextEdited: detailView._chapterFilter = text
+                }
+
+                IconButton {
+                    type: IconButton.Ghost
+                    icon: detailView._sortAscending ? "arrow_upward" : "arrow_downward"
+                    onClicked: detailView._sortAscending = !detailView._sortAscending
+                    Tooltip {
+                        target: parent
+                        text: detailView._sortAscending ? qsTr("Sort: Ascending") : qsTr("Sort: Descending")
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                height: 1; color: c.m3outlineVariant; opacity: 0.2
+            }
+        }
+
         // ── Chapter list ──────────────────────────────────────────────────────
         Item {
             Layout.fillWidth: true; Layout.fillHeight: true
@@ -240,7 +314,7 @@ Item {
                 id: chapterList
                 anchors.fill: parent; clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                model: Manga.currentManga ? Manga.currentManga.chapters : []
+                model: detailView._processedChapters
 
                 ScrollBar.vertical: StyledScrollBar {}
 

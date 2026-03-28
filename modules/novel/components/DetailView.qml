@@ -17,11 +17,47 @@ Item {
     signal backRequested()
     signal chapterSelected(string chapterId)
 
+    function formatChapter(ch) {
+        if (!ch) return "?"
+        const match = ch.match(/\d+(\.\d+)?/)
+        return match ? match[0] : ch
+    }
+
     readonly property bool _inLibrary:
         Novel.currentNovel ? Novel.isInLibrary(Novel.currentNovel.id) : false
 
-    readonly property var _reversedChapters:
-        Novel.currentNovel ? Novel.currentNovel.chapters.slice().reverse() : []
+    property bool _sortAscending: false
+    property string _chapterFilter: ""
+
+    function reset() {
+        console.log("[NovelDetailView] Resetting filters")
+        _chapterFilter = ""
+        _sortAscending = false
+    }
+
+    readonly property var _processedChapters: {
+        if (!Novel.currentNovel) return []
+        let chapters = Novel.currentNovel.chapters.slice()
+        
+        // Filter
+        if (detailView._chapterFilter.trim() !== "") {
+            const f = detailView._chapterFilter.trim().toLowerCase()
+            chapters = chapters.filter(ch => {
+                const num = detailView.formatChapter(ch.chapter).toLowerCase()
+                const title = (ch.title || "").toLowerCase()
+                return num.includes(f) || title.includes(f)
+            })
+        }
+
+        // Sort
+        chapters.sort((a, b) => {
+            const numA = parseFloat(detailView.formatChapter(a.chapter)) || 0
+            const numB = parseFloat(detailView.formatChapter(b.chapter)) || 0
+            return detailView._sortAscending ? numA - numB : numB - numA
+        })
+
+        return chapters
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -204,7 +240,7 @@ Item {
                             id: lastReadText
                             text: {
                                 var e = Novel.currentNovel ? Novel.getLibraryEntry(Novel.currentNovel.id) : null
-                                return e ? qsTr("Ch. %1").arg(e.lastReadChapterNum) : ""
+                                return e ? qsTr("Ch. %1").arg(detailView.formatChapter(e.lastReadChapterNum)) : ""
                             }
                             font.pointSize: Appearance.font.size.labelSmall
                             font.weight: Font.Bold
@@ -217,6 +253,47 @@ Item {
             Rectangle {
                 anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
                 height: 1; color: c.m3outlineVariant; opacity: 0.3
+            }
+        }
+
+        // ── Search & Sort bar ────────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true; height: 48
+            color: c.m3surfaceContainerLow
+            visible: Novel.currentNovel !== null
+
+            RowLayout {
+                anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.sm }
+                spacing: Appearance.spacing.sm
+
+                MaterialIcon {
+                    text: "search"
+                    font.pointSize: 18
+                    color: c.m3onSurfaceVariant; opacity: 0.5
+                }
+
+                StyledInputField {
+                    id: chapterSearch
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Filter chapters...")
+                    text: detailView._chapterFilter
+                    onTextEdited: detailView._chapterFilter = text
+                }
+
+                IconButton {
+                    type: IconButton.Ghost
+                    icon: detailView._sortAscending ? "arrow_upward" : "arrow_downward"
+                    onClicked: detailView._sortAscending = !detailView._sortAscending
+                    Tooltip {
+                        target: parent
+                        text: detailView._sortAscending ? qsTr("Sort: Ascending") : qsTr("Sort: Descending")
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                height: 1; color: c.m3outlineVariant; opacity: 0.2
             }
         }
 
@@ -245,7 +322,7 @@ Item {
                 id: chapterList
                 anchors.fill: parent; clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                model: Novel.currentNovel ? Novel.currentNovel.chapters : []
+                model: detailView._processedChapters
 
                 ScrollBar.vertical: StyledScrollBar {}
 
@@ -281,7 +358,7 @@ Item {
 
                             StyledText {
                                 anchors.centerIn: parent
-                                text: modelData.chapter || "?"
+                                text: detailView.formatChapter(modelData.chapter)
                                 font.weight: Font.Bold
                                 color: isLastRead ? c.m3onPrimary : c.m3onSurface
                             }
@@ -292,7 +369,7 @@ Item {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: modelData.title || qsTr("Chapter %1").arg(modelData.chapter || "")
+                                text: modelData.title || qsTr("Chapter %1").arg(detailView.formatChapter(modelData.chapter))
                                 font.weight: Font.Medium
                                 color: c.m3onSurface; elide: Text.ElideRight
                             }

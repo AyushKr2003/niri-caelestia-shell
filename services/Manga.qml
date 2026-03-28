@@ -41,6 +41,9 @@ Singleton {
     property list<var> downloadsList: []
     property var downloadProgress: ({})
 
+    // ── Request tracking ─────────────────────────────────────────────────────
+    property int _activeRequestId: 0
+
     // ── Library ──────────────────────────────────────────────────────────────
     // Each entry: { id, title, coverUrl, lastReadChapterId, lastReadChapterNum, addedAt }
     property list<var> libraryList: []
@@ -250,16 +253,26 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchByOrigin(origin, reset) {
-        if (!root.serverReady || root.isFetchingManga) return
-        if (reset) { root.mangaList = []; root.currentOffset = 0; root.latestPage = 1 }
+        if (!root.serverReady) return
+        if (reset) {
+            root.isFetchingManga = false
+            root.mangaList = []
+            root.currentOffset = 0
+            root.latestPage = 1
+        } else if (root.isFetchingManga) {
+            return
+        }
+        
         root.currentOrigin = origin
         root.currentSearchText = ""
+        const reqId = ++root._activeRequestId
 
         if (origin === "") {
             root.isFetchingManga = true
             root.mangaError = ""
             const url = root.apiUrl + "/hot"
             _get(url, function(err, body) {
+                if (reqId !== root._activeRequestId) return
                 if (err) { root.mangaError = "Request failed: " + err; root.isFetchingManga = false; return }
                 _parseMangaResults(body)
             })
@@ -269,11 +282,12 @@ Singleton {
             root.mangaError = ""
             const url = root.apiUrl + "/latest?page=" + root.latestPage
             _get(url, function(err, body) {
+                if (reqId !== root._activeRequestId) return
                 if (err) { root.mangaError = "Request failed: " + err; root.isFetchingManga = false; return }
                 _parseMangaResults(body)
             })
         } else {
-            _doSearch("a", _originType(origin), root.currentOffset, "Popularity")
+            _doSearch("a", _originType(origin), root.currentOffset, "Popularity", reqId)
         }
     }
 
@@ -281,28 +295,31 @@ Singleton {
         if (!root.serverReady || root.isFetchingManga) return
         if (reset) { root.mangaList = []; root.currentOffset = 0 }
         root.currentSearchText = query
-        _doSearch(query, _originType(root.currentOrigin), root.currentOffset, "Best Match")
+        const reqId = ++root._activeRequestId
+        _doSearch(query, _originType(root.currentOrigin), root.currentOffset, "Best Match", reqId)
     }
 
     function fetchNextMangaPage() {
         if (!root.serverReady || !root.hasMoreManga || root.isFetchingManga) return
+        const reqId = ++root._activeRequestId
         if (root.currentSearchText.length > 0) {
-            _doSearch(root.currentSearchText, _originType(root.currentOrigin), root.currentOffset, "Best Match")
+            _doSearch(root.currentSearchText, _originType(root.currentOrigin), root.currentOffset, "Best Match", reqId)
         } else if (root.currentOrigin === "latest") {
             root.latestPage++
             fetchByOrigin("latest", false)
         } else {
-            _doSearch("a", _originType(root.currentOrigin), root.currentOffset, "Popularity")
+            _doSearch("a", _originType(root.currentOrigin), root.currentOffset, "Popularity", reqId)
         }
     }
 
-    function _doSearch(query, type, offset, sort) {
+    function _doSearch(query, type, offset, sort, reqId) {
         root.isFetchingManga = true
         root.mangaError = ""
         let url = root.apiUrl + "/search?q=" + encodeURIComponent(query)
             + "&offset=" + offset + "&sort=" + encodeURIComponent(sort)
         if (type) url += "&type=" + encodeURIComponent(type)
         _get(url, function(err, body) {
+            if (reqId !== root._activeRequestId) return
             if (err) { root.mangaError = "Request failed: " + err; root.isFetchingManga = false; return }
             _parseMangaResults(body)
         })
@@ -572,6 +589,7 @@ Singleton {
     }
 
     function clearMangaList() {
+        console.log("[ServiceManga] Clearing manga list")
         root.mangaList = []
         root.hasMoreManga = false
         root.currentOffset = 0

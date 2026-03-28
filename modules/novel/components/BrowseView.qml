@@ -18,6 +18,15 @@ Item {
 
     property string currentFilter: "hot"
 
+    function reset() {
+        console.log("[NovelBrowseView] Resetting search and filters")
+        searchBar.text = ""
+        searchBar.visible = false
+        currentFilter = "hot"
+        Novel.clearNovelList()
+        Novel.fetchHot()
+    }
+
     function _switchFilter(f) {
         if (currentFilter === f) return
         currentFilter = f

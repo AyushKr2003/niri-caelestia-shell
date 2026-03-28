@@ -7,7 +7,7 @@ import "./"
 Item {
     id: root
 
-    required property PersistentProperties visibilities
+    required property var visibilities
 
     visible: width > 0
     implicitWidth: 0
@@ -48,10 +48,12 @@ Item {
     ]
 
     MangaReader {
+        id: mangaReader
         width: 600
         height: parent.height
         anchors.left: parent.left
-        visible: true
+        visible: root.visible
+        visibilities: root.visibilities
     }
 
     clip: true

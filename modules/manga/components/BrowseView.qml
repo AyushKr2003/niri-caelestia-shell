@@ -18,6 +18,15 @@ Item {
     // Emitted when the user taps a manga card
     signal mangaSelected(string mangaId)
 
+    function reset() {
+        console.log("[MangaBrowseView] Resetting search and filters")
+        searchBar.text = ""
+        searchBar.visible = false
+        currentTagId = ""
+        Manga.clearMangaList()
+        Manga.fetchByOrigin("", true)
+    }
+
     property string currentTagId: ""
 
     ColumnLayout {

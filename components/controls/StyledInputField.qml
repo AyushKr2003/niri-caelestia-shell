@@ -10,6 +10,7 @@ Item {
     id: root
 
     property string text: ""
+    property alias placeholderText: inputField.placeholderText
     property var validator: null
     property bool readOnly: false
     property int horizontalAlignment: TextInput.AlignHCenter
@@ -58,17 +59,13 @@ Item {
             validator: root.validator
             readOnly: root.readOnly
             enabled: root.enabled
-
-            Binding {
-                target: inputField
-                property: "text"
-                value: root.text
-                when: !inputField.activeFocus
-            }
+            text: root.text
 
             onTextChanged: {
-                root.text = text;
-                root.textEdited(text);
+                if (activeFocus) {
+                    root.text = text;
+                    root.textEdited(text);
+                }
             }
 
             onEditingFinished: {

@@ -32,6 +32,9 @@ Singleton {
     property string chapterError: ""
     property string currentChapterId: ""
 
+    // ── Request tracking ─────────────────────────────────────────────────────
+    property int _activeRequestId: 0
+
     // ── Provider ─────────────────────────────────────────────────────────────
     PersistentProperties {
         id: providerProps
@@ -236,25 +239,37 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchHot() {
-        if (!root.serverReady || root.isFetchingNovel) return
-        root.isFetchingNovel = true
+        if (!root.serverReady) return
+        root.isFetchingNovel = false // Force reset state
         root.novelError = ""
         root.novelList = []
         root.currentSearchText = ""
         root.currentGenre = ""
+        root.isFetchingNovel = true
+        const reqId = ++root._activeRequestId
         _get(root.apiUrl + "/hot", function(err, body) {
+            if (reqId !== root._activeRequestId) return
             if (err) { root.novelError = "Request failed: " + err; root.isFetchingNovel = false; return }
             _parseNovelResults(body, true)
         })
     }
 
     function fetchLatest(reset) {
-        if (!root.serverReady || root.isFetchingNovel) return
-        if (reset) { root.novelList = []; root.latestPage = 1 }
+        if (!root.serverReady) return
+        if (reset) {
+            root.isFetchingNovel = false
+            root.novelList = [];
+            root.latestPage = 1
+        } else if (root.isFetchingNovel) {
+            return
+        }
+        
         root.currentSearchText = ""
         root.isFetchingNovel = true
         root.novelError = ""
+        const reqId = ++root._activeRequestId
         _get(root.apiUrl + "/latest?page=" + root.latestPage, function(err, body) {
+            if (reqId !== root._activeRequestId) return
             if (err) { root.novelError = "Request failed: " + err; root.isFetchingNovel = false; return }
             _parseNovelResults(body, false)
         })
@@ -268,10 +283,12 @@ Singleton {
         root.currentStatus = status || "All"
         root.isFetchingNovel = true
         root.novelError = ""
+        const reqId = ++root._activeRequestId
         var url = root.apiUrl + "/search?q=" + encodeURIComponent(query) + "&page=1"
         if (genre)  url += "&genre="  + encodeURIComponent(genre)
         if (status && status !== "All") url += "&status=" + encodeURIComponent(status)
         _get(url, function(err, body) {
+            if (reqId !== root._activeRequestId) return
             if (err) { root.novelError = "Request failed: " + err; root.isFetchingNovel = false; return }
             _parseNovelResults(body, false)
         })
@@ -279,6 +296,7 @@ Singleton {
 
     function fetchNextPage() {
         if (!root.serverReady || !root.hasMoreNovels || root.isFetchingNovel) return
+        const reqId = ++root._activeRequestId
         if (root.currentSearchText.length > 0) {
             root.currentOffset++
             root.isFetchingNovel = true
@@ -289,6 +307,7 @@ Singleton {
             if (root.currentStatus && root.currentStatus !== "All")
                 url += "&status=" + encodeURIComponent(root.currentStatus)
             _get(url, function(err, body) {
+                if (reqId !== root._activeRequestId) return
                 if (err) { root.novelError = "Request failed: " + err; root.isFetchingNovel = false; return }
                 _parseNovelResults(body, false)
             })
@@ -412,6 +431,7 @@ Singleton {
 
     // ── Utility ───────────────────────────────────────────────────────────────
     function clearNovelList() {
+        console.log("[ServiceNovel] Clearing novel list")
         root.novelList = []
         root.hasMoreNovels = false
         root.currentOffset = 0

@@ -10,6 +10,9 @@ import "./components"
 
 Item {
     id: root
+
+    property var visibilities
+
     anchors {
         top: parent.top
         bottom: parent.bottom
@@ -25,6 +28,24 @@ Item {
 
     property int browseStack:  0
     property int libraryStack: 0
+
+    function reset() {
+        console.log("[NovelReader] Resetting state")
+        root.tabIndex = 0
+        root.browseStack = 0
+        root.libraryStack = 0
+        Novel.clearDetail()
+        Novel.clearChapter()
+        browseView.reset()
+        browseDetail.reset()
+        libraryDetail.reset()
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            root.reset()
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -103,6 +124,7 @@ Item {
 
             Item {
                 BrowseView {
+                    id: browseView
                     anchors.fill: parent
                     visible: root.browseStack === 0
                     opacity: visible ? 1 : 0
