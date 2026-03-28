@@ -10,44 +10,39 @@ ShapePath {
 
     required property var wrapper
     readonly property real rounding: Config.border.rounding
-    readonly property real realRounding: wrapper.width > 0 ? rounding : 0
+    readonly property real realRounding: (wrapper?.width ?? 0) > 0 ? rounding : 0
 
     strokeWidth: -1
     fillColor: Colours.palette.m3surface
 
-    // startX and startY are properties of ShapePath, set in Backgrounds.qml
-    // Drawing a full-height panel on the RIGHT with concave arcs at top-left and bottom-left
+    // startX and startY are properties of ShapePath, set in Backgrounds.qml (screen right edge)
 
+    // Top-left corner bridge
     PathLine {
-        x: root.startX - (root.wrapper?.width ?? 0)
+        x: root.startX - (root.wrapper?.width ?? 0) - root.realRounding
         y: root.startY
     }
     PathArc {
-        x: root.startX - (root.wrapper?.width ?? 0) - root.realRounding
+        x: root.startX - (root.wrapper?.width ?? 0)
         y: root.startY + root.realRounding
-        radiusX: root.realRounding
-        radiusY: root.realRounding
-        direction: PathArc.Clockwise
+        radiusX: root.realRounding; radiusY: root.realRounding
+        direction: PathArc.Clockwise // Flipped back to Clockwise for the correct concave direction
     }
+    
+    // Bottom-left corner bridge
     PathLine {
-        x: root.startX - (root.wrapper?.width ?? 0) - root.realRounding
+        x: root.startX - (root.wrapper?.width ?? 0)
         y: (root.wrapper?.height ?? 0) - root.realRounding
     }
     PathArc {
-        x: root.startX - (root.wrapper?.width ?? 0)
+        x: root.startX - (root.wrapper?.width ?? 0) - root.realRounding
         y: (root.wrapper?.height ?? 0)
-        radiusX: root.realRounding
-        radiusY: root.realRounding
-        direction: PathArc.Clockwise
+        radiusX: root.realRounding; radiusY: root.realRounding
+        direction: PathArc.Clockwise // Flipped back to Clockwise for the correct concave direction
     }
-    PathLine {
-        x: root.startX
-        y: (root.wrapper?.height ?? 0)
-    }
-    PathLine {
-        x: root.startX
-        y: root.startY
-    }
+    
+    PathLine { x: root.startX; y: (root.wrapper?.height ?? 0) }
+    PathLine { x: root.startX; y: root.startY }
 
     Behavior on fillColor {
         CAnim {}
