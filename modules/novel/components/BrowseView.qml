@@ -2,15 +2,17 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import qs.services
 import qs.config
+import qs.services
+import "../../../components"
+import "../../../components/controls"
 
 Item {
     id: browseView
 
     readonly property var c: Colours.tPalette
     readonly property string fontDisplay: Config.appearance.font.family.sans
-    readonly property string fontBody: Config.appearance.font.family.sans
+    readonly property string fontBody:    Config.appearance.font.family.sans
 
     signal novelSelected(string novelId)
 
@@ -20,7 +22,7 @@ Item {
         if (currentFilter === f) return
         currentFilter = f
         searchBar.visible = false
-        searchField.text = ""
+        searchBar.text = ""
         Novel.clearNovelList()
         if (f === "hot") Novel.fetchHot()
         else             Novel.fetchLatest(true)
@@ -33,90 +35,49 @@ Item {
         // ── Top bar ───────────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            height: 60
+            height: 64
             color: c.m3surfaceContainerLow
             z: 2
 
-            Rectangle {
-                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                height: 1; color: c.m3outlineVariant; opacity: 0.5
-            }
-
             RowLayout {
-                anchors { fill: parent; leftMargin: 18; rightMargin: 12 }
-                spacing: 10
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.md }
+                spacing: Appearance.spacing.md
 
                 // Title (hidden while search bar is open)
-                Row {
-                    spacing: 0
+                RowLayout {
+                    spacing: Appearance.spacing.xs
                     visible: !searchBar.visible
-                    Text {
-                        text: "N"
-                        font.family: browseView.fontDisplay
-                        font.pixelSize: 24; font.letterSpacing: 1
+                    Layout.fillWidth: true
+
+                    MaterialIcon {
+                        text: "book"
                         color: c.m3primary
+                        font.pointSize: Appearance.font.size.headlineLarge
                     }
-                    Text {
-                        text: "ovel"
-                        font.family: browseView.fontDisplay
-                        font.pixelSize: 24; font.letterSpacing: 1
-                        color: c.m3onSurface; opacity: 0.85
+
+                    StyledText {
+                        text: qsTr("Novel")
+                        font.pointSize: Appearance.font.size.titleMedium
+                        font.weight: Font.Bold
+                        color: c.m3onSurface
                     }
                 }
 
                 // Search bar (shown when search icon is tapped)
-                Rectangle {
+                StyledInputField {
                     id: searchBar
                     Layout.fillWidth: true
-                    height: 38; radius: 19
-                    color: c.m3surfaceContainer
                     visible: false
-                    border.color: searchField.activeFocus ? c.m3primary : c.m3outlineVariant
-                    border.width: searchField.activeFocus ? 1.5 : 1
-                    Behavior on border.width { NumberAnimation { duration: 120 } }
-
-                    TextInput {
-                        id: searchField
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            left: parent.left; right: clearBtn.left
-                            leftMargin: 16; rightMargin: 6
-                        }
-                        color: c.m3onSurface
-                        font.family: browseView.fontBody; font.pixelSize: 13
-                        clip: true
-                        onTextChanged: searchDebounce.restart()
-                        Keys.onEscapePressed: {
-                            searchBar.visible = false
-                            text = ""
-                            browseView.currentFilter = "hot"
-                            Novel.fetchHot()
-                        }
-                    }
-
-                    Text {
-                        anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 16 }
-                        text: "Search novels…"
-                        color: c.m3onSurfaceVariant; font.family: browseView.fontBody
-                        font.pixelSize: 13; visible: searchField.text.length === 0; opacity: 0.6
-                    }
-
-                    Item {
-                        id: clearBtn
-                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 10 }
-                        width: 22; height: 22
-                        visible: searchField.text.length > 0
-                        opacity: visible ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 100 } }
-                        Rectangle {
-                            anchors.centerIn: parent; width: 18; height: 18; radius: 9
-                            color: c.m3surfaceContainerHighest
-                        }
-                        Text {
-                            anchors.centerIn: parent; text: "✕"
-                            color: c.m3onSurfaceVariant; font.pixelSize: 9; font.bold: true
-                        }
-                        MouseArea { anchors.fill: parent; onClicked: searchField.text = "" }
+                    text: ""
+                    horizontalAlignment: TextInput.AlignLeft
+                    
+                    onTextEdited: searchDebounce.restart()
+                    
+                    Keys.onEscapePressed: {
+                        visible = false
+                        text = ""
+                        browseView.currentFilter = "hot"
+                        Novel.fetchHot()
                     }
                 }
 
@@ -124,7 +85,7 @@ Item {
                     id: searchDebounce
                     interval: 380
                     onTriggered: {
-                        var q = searchField.text.trim()
+                        var q = searchBar.text.trim()
                         if (q.length > 0) {
                             browseView.currentFilter = "search"
                             Novel.searchNovels(q, "", "All", true)
@@ -138,232 +99,130 @@ Item {
                 // ── Provider dropdown button ──────────────────────────────────
                 Item {
                     visible: !searchBar.visible
-                    width: 200
-                    height: 32
+                    width: 160
+                    height: 40
 
-                    Rectangle {
-                        anchors.fill: parent; radius: 16
-                        color: providerDropArea.containsMouse
-                            ? c.m3surfaceContainerHighest
-                            : c.m3surfaceContainer
-                        border.color: c.m3outlineVariant; border.width: 1
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 5
-
-                        Text {
-                            id: providerLabel
-                            text: {
-                                for (var i = 0; i < Novel.availableProviders.length; i++) {
-                                    if (Novel.availableProviders[i].name === Novel.activeProvider)
-                                        return Novel.availableProviders[i].label
-                                }
-                                return Novel.activeProvider
-                            }
-                            font.family: browseView.fontBody; font.pixelSize: 11
-                            font.letterSpacing: 0.3
-                            color: Novel.isSwitchingProvider ? c.m3onSurfaceVariant : c.m3onSurface
-                            anchors.verticalCenter: parent.verticalCenter
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        // Tiny spinner shown while switching
-                        Rectangle {
-                            visible: Novel.isSwitchingProvider
-                            width: 10; height: 10; radius: 5
-                            color: "transparent"
-                            border.color: c.m3primary; border.width: 1.5
-                            anchors.verticalCenter: parent.verticalCenter
-                            RotationAnimator on rotation {
-                                from: 0; to: 360; duration: 700
-                                loops: Animation.Infinite
-                                running: Novel.isSwitchingProvider
-                                easing.type: Easing.Linear
-                            }
-                        }
-
-                        // Chevron (hidden while switching)
-                        Text {
-                            visible: !Novel.isSwitchingProvider
-                            text: providerPopup.visible ? "▲" : "▾"
-                            font.pixelSize: 8
-                            color: c.m3onSurfaceVariant
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: providerDropArea
+                    Card {
                         anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            if (!Novel.isSwitchingProvider)
-                                providerPopup.visible = !providerPopup.visible
+                        variant: Card.Variant.Outlined
+                        radius: Appearance.rounding.full
+                        
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Appearance.spacing.sm
+
+                            StyledText {
+                                text: {
+                                    for (var i = 0; i < Novel.availableProviders.length; i++) {
+                                        if (Novel.availableProviders[i].name === Novel.activeProvider)
+                                            return Novel.availableProviders[i].label
+                                    }
+                                    return Novel.activeProvider
+                                }
+                                font.pointSize: Appearance.font.size.labelLarge
+                                color: Novel.isSwitchingProvider ? c.m3onSurfaceVariant : c.m3onSurface
+                            }
+
+                            MaterialIcon {
+                                visible: !Novel.isSwitchingProvider
+                                text: providerMenu.expanded ? "arrow_drop_up" : "arrow_drop_down"
+                                font.pointSize: Appearance.font.size.bodyLarge
+                                color: c.m3onSurfaceVariant
+                            }
+                            
+                            StyledBusyIndicator {
+                                visible: Novel.isSwitchingProvider
+                                implicitHeight: 16
+                                implicitWidth: 16
+                            }
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (!Novel.isSwitchingProvider)
+                                    providerMenu.expanded = !providerMenu.expanded
+                            }
                         }
                     }
 
-                    // ── Dropdown popup ────────────────────────────────────────
-                    Rectangle {
-                        id: providerPopup
-                        visible: false
-                        // Anchor below the button, right-aligned
-                        anchors { top: parent.bottom; right: parent.right; topMargin: 6 }
-                        width: 150
-                        height: popupColumn.implicitHeight + 10
-                        radius: 10
-                        color: c.m3surfaceContainerHigh
-                        border.color: c.m3outlineVariant; border.width: 1
-                        z: 100
+                    Menu {
+                        id: providerMenu
+                        width: 160
+                        x: parent.width - width
+                        y: parent.height + Appearance.spacing.sm
+                        
+                        items: [
+                            MenuItem {
+                                text: "NovelBin"
+                                property string providerName: "novelbin"
+                            },
+                            MenuItem {
+                                text: "FreeWebNovel"
+                                property string providerName: "freewebnovel"
+                            }
+                        ]
 
-                        // Drop shadow hint
-                        layer.enabled: true
+                        onItemSelected: item => {
+                            Novel.switchProvider(item.providerName, false)
+                        }
 
-                        Column {
-                            id: popupColumn
-                            anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 5 }
-                            spacing: 0
-
-                            Repeater {
-                                model: Novel.availableProviders
-
-                                delegate: Item {
-                                    width: parent.width
-                                    height: 36
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 4; anchors.rightMargin: 4
-                                        radius: 7
-                                        color: {
-                                            if (modelData.name === Novel.activeProvider)
-                                                return c.m3primaryContainer
-                                            return optionArea.containsMouse
-                                                ? c.m3surfaceContainerHighest
-                                                : "transparent"
-                                        }
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-                                    }
-
-                                    Row {
-                                        anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 14 }
-                                        spacing: 8
-
-                                        // Active indicator dot
-                                        Rectangle {
-                                            width: 6; height: 6; radius: 3
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            color: c.m3primary
-                                            visible: modelData.name === Novel.activeProvider
-                                        }
-                                        // Spacer when not active so text stays aligned
-                                        Item {
-                                            width: 6; height: 6
-                                            visible: modelData.name !== Novel.activeProvider
-                                        }
-
-                                        Text {
-                                            text: modelData.label
-                                            font.family: browseView.fontBody; font.pixelSize: 12
-                                            color: modelData.name === Novel.activeProvider
-                                                ? c.m3onPrimaryContainer
-                                                : c.m3onSurface
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: optionArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            providerPopup.visible = false
-                                            Novel.switchProvider(modelData.name)
-                                        }
-                                    }
+                        // Set active item based on Novel.activeProvider
+                        Component.onCompleted: {
+                            for (var i = 0; i < items.length; i++) {
+                                if (items[i].providerName === Novel.activeProvider) {
+                                    active = items[i];
+                                    break;
                                 }
                             }
                         }
                     }
                 }
 
-                // ── Search icon ───────────────────────────────────────────────
-                Item {
-                    width: 40; height: 40
-
-                    Rectangle {
-                        anchors.centerIn: parent; width: 34; height: 34; radius: 17
-                        color: searchBar.visible ? c.m3primaryContainer : "transparent"
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-                    Text {
-                        anchors.centerIn: parent; text: "⌕"; font.pixelSize: 19
-                        color: searchBar.visible ? c.m3onPrimaryContainer : c.m3onSurfaceVariant
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            searchBar.visible = !searchBar.visible
-                            if (searchBar.visible) searchField.forceActiveFocus()
-                            else {
-                                searchField.text = ""
-                                browseView.currentFilter = "hot"
-                                Novel.fetchHot()
-                            }
+                IconButton {
+                    id: searchToggle
+                    type: IconButton.Tonal
+                    icon: searchBar.visible ? "close" : "search"
+                    onClicked: {
+                        searchBar.visible = !searchBar.visible
+                        if (searchBar.visible) {
+                            searchBar.forceActiveFocus()
+                        } else {
+                            searchBar.text = ""
+                            browseView.currentFilter = "hot"
+                            Novel.fetchHot()
                         }
                     }
                 }
+            }
+
+            Rectangle {
+                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                height: 1; color: c.m3outlineVariant; opacity: 0.5
             }
         }
 
         // ── Filter chips (Hot / Latest) ───────────────────────────────────────
         Rectangle {
-            Layout.fillWidth: true; height: 48
+            Layout.fillWidth: true; height: 56
             color: c.m3surfaceContainerLow; clip: true
 
-            Rectangle {
-                anchors { top: parent.top; left: parent.left; right: parent.right }
-                height: 1; color: c.m3outlineVariant; opacity: 0.25
-            }
+            RowLayout {
+                anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.md }
+                spacing: Appearance.spacing.sm
 
-            ListView {
-                anchors { fill: parent; leftMargin: 14; rightMargin: 14 }
-                orientation: ListView.Horizontal; spacing: 7; clip: true
-                boundsBehavior: Flickable.StopAtBounds
-
-                model: ListModel {
-                    ListElement { label: "Hot";    fid: "hot"    }
-                    ListElement { label: "Latest"; fid: "latest" }
+                Chip {
+                    text: qsTr("Hot")
+                    icon: "local_fire_department"
+                    selected: browseView.currentFilter === "hot"
+                    onClicked: browseView._switchFilter("hot")
                 }
-
-                delegate: Item {
-                    width: chip.implicitWidth + 28; height: parent.height
-
-                    Rectangle {
-                        id: chip
-                        anchors.centerIn: parent
-                        implicitWidth: chipLbl.implicitWidth + 28; height: 30; radius: 15
-                        color: browseView.currentFilter === fid ? c.m3primary : c.m3surfaceContainer
-                        border.color: browseView.currentFilter === fid ? c.m3primary : c.m3outlineVariant
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: 180 } }
-
-                        Text {
-                            id: chipLbl; anchors.centerIn: parent; text: label
-                            font.family: browseView.fontBody; font.pixelSize: 12
-                            font.letterSpacing: 0.6
-                            color: browseView.currentFilter === fid ? c.m3onPrimary : c.m3onSurfaceVariant
-                            Behavior on color { ColorAnimation { duration: 180 } }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: browseView._switchFilter(fid)
-                    }
+                
+                Chip {
+                    text: qsTr("Latest")
+                    icon: "new_releases"
+                    selected: browseView.currentFilter === "latest"
+                    onClicked: browseView._switchFilter("latest")
                 }
             }
 
@@ -377,35 +236,25 @@ Item {
         Item {
             Layout.fillWidth: true; Layout.fillHeight: true
 
-            // Close the provider popup when clicking outside it
-            MouseArea {
-                anchors.fill: parent
-                enabled: providerPopup.visible
-                onClicked: providerPopup.visible = false
-                z: 50
-            }
-
             // Loading overlay
             Rectangle {
                 anchors.fill: parent; color: c.m3background; z: 10
                 visible: Novel.isFetchingNovel && Novel.novelList.length === 0
 
-                Column {
-                    anchors.centerIn: parent; spacing: 16
-                    Rectangle {
-                        width: 36; height: 36; radius: 18
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: "transparent"; border.color: c.m3primary; border.width: 2.5
-                        RotationAnimator on rotation {
-                            from: 0; to: 360; duration: 800
-                            loops: Animation.Infinite; running: parent.visible; easing.type: Easing.Linear
-                        }
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: Appearance.spacing.md
+
+                    StyledBusyIndicator {
+                        Layout.alignment: Qt.AlignHCenter
+                        running: parent.visible
                     }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "loading"; color: c.m3onSurfaceVariant
-                        font.family: browseView.fontBody; font.pixelSize: 11
-                        font.letterSpacing: 2.5; opacity: 0.7
+                    
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Loading titles...")
+                        color: c.m3onSurfaceVariant
+                        opacity: 0.7
                     }
                 }
             }
@@ -415,29 +264,46 @@ Item {
                 anchors.fill: parent; color: c.m3background; z: 9
                 visible: Novel.novelError.length > 0 && !Novel.isFetchingNovel
 
-                Column {
-                    anchors.centerIn: parent; spacing: 10
-                    Text { text: "⚠"; font.pixelSize: 32; color: c.m3error; anchors.horizontalCenter: parent.horizontalCenter; opacity: 0.8 }
-                    Text {
-                        text: Novel.novelError; color: c.m3onSurfaceVariant
-                        font.pixelSize: 12; font.family: browseView.fontBody
-                        wrapMode: Text.Wrap; width: 260; horizontalAlignment: Text.AlignHCenter; lineHeight: 1.4
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: Appearance.spacing.md
+                    
+                    MaterialIcon {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "error"
+                        font.pointSize: 48
+                        color: c.m3error
+                    }
+                    
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: Novel.novelError
+                        color: c.m3onSurfaceVariant
+                        wrapMode: Text.Wrap
+                        Layout.preferredWidth: 300
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    
+                    TextButton {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Retry")
+                        onClicked: {
+                            if (browseView.currentFilter === "hot") Novel.fetchHot()
+                            else Novel.fetchLatest(true)
+                        }
                     }
                 }
             }
 
             GridView {
                 id: novelGrid
-                anchors.fill: parent; anchors.margins: 10
-                cellWidth: (width - 10) / 4
+                anchors.fill: parent; anchors.margins: Appearance.padding.md
+                cellWidth: width / 3
                 cellHeight: cellWidth * 1.65
                 clip: true; boundsBehavior: Flickable.StopAtBounds
                 model: Novel.novelList
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
-                    contentItem: Rectangle { implicitWidth: 3; color: c.m3primary; opacity: 0.45; radius: 2 }
-                }
+                ScrollBar.vertical: StyledScrollBar {}
 
                 onContentYChanged: {
                     if (contentY + height > contentHeight - cellHeight * 2)
@@ -447,99 +313,102 @@ Item {
                 delegate: Item {
                     width: novelGrid.cellWidth; height: novelGrid.cellHeight
 
-                    Rectangle {
+                    Card {
                         id: nCard
-                        anchors { fill: parent; margins: 5 }
-                        radius: 10; color: c.m3surfaceContainer; clip: true
+                        anchors { fill: parent; margins: Appearance.spacing.sm }
+                        variant: Card.Variant.Filled
+                        clip: true
 
-                        Image {
-                            id: coverImg
-                            anchors { top: parent.top; left: parent.left; right: parent.right }
-                            height: parent.height - nTitleBar.height
-                            source: modelData.coverUrl || ""
-                            fillMode: Image.PreserveAspectCrop; asynchronous: true; cache: true
-                            opacity: status === Image.Ready ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: 300 } }
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 0
 
-                            Rectangle {
-                                anchors.fill: parent; color: c.m3surfaceContainerHigh
-                                visible: coverImg.status !== Image.Ready
-                                Text { anchors.centerIn: parent; text: "◫"; font.pixelSize: 28; color: c.m3outline; opacity: 0.25 }
-                            }
+                            // Cover image
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                clip: true
 
-                            Rectangle {
-                                visible: modelData.status && modelData.status.length > 0
-                                anchors { top: parent.top; left: parent.left; topMargin: 8; leftMargin: 8 }
-                                height: 18; radius: 9; width: statusBadge.implicitWidth + 12
-                                color: modelData.status === "Ongoing"
-                                    ? Qt.rgba(0.2, 0.75, 0.4, 0.85)
-                                    : Qt.rgba(0.3, 0.5, 0.9, 0.85)
+                                Image {
+                                    id: coverImg
+                                    anchors.fill: parent
+                                    source: modelData.coverUrl || ""
+                                    fillMode: Image.PreserveAspectCrop; asynchronous: true; cache: true
+                                    opacity: status === Image.Ready ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 300 } }
+                                }
 
-                                Text {
-                                    id: statusBadge; anchors.centerIn: parent
-                                    text: (modelData.status || "").toUpperCase()
-                                    font.family: browseView.fontBody; font.pixelSize: 7
-                                    font.letterSpacing: 0.8; font.bold: true; color: "white"
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: c.m3surfaceContainerHigh
+                                    visible: coverImg.status !== Image.Ready
+                                    
+                                    MaterialIcon {
+                                        anchors.centerIn: parent
+                                        text: "image"
+                                        font.pointSize: 32
+                                        color: c.m3outline
+                                        opacity: 0.3
+                                    }
+                                }
+
+                                // Status badge
+                                StyledRect {
+                                    visible: modelData.status && modelData.status.length > 0
+                                    anchors { top: parent.top; left: parent.left; topMargin: 8; leftMargin: 8 }
+                                    height: 18
+                                    radius: Appearance.rounding.extraSmall
+                                    width: statusBadge.implicitWidth + 12
+                                    color: modelData.status === "Ongoing"
+                                        ? Qt.alpha("#2E7D32", 0.85)
+                                        : Qt.alpha("#1565C0", 0.85)
+
+                                    StyledText {
+                                        id: statusBadge; anchors.centerIn: parent
+                                        text: (modelData.status || "").toUpperCase()
+                                        font.pointSize: 8
+                                        font.weight: Font.Bold
+                                        color: "white"
+                                    }
                                 }
                             }
 
-                            Rectangle {
-                                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                                height: 52
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: "transparent" }
-                                    GradientStop { position: 1.0; color: c.m3surfaceContainer }
+                            // Title bar
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: nTitleCol.implicitHeight + Appearance.padding.md
+
+                                ColumnLayout {
+                                    id: nTitleCol
+                                    anchors {
+                                        left: parent.left; right: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        leftMargin: Appearance.padding.sm; rightMargin: Appearance.padding.sm
+                                    }
+                                    spacing: 2
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: modelData.title || ""
+                                        font.weight: Font.Medium
+                                        color: c.m3onSurface
+                                        wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight
+                                    }
+                                    
+                                    StyledText {
+                                        visible: modelData.author && modelData.author.length > 0
+                                        Layout.fillWidth: true
+                                        text: modelData.author || ""
+                                        font.pointSize: Appearance.font.size.labelSmall
+                                        color: c.m3onSurfaceVariant; opacity: 0.7
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
                         }
 
-                        Rectangle {
-                            id: nTitleBar
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: nTitleText.implicitHeight + 18; color: c.m3surfaceContainer; radius: 10
-
-                            Column {
-                                anchors {
-                                    left: parent.left; right: parent.right
-                                    verticalCenter: parent.verticalCenter
-                                    leftMargin: 10; rightMargin: 10
-                                }
-                                spacing: 3
-
-                                Text {
-                                    id: nTitleText; width: parent.width
-                                    text: modelData.title || ""
-                                    font.family: browseView.fontBody; font.pixelSize: 11
-                                    font.letterSpacing: 0.2; color: c.m3onSurface
-                                    wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; lineHeight: 1.3
-                                }
-                                Text {
-                                    visible: modelData.author && modelData.author.length > 0
-                                    width: parent.width
-                                    text: modelData.author || ""
-                                    font.family: browseView.fontBody; font.pixelSize: 9
-                                    color: c.m3onSurfaceVariant; opacity: 0.6
-                                    elide: Text.ElideRight; font.letterSpacing: 0.3
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent; radius: 10; color: c.m3primary
-                            opacity: nCardArea.pressed ? 0.16 : (nCardArea.containsMouse ? 0.07 : 0)
-                            Behavior on opacity { NumberAnimation { duration: 130 } }
-                        }
-
-                        transform: Scale {
-                            origin.x: nCard.width / 2; origin.y: nCard.height / 2
-                            xScale: nCardArea.pressed ? 0.97 : 1.0
-                            yScale: nCardArea.pressed ? 0.97 : 1.0
-                            Behavior on xScale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                            Behavior on yScale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                        }
-
-                        MouseArea {
-                            id: nCardArea; anchors.fill: parent; hoverEnabled: true
+                        StateLayer {
+                            anchors.fill: parent
                             onClicked: {
                                 Novel.fetchNovelDetail(modelData.id)
                                 browseView.novelSelected(modelData.id)

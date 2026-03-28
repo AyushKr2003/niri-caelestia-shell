@@ -33,15 +33,21 @@ Singleton {
     property string currentChapterId: ""
 
     // ── Provider ─────────────────────────────────────────────────────────────
-    property string activeProvider: "novelbin"
+    PersistentProperties {
+        id: providerProps
+        property string activeProvider: "freewebnovel"
+        reloadableId: "novel_provider"
+    }
+
+    property alias activeProvider: providerProps.activeProvider
     property bool isSwitchingProvider: false
     readonly property var availableProviders: [
         { name: "novelbin",     label: "NovelBin"     },
         { name: "freewebnovel", label: "FreeWebNovel" }
     ]
 
-    function switchProvider(name) {
-        if (name === root.activeProvider || root.isSwitchingProvider) return
+    function switchProvider(name, force) {
+        if (!force && (name === root.activeProvider || root.isSwitchingProvider)) return
         root.isSwitchingProvider = true
         _post(root.apiUrl + "/provider/switch", { provider: name }, function(err, body) {
             root.isSwitchingProvider = false
@@ -136,8 +142,10 @@ Singleton {
         return null
     }
 
-    // Load library as soon as the singleton initialises
-    Component.onCompleted: libraryFile.reload()
+    Component.onCompleted: {
+        console.log("[ServiceNovel] Singleton instantiated")
+        libraryFile.reload()
+    }
 
     // ── Backend server ───────────────────────────────────────────────────────
     property bool serverReady: false
@@ -152,27 +160,49 @@ Singleton {
             (Quickshell.env("CAELESTIA_VIRTUAL_ENV") || (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/quickshell/.venv") + "/bin/python3",
             root._rootPath + "/scripts/novel/main.py"
         ]
-        running: true
+        running: false // Started by healthPoller if needed
         onExited: (code) => {
-            console.warn("[ServiceNovel] Server exited with code", code, "— restarting")
             root.serverReady = false
-            serverProcess.running = true
+            if (code !== 0 && code !== 1) {
+                console.warn("[ServiceNovel] Server exited with code", code)
+            }
         }
     }
 
     Timer {
         id: healthPoller
-        interval: 150
+        interval: 2000
         repeat: true
         running: true
         onTriggered: {
             var xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    healthPoller.stop()
-                    root.serverReady = true
-                    console.log("[ServiceNovel] Backend ready at", root.apiUrl)
-                    fetchHot()
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (!root.serverReady) {
+                            root.serverReady = true
+                            console.log("[ServiceNovel] Backend connected at", root.apiUrl)
+                            
+                            // Sync server with persisted provider
+                            try {
+                                var data = JSON.parse(xhr.responseText)
+                                if (data.provider !== root.activeProvider) {
+                                    console.log("[ServiceNovel] Syncing provider to:", root.activeProvider)
+                                    switchProvider(root.activeProvider, true)
+                                } else {
+                                    fetchHot()
+                                }
+                            } catch (e) {
+                                fetchHot()
+                            }
+                        }
+                    } else {
+                        root.serverReady = false
+                        if (!serverProcess.running) {
+                            console.log("[ServiceNovel] Backend not found, starting process...")
+                            serverProcess.running = true
+                        }
+                    }
                 }
             }
             xhr.open("GET", root.apiUrl + "/health")
@@ -206,7 +236,7 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchHot() {
-        if (root.isFetchingNovel) return
+        if (!root.serverReady || root.isFetchingNovel) return
         root.isFetchingNovel = true
         root.novelError = ""
         root.novelList = []
@@ -219,7 +249,7 @@ Singleton {
     }
 
     function fetchLatest(reset) {
-        if (root.isFetchingNovel) return
+        if (!root.serverReady || root.isFetchingNovel) return
         if (reset) { root.novelList = []; root.latestPage = 1 }
         root.currentSearchText = ""
         root.isFetchingNovel = true
@@ -231,7 +261,7 @@ Singleton {
     }
 
     function searchNovels(query, genre, status, reset) {
-        if (root.isFetchingNovel) return
+        if (!root.serverReady || root.isFetchingNovel) return
         if (reset) { root.novelList = []; root.currentOffset = 0 }
         root.currentSearchText = query
         root.currentGenre = genre || ""
@@ -248,7 +278,7 @@ Singleton {
     }
 
     function fetchNextPage() {
-        if (!root.hasMoreNovels || root.isFetchingNovel) return
+        if (!root.serverReady || !root.hasMoreNovels || root.isFetchingNovel) return
         if (root.currentSearchText.length > 0) {
             root.currentOffset++
             root.isFetchingNovel = true
@@ -297,7 +327,7 @@ Singleton {
 
     // ── Novel detail ──────────────────────────────────────────────────────────
     function fetchNovelDetail(novelId) {
-        if (root.isFetchingDetail) return
+        if (!root.serverReady || root.isFetchingDetail) return
         root.isFetchingDetail = true
         root.currentNovel = null
         root.detailError = ""
@@ -338,7 +368,7 @@ Singleton {
 
     // ── Chapter reading ───────────────────────────────────────────────────────
     function fetchChapter(chapterId) {
-        if (root.isFetchingChapter) return
+        if (!root.serverReady || root.isFetchingChapter) return
         root.isFetchingChapter = true
         root.currentChapterId = chapterId
         root.currentChapter = null

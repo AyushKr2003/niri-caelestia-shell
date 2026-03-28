@@ -8,6 +8,8 @@ import qs.modules.dashboard as Dashboard
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
 import qs.modules.quicktoggles as QuickToggles
+import qs.modules.manga as MangaModule
+import qs.modules.novel as NovelModule
 import QtQuick
 import QtQuick.Shapes
 
@@ -54,6 +56,20 @@ Shape {
         wrapper: root.panels.dashboard
 
         startX: (root.width - wrapper.width) / 2 - rounding
+        startY: 0
+    }
+
+    MangaModule.Background {
+        wrapper: root.panels.manga
+
+        startX: 0
+        startY: 0
+    }
+
+    NovelModule.Background {
+        wrapper: root.panels.novel
+
+        startX: root.width
         startY: 0
     }
 

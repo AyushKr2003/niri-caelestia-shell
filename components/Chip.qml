@@ -34,7 +34,10 @@ StyledRect {
     RowLayout {
         id: row
 
-        anchors.centerIn: parent
+        anchors {
+            verticalCenter: parent ? parent.verticalCenter : undefined
+            horizontalCenter: parent ? parent.horizontalCenter : undefined
+        }
         spacing: Appearance.spacing.xs
 
         MaterialIcon {

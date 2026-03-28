@@ -13,6 +13,7 @@ StyledRect {
 
     property int variant: Card.Variant.Filled
     property alias contentItem: contentArea
+    property int padding: Appearance.padding.md
 
     radius: Appearance.rounding.normal
 
@@ -35,6 +36,6 @@ StyledRect {
         id: contentArea
 
         anchors.fill: parent
-        anchors.margins: Appearance.padding.md
+        anchors.margins: root.padding
     }
 }

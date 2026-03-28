@@ -8,6 +8,8 @@ import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities as Utilities
 import qs.modules.utilities.toasts as Toasts
 import qs.modules.quicktoggles as QuickToggles
+import qs.modules.manga as MangaModule
+import qs.modules.novel as NovelModule
 import Quickshell
 import QtQuick
 
@@ -26,10 +28,28 @@ Item {
     readonly property BarPopouts.Wrapper popouts: popouts
     readonly property Utilities.Wrapper utilities: utilities
     readonly property QuickToggles.Wrapper quicktoggles: quicktoggles
+    readonly property MangaModule.Wrapper manga: manga
+    readonly property NovelModule.Wrapper novel: novel
 
     anchors.fill: parent
     anchors.margins: Config.border.thickness
     anchors.leftMargin: bar.implicitWidth
+
+    MangaModule.Wrapper {
+        id: manga
+        visibilities: root.visibilities
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+    }
+
+    NovelModule.Wrapper {
+        id: novel
+        visibilities: root.visibilities
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+    }
 
     Osd.Wrapper {
         id: osd

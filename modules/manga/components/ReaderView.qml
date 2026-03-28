@@ -4,6 +4,8 @@ import QtQuick.Layouts
 
 import qs.services
 import qs.config
+import "../../../components"
+import "../../../components/controls"
 
 Item {
     id: readerView
@@ -11,7 +13,7 @@ Item {
     // ── Exposed API ──────────────────────────────────────────────────────────
     readonly property var c: Colours.tPalette
     readonly property string fontDisplay: Config.appearance.font.family.sans
-    readonly property string fontBody: Config.appearance.font.family.sans
+    readonly property string fontBody:    Config.appearance.font.family.sans
 
     // Emitted when the user navigates back
     signal backRequested()
@@ -25,121 +27,88 @@ Item {
     }
 
     // ── Ink-black background ─────────────────────────────────────────────────
-    Rectangle { anchors.fill: parent; color: "#08080a" }
+    Rectangle { anchors.fill: parent; color: "black" }
 
     // ── Reader header ────────────────────────────────────────────────────────
     Rectangle {
         id: readerHeader
         anchors { top: parent.top; left: parent.left; right: parent.right }
-        height: 54
-        color: Qt.rgba(0.05, 0.05, 0.08, 0.95)
+        height: 64
+        color: Qt.alpha(c.m3surfaceContainerLowest, 0.9)
         z: 10
         opacity: readerView.headerVisible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
-        // Bottom hairline
-        Rectangle {
-            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-            height: 1
-            color: Qt.rgba(1, 1, 1, 0.07)
-        }
-
         RowLayout {
-            anchors { fill: parent; leftMargin: 6; rightMargin: 16 }
-            spacing: 2
+            anchors { fill: parent; leftMargin: Appearance.padding.sm; rightMargin: Appearance.padding.md }
+            spacing: Appearance.spacing.sm
 
-            // Back button
-            Item {
-                width: 44; height: 44
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 34; height: 34; radius: 17
-                    color: readerBackArea.containsMouse
-                        ? Qt.rgba(1, 1, 1, 0.1)
-                        : "transparent"
-                    Behavior on color { ColorAnimation { duration: 130 } }
-                }
-                Text {
-                    anchors.centerIn: parent
-                    text: "←"
-                    font.pixelSize: 18
-                    color: Qt.rgba(1, 1, 1, 0.7)
-                }
-                MouseArea {
-                    id: readerBackArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        Manga.clearChapterPages()
-                        readerView.backRequested()
-                    }
+            IconButton {
+                type: IconButton.Text
+                icon: "arrow_back"
+                onClicked: {
+                    Manga.clearChapterPages()
+                    readerView.backRequested()
                 }
             }
 
-            // Title
-            Text {
+            StyledText {
                 Layout.fillWidth: true
                 text: Manga.currentManga ? Manga.currentManga.title : ""
-                font.family: readerView.fontDisplay
-                font.pixelSize: 13
-                color: Qt.rgba(1, 1, 1, 0.85)
+                font.pointSize: Appearance.font.size.bodyLarge
+                font.weight: Font.Bold
+                color: c.m3onSurface
                 elide: Text.ElideRight
             }
 
             // Page counter badge
-            Rectangle {
+            StyledRect {
                 visible: Manga.chapterPages.length > 0
-                height: 24
-                width: pageCountText.implicitWidth + 18
-                radius: 12
-                color: Qt.rgba(1, 1, 1, 0.09)
-                border.color: Qt.rgba(1, 1, 1, 0.12)
-                border.width: 1
+                height: 28
+                width: pageCountText.implicitWidth + 24
+                radius: Appearance.rounding.full
+                color: c.m3surfaceContainerHigh
 
-                Text {
+                StyledText {
                     id: pageCountText
                     anchors.centerIn: parent
-                    text: (pageListView.currentIndex + 1) + " / " + Manga.chapterPages.length
-                    font.family: readerView.fontBody
-                    font.pixelSize: 10
-                    font.letterSpacing: 0.5
-                    color: Qt.rgba(1, 1, 1, 0.65)
+                    text: qsTr("%1 / %2").arg(pageListView.currentIndex + 1).arg(Manga.chapterPages.length)
+                    font.pointSize: Appearance.font.size.labelLarge
+                    font.weight: Font.Bold
+                    color: c.m3onSurfaceVariant
                 }
             }
+        }
+
+        Rectangle {
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+            height: 1
+            color: c.m3outlineVariant
+            opacity: 0.3
         }
     }
 
     // ── Fetching pages overlay ───────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        color: "#08080a"
+        color: "black"
         visible: Manga.isFetchingPages
         z: 8
 
-        Column {
+        ColumnLayout {
             anchors.centerIn: parent
-            spacing: 16
+            spacing: Appearance.spacing.md
 
-            Rectangle {
-                width: 40; height: 40; radius: 20
-                anchors.horizontalCenter: parent.horizontalCenter
-                color: "transparent"
-                border.color: c.m3primary; border.width: 2.5
-                RotationAnimator on rotation {
-                    from: 0; to: 360; duration: 800
-                    loops: Animation.Infinite
-                    running: parent.visible
-                    easing.type: Easing.Linear
-                }
+            StyledBusyIndicator {
+                Layout.alignment: Qt.AlignHCenter
+                running: parent.visible
             }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "loading pages"
-                color: Qt.rgba(1, 1, 1, 0.4)
-                font.family: readerView.fontBody
-                font.pixelSize: 11
-                font.letterSpacing: 2.5
+            
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: qsTr("Loading pages...")
+                color: "white"
+                opacity: 0.7
             }
         }
     }
@@ -147,30 +116,34 @@ Item {
     // ── Pages error overlay ──────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        color: "#08080a"
+        color: "black"
         visible: Manga.pagesError.length > 0 && !Manga.isFetchingPages
         z: 7
 
-        Column {
+        ColumnLayout {
             anchors.centerIn: parent
-            spacing: 10
+            spacing: Appearance.spacing.md
 
-            Text {
-                text: "⚠"
-                font.pixelSize: 32
+            MaterialIcon {
+                Layout.alignment: Qt.AlignHCenter
+                text: "error"
+                font.pointSize: 48
                 color: c.m3error
-                anchors.horizontalCenter: parent.horizontalCenter
-                opacity: 0.85
             }
-            Text {
+            
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
                 text: Manga.pagesError
-                color: Qt.rgba(1, 1, 1, 0.45)
-                font.pixelSize: 11
-                font.family: readerView.fontBody
+                color: "white"
                 wrapMode: Text.Wrap
-                width: 260
+                Layout.preferredWidth: 300
                 horizontalAlignment: Text.AlignHCenter
-                lineHeight: 1.4
+            }
+            
+            TextButton {
+                Layout.alignment: Qt.AlignHCenter
+                text: qsTr("Retry")
+                onClicked: Manga.refreshChapterPages()
             }
         }
     }
@@ -180,12 +153,12 @@ Item {
         id: pageListView
         anchors {
             fill: parent
-            topMargin: readerView.headerVisible ? 54 : 0
+            topMargin: readerView.headerVisible ? readerHeader.height : 0
         }
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         model: Manga.chapterPages
-        spacing: 3
+        spacing: Appearance.spacing.xs
         Behavior on anchors.topMargin { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
         // Tap anywhere to toggle header
@@ -202,7 +175,7 @@ Item {
             width: pageListView.width
             height: pageImg.implicitHeight > 0
                 ? pageImg.implicitHeight * (pageListView.width / pageImg.implicitWidth)
-                : pageListView.width * 1.42
+                : pageListView.width * 1.4
 
             Image {
                 id: pageImg
@@ -213,68 +186,46 @@ Item {
                 cache: true
                 opacity: status === Image.Ready ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 350 } }
+            }
 
-                // Loading placeholder
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#111115"
-                    visible: pageImg.status !== Image.Ready
+            Rectangle {
+                anchors.fill: parent
+                color: "#111"
+                visible: pageImg.status !== Image.Ready
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 10
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: Appearance.spacing.sm
 
-                        Rectangle {
-                            width: 18; height: 18; radius: 9
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            color: "transparent"
-                            border.color: Qt.rgba(1, 1, 1, 0.2)
-                            border.width: 1.5
-                            RotationAnimator on rotation {
-                                from: 0; to: 360; duration: 1200
-                                loops: Animation.Infinite
-                                running: parent.visible
-                                easing.type: Easing.Linear
-                            }
-                        }
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "p. " + (modelData.index + 1)
-                            color: Qt.rgba(1, 1, 1, 0.2)
-                            font.pixelSize: 10
-                            font.family: readerView.fontBody
-                            font.letterSpacing: 1.5
-                        }
+                    StyledBusyIndicator {
+                        Layout.alignment: Qt.AlignHCenter
+                        running: parent.visible
+                        implicitHeight: 24
+                        implicitWidth: 24
+                    }
+                    
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Page %1").arg(modelData.index + 1)
+                        color: "white"
+                        font.pointSize: Appearance.font.size.labelSmall
+                        opacity: 0.5
                     }
                 }
             }
         }
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-            contentItem: Rectangle {
-                implicitWidth: 2
-                color: c.m3primary
-                opacity: 0.35
-                radius: 1
-            }
-        }
+        ScrollBar.vertical: StyledScrollBar {}
     }
 
     // ── Reading progress bar (bottom) ─────────────────────────────────────────
-    Item {
+    Rectangle {
         anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-        height: 3
+        height: 4
         z: 9
         visible: Manga.chapterPages.length > 0
+        color: Qt.alpha("white", 0.1)
 
-        // Track
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(1, 1, 1, 0.06)
-        }
-
-        // Fill
         Rectangle {
             width: Manga.chapterPages.length > 0
                 ? parent.width * ((pageListView.currentIndex + 1) / Manga.chapterPages.length)

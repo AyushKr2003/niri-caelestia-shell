@@ -4,16 +4,24 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services
+import "../../../components"
+import "../../../components/controls"
 
 Item {
     id: detailView
 
     readonly property var c: Colours.tPalette
     readonly property string fontDisplay: Config.appearance.font.family.sans
-    readonly property string fontBody: Config.appearance.font.family.sans
+    readonly property string fontBody:    Config.appearance.font.family.sans
 
     signal backRequested()
     signal chapterSelected(string chapterId)
+
+    function formatChapter(ch) {
+        if (!ch) return "?"
+        const match = ch.match(/\d+(\.\d+)?/)
+        return match ? match[0] : ch
+    }
 
     readonly property bool _inLibrary:
         Manga.currentManga ? Manga.isInLibrary(Manga.currentManga.id) : false
@@ -25,232 +33,180 @@ Item {
         // ── Header ────────────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            height: 56
+            height: 64
             color: c.m3surfaceContainerLow
             z: 2
+
+            RowLayout {
+                anchors { fill: parent; leftMargin: Appearance.padding.sm; rightMargin: Appearance.padding.md }
+                spacing: Appearance.spacing.sm
+
+                IconButton {
+                    type: IconButton.Text
+                    icon: "arrow_back"
+                    onClicked: { Manga.clearChapterList(); detailView.backRequested() }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Manga.currentManga ? Manga.currentManga.title : ""
+                    font.pointSize: Appearance.font.size.titleMedium
+                    font.weight: Font.Bold
+                    color: c.m3onSurface; elide: Text.ElideRight
+                }
+
+                IconButton {
+                    id: favButton
+                    visible: Manga.currentManga !== null
+                    type: IconButton.Tonal
+                    icon: detailView._inLibrary ? "done" : "add"
+                    checked: detailView._inLibrary
+                    toggle: true
+                    onClicked: {
+                        if (detailView._inLibrary) {
+                            Manga.removeFromLibrary(Manga.currentManga.id)
+                        } else {
+                            Manga.addToLibrary({
+                                id:       Manga.currentManga.id,
+                                title:    Manga.currentManga.title,
+                                coverUrl: Manga.currentManga.coverUrl
+                            })
+                        }
+                    }
+                    Tooltip {
+                        target: favButton
+                        text: detailView._inLibrary ? qsTr("Remove from library") : qsTr("Add to library")
+                    }
+                }
+            }
 
             Rectangle {
                 anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
                 height: 1; color: c.m3outlineVariant; opacity: 0.5
             }
-
-            RowLayout {
-                anchors { fill: parent; leftMargin: 6; rightMargin: 10 }
-                spacing: 2
-
-                // Back button
-                Item {
-                    width: 44; height: 44
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 34; height: 34; radius: 17
-                        color: backArea.containsMouse ? c.m3surfaceContainer : "transparent"
-                        Behavior on color { ColorAnimation { duration: 130 } }
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        text: "←"; font.pixelSize: 18; color: c.m3onSurfaceVariant
-                    }
-                    MouseArea {
-                        id: backArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: { Manga.clearChapterList(); detailView.backRequested() }
-                    }
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: Manga.currentManga ? Manga.currentManga.title : ""
-                    font.family: detailView.fontDisplay
-                    font.pixelSize: 15; color: c.m3onSurface; elide: Text.ElideRight
-                }
-
-                // ── Library toggle button ─────────────────────────────────────
-                Item {
-                    visible: Manga.currentManga !== null
-                    width: libBtnLabel.implicitWidth + 28
-                    height: 34
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: detailView._inLibrary ? c.m3primaryContainer : c.m3surfaceContainer
-                        border.color: detailView._inLibrary ? c.m3primary : c.m3outlineVariant
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 5
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: detailView._inLibrary ? "✓" : "+"
-                            font.pixelSize: 11; font.bold: true
-                            color: detailView._inLibrary
-                                ? c.m3onPrimaryContainer : c.m3onSurfaceVariant
-                            Behavior on color { ColorAnimation { duration: 180 } }
-                        }
-                        Text {
-                            id: libBtnLabel
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Library"
-                            font.family: detailView.fontBody
-                            font.pixelSize: 11; font.letterSpacing: 0.3
-                            color: detailView._inLibrary
-                                ? c.m3onPrimaryContainer : c.m3onSurfaceVariant
-                            Behavior on color { ColorAnimation { duration: 180 } }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            if (detailView._inLibrary) {
-                                Manga.removeFromLibrary(Manga.currentManga.id)
-                            } else {
-                                Manga.addToLibrary({
-                                    id:       Manga.currentManga.id,
-                                    title:    Manga.currentManga.title,
-                                    coverUrl: Manga.currentManga.coverUrl
-                                })
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         // ── Hero banner ───────────────────────────────────────────────────────
-        Rectangle {
+        Item {
             Layout.fillWidth: true
-            height: Manga.currentManga !== null ? 120 : 0
-            color: c.m3surfaceContainerLow
+            Layout.preferredHeight: Manga.currentManga !== null ? 160 : 0
             clip: true
-            Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+            Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
             Image {
                 anchors.fill: parent
                 source: Manga.currentManga ? Manga.currentManga.coverUrl : ""
                 fillMode: Image.PreserveAspectCrop
-                asynchronous: true; opacity: 0.12
-                layer.enabled: true; layer.effect: null
+                asynchronous: true; opacity: 0.2
             }
-            Rectangle { anchors.fill: parent; color: c.m3surfaceContainerLow; opacity: 0.82 }
+            
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: Qt.alpha(c.m3surfaceContainerLow, 0.8) }
+                    GradientStop { position: 1.0; color: c.m3background }
+                }
+            }
 
-            Row {
-                anchors { fill: parent; margins: 14 }
-                spacing: 14
+            RowLayout {
+                anchors { fill: parent; margins: Appearance.padding.lg }
+                spacing: Appearance.spacing.lg
 
-                Rectangle {
-                    width: 66; height: 92; radius: 8
-                    color: c.m3surfaceContainerHigh; clip: true
-                    anchors.verticalCenter: parent.verticalCenter
+                Card {
+                    Layout.preferredWidth: 90; Layout.preferredHeight: 130
+                    variant: Card.Variant.Elevated
+                    padding: 0
+                    clip: true
 
                     Image {
                         anchors.fill: parent
                         source: Manga.currentManga ? Manga.currentManga.coverUrl : ""
                         fillMode: Image.PreserveAspectCrop; asynchronous: true
                     }
-                    Rectangle {
-                        anchors.fill: parent; radius: 8; color: "transparent"
-                        border.color: c.m3outlineVariant; border.width: 1
-                    }
                 }
 
-                Column {
-                    width: parent.width - 80
-                    spacing: 5; anchors.verticalCenter: parent.verticalCenter
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.spacing.sm
 
-                    Rectangle {
+                    StyledRect {
                         visible: Manga.currentManga && Manga.currentManga.status.length > 0
-                        height: 18; width: statusText.implicitWidth + 14; radius: 9
-                        color: Qt.rgba(c.m3tertiary.r, c.m3tertiary.g, c.m3tertiary.b, 0.15)
-                        border.color: c.m3tertiary; border.width: 1
+                        height: 22; width: statusText.implicitWidth + 16; radius: Appearance.rounding.extraSmall
+                        color: c.m3tertiaryContainer
 
-                        Text {
+                        StyledText {
                             id: statusText; anchors.centerIn: parent
-                            text: Manga.currentManga
-                                ? (Manga.currentManga.status || "").toUpperCase() : ""
-                            font.family: detailView.fontBody
-                            font.pixelSize: 9; font.letterSpacing: 1.2; font.bold: true
-                            color: c.m3tertiary
+                            text: Manga.currentManga ? (Manga.currentManga.status || "").toUpperCase() : ""
+                            font.pointSize: Appearance.font.size.labelSmall
+                            font.weight: Font.Bold
+                            color: c.m3onTertiaryContainer
                         }
                     }
 
-                    Text {
-                        width: parent.width
-                        text: Manga.currentManga
-                            ? (Manga.currentManga.authors || []).join(", ") : ""
-                        font.family: detailView.fontBody
-                        font.pixelSize: 12; font.bold: true
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Manga.currentManga ? (Manga.currentManga.authors || []).join(", ") : ""
+                        font.weight: Font.Bold
                         color: c.m3onSurface; elide: Text.ElideRight
                     }
 
-                    Text {
-                        width: parent.width
+                    StyledText {
+                        Layout.fillWidth: true
                         text: Manga.currentManga ? Manga.currentManga.description : ""
-                        font.family: detailView.fontBody; font.pixelSize: 11
+                        font.pointSize: Appearance.font.size.bodySmall
                         color: c.m3onSurfaceVariant
                         wrapMode: Text.Wrap; maximumLineCount: 3
-                        elide: Text.ElideRight; opacity: 0.8; lineHeight: 1.35
+                        elide: Text.ElideRight; opacity: 0.8; lineHeight: 1.3
                     }
                 }
             }
 
             Rectangle {
                 anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                height: 1; color: c.m3outlineVariant; opacity: 0.35
+                height: 1; color: c.m3outlineVariant; opacity: 0.3
             }
         }
 
         // ── Chapter count + last-read strip ───────────────────────────────────
         Rectangle {
-            Layout.fillWidth: true; height: 36
-            color: c.m3surfaceContainer
+            Layout.fillWidth: true; height: 40
+            color: c.m3surfaceContainerLow
             visible: Manga.currentManga !== null
 
             RowLayout {
-                anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.lg }
 
-                Text {
-                    text: Manga.currentManga
-                        ? Manga.currentManga.chapters.length + " chapters" : ""
-                    font.family: detailView.fontBody
-                    font.pixelSize: 11; font.letterSpacing: 1
-                    color: c.m3onSurfaceVariant; opacity: 0.75
+                StyledText {
+                    text: Manga.currentManga ? qsTr("%1 chapters").arg(Manga.currentManga.chapters.length) : ""
+                    font.pointSize: Appearance.font.size.labelLarge
+                    color: c.m3onSurfaceVariant; opacity: 0.7
                 }
 
                 Item { Layout.fillWidth: true }
 
-                // Last-read badge (visible only when manga is in library and a chapter was read)
-                Rectangle {
-                    readonly property var _entry: Manga.currentManga
-                        ? Manga.getLibraryEntry(Manga.currentManga.id) : null
-                    visible: _entry !== null && _entry !== undefined
-                        && _entry.lastReadChapterNum !== ""
-                        && _entry.lastReadChapterNum !== undefined
-                    height: 20; width: lastReadText.implicitWidth + 18; radius: 10
-                    color: Qt.rgba(c.m3primary.r, c.m3primary.g, c.m3primary.b, 0.12)
-                    border.color: c.m3primary; border.width: 1
+                // Last-read badge
+                StyledRect {
+                    readonly property var _entry: Manga.currentManga ? Manga.getLibraryEntry(Manga.currentManga.id) : null
+                    visible: _entry !== null && _entry !== undefined && _entry.lastReadChapterNum !== ""
+                    height: 24; width: lastReadText.implicitWidth + 20; radius: Appearance.rounding.full
+                    color: c.m3primaryContainer
 
-                    Text {
-                        id: lastReadText; anchors.centerIn: parent
-                        text: {
-                            var e = Manga.currentManga
-                                ? Manga.getLibraryEntry(Manga.currentManga.id) : null
-                            return e ? "Last: Ch. " + e.lastReadChapterNum : ""
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialIcon { text: "history"; font.pointSize: 14; color: c.m3onPrimaryContainer }
+                        StyledText {
+                            id: lastReadText
+                            text: {
+                                var e = Manga.currentManga ? Manga.getLibraryEntry(Manga.currentManga.id) : null
+                                return e ? qsTr("Ch. %1").arg(detailView.formatChapter(e.lastReadChapterNum)) : ""
+                            }
+                            font.pointSize: Appearance.font.size.labelSmall
+                            font.weight: Font.Bold
+                            color: c.m3onPrimaryContainer
                         }
-                        font.family: detailView.fontBody
-                        font.pixelSize: 9; font.letterSpacing: 0.8; color: c.m3primary
                     }
                 }
-
-                Rectangle { width: 3; height: 3; radius: 2; color: c.m3outlineVariant; opacity: 0.5 }
             }
 
             Rectangle {
@@ -262,31 +218,20 @@ Item {
         // ── Chapter list ──────────────────────────────────────────────────────
         Item {
             Layout.fillWidth: true; Layout.fillHeight: true
-            Rectangle { anchors.fill: parent; color: c.m3background }
 
+            // Loading overlay
             Rectangle {
                 anchors.fill: parent; color: c.m3background
                 visible: Manga.isFetchingDetail; z: 5
 
-                Column {
-                    anchors.centerIn: parent; spacing: 14
+                ColumnLayout {
+                    anchors.centerIn: parent; spacing: Appearance.spacing.md
 
-                    Rectangle {
-                        width: 28; height: 28; radius: 14
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: "transparent"; border.color: c.m3primary; border.width: 2
-                        RotationAnimator on rotation {
-                            from: 0; to: 360; duration: 800
-                            loops: Animation.Infinite; running: parent.visible
-                            easing.type: Easing.Linear
-                        }
-                    }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "fetching chapters"
-                        color: c.m3onSurfaceVariant
-                        font.family: detailView.fontBody
-                        font.pixelSize: 11; font.letterSpacing: 2; opacity: 0.7
+                    StyledBusyIndicator { Layout.alignment: Qt.AlignHCenter; running: parent.visible }
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Fetching chapters...")
+                        color: c.m3onSurfaceVariant; opacity: 0.7
                     }
                 }
             }
@@ -297,95 +242,70 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 model: Manga.currentManga ? Manga.currentManga.chapters : []
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
-                    contentItem: Rectangle {
-                        implicitWidth: 3; color: c.m3primary; opacity: 0.45; radius: 2
-                    }
-                }
+                ScrollBar.vertical: StyledScrollBar {}
 
-                delegate: Rectangle {
-                    width: chapterList.width; height: 58
+                delegate: Item {
+                    width: chapterList.width; height: 64
 
-                    readonly property var _libEntry: Manga.currentManga
-                        ? Manga.getLibraryEntry(Manga.currentManga.id) : null
-                    readonly property bool isLastRead:
-                        _libEntry !== null && _libEntry !== undefined
-                        && _libEntry.lastReadChapterId === modelData.id
-
-                    color: isLastRead
-                        ? Qt.rgba(c.m3primary.r, c.m3primary.g, c.m3primary.b, 0.07)
-                        : (chapterRowArea.pressed
-                            ? c.m3surfaceContainerHigh
-                            : (chapterRowArea.containsMouse ? c.m3surfaceContainer : "transparent"))
-                    Behavior on color { ColorAnimation { duration: 110 } }
+                    readonly property var _libEntry: Manga.currentManga ? Manga.getLibraryEntry(Manga.currentManga.id) : null
+                    readonly property bool isLastRead: _libEntry !== null && _libEntry !== undefined && _libEntry.lastReadChapterId === modelData.id
 
                     Rectangle {
-                        anchors {
-                            bottom: parent.bottom
-                            left: parent.left; right: parent.right
-                            leftMargin: 72; rightMargin: 16
-                        }
-                        height: 1; color: c.m3outlineVariant; opacity: 0.25
+                        anchors.fill: parent
+                        color: isLastRead ? Qt.alpha(c.m3primary, 0.08) : "transparent"
                     }
 
-                    RowLayout {
-                        anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
-                        spacing: 14
-
-                        Rectangle {
-                            width: chapterPillText.implicitWidth + 16
-                            height: 26; radius: 13
-                            color: isLastRead ? c.m3primary : c.m3primaryContainer
-
-                            Text {
-                                id: chapterPillText; anchors.centerIn: parent
-                                text: "Ch." + (modelData.chapter || "?")
-                                font.family: detailView.fontBody
-                                font.pixelSize: 9; font.bold: true; font.letterSpacing: 0.5
-                                color: isLastRead ? c.m3onPrimary : c.m3onPrimaryContainer
-                            }
-                        }
-
-                        Column {
-                            Layout.fillWidth: true; spacing: 3
-
-                            Text {
-                                width: parent.width
-                                text: modelData.title || ("Chapter " + (modelData.chapter || ""))
-                                font.family: detailView.fontBody
-                                font.pixelSize: 12; color: c.m3onSurface; elide: Text.ElideRight
-                            }
-                            Text {
-                                text: modelData.publishAt
-                                    ? Qt.formatDate(new Date(modelData.publishAt), "MMM d, yyyy")
-                                    : ""
-                                font.family: detailView.fontBody
-                                font.pixelSize: 10; color: c.m3onSurfaceVariant
-                                opacity: 0.55; font.letterSpacing: 0.3
-                            }
-                        }
-
-                        Text {
-                            text: "›"; font.pixelSize: 20; color: c.m3outline
-                            opacity: chapterRowArea.containsMouse ? 0.9 : 0.4
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
-                        }
-                    }
-
-                    MouseArea {
-                        id: chapterRowArea; anchors.fill: parent; hoverEnabled: true
+                    StateLayer {
+                        anchors.fill: parent
                         onClicked: {
                             Manga.fetchChapterPages(modelData.id)
                             detailView.chapterSelected(modelData.id)
                             if (Manga.currentManga && Manga.isInLibrary(Manga.currentManga.id)) {
-                                Manga.updateLastRead(
-                                    Manga.currentManga.id,
-                                    modelData.id,
-                                    modelData.chapter
-                                )
+                                Manga.updateLastRead(Manga.currentManga.id, modelData.id, modelData.chapter)
                             }
                         }
+                    }
+
+                    RowLayout {
+                        anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.lg }
+                        spacing: Appearance.spacing.md
+
+                        StyledRect {
+                            Layout.preferredWidth: 48; Layout.preferredHeight: 32; radius: Appearance.rounding.small
+                            color: isLastRead ? c.m3primary : c.m3surfaceContainerHigh
+
+                            StyledText {
+                                anchors.centerIn: parent
+                                text: detailView.formatChapter(modelData.chapter)
+                                font.weight: Font.Bold
+                                color: isLastRead ? c.m3onPrimary : c.m3onSurface
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true; spacing: 2
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: modelData.title || qsTr("Chapter %1").arg(detailView.formatChapter(modelData.chapter))
+                                font.weight: Font.Medium
+                                color: c.m3onSurface; elide: Text.ElideRight
+                            }
+                            StyledText {
+                                text: modelData.publishAt ? Qt.formatDate(new Date(modelData.publishAt), "MMM d, yyyy") : ""
+                                font.pointSize: Appearance.font.size.labelSmall
+                                color: c.m3onSurfaceVariant; opacity: 0.6
+                            }
+                        }
+
+                        MaterialIcon {
+                            text: "chevron_right"; color: c.m3outline
+                        }
+                    }
+
+                    Rectangle {
+                        anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 72 }
+                        height: 1; color: c.m3outlineVariant; opacity: 0.2
                     }
                 }
             }

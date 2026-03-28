@@ -129,7 +129,10 @@ Singleton {
     }
 
     // Load library as soon as the singleton initialises
-    Component.onCompleted: libraryFile.reload()
+    Component.onCompleted: {
+        console.log("[ServiceManga] Singleton instantiated")
+        libraryFile.reload()
+    }
 
     // ── Backend server ───────────────────────────────────────────────────────
     property bool serverReady: false
@@ -144,29 +147,39 @@ Singleton {
             (Quickshell.env("CAELESTIA_VIRTUAL_ENV") || (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/quickshell/.venv") + "/bin/python3",
             root._rootPath + "/scripts/manga/manga_server.py"
         ]
-        running: true
+        running: false // Started by healthPoller if needed
         onExited: (code) => {
-            console.warn("[ServiceManga] Server exited with code", code, "— restarting")
-            serverReady = false
-            serverProcess.running = true
+            root.serverReady = false
+            if (code !== 0 && code !== 1) { // 1 usually means 'port busy' which we handle via lazy start
+                console.warn("[ServiceManga] Server exited with code", code)
+            }
         }
     }
 
     Timer {
         id: healthPoller
-        interval: 150
+        interval: 2000
         repeat: true
         running: true
         onTriggered: {
             var xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    healthPoller.stop()
-                    root.serverReady = true
-                    console.log("[ServiceManga] Backend ready at", root.apiUrl)
-                    fetchByOrigin("", true)
-                    fetchFavorites()
-                    fetchDownloads()
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        if (!root.serverReady) {
+                            root.serverReady = true
+                            console.log("[ServiceManga] Backend connected at", root.apiUrl)
+                            fetchByOrigin("", true)
+                            fetchFavorites()
+                            fetchDownloads()
+                        }
+                    } else {
+                        root.serverReady = false
+                        if (!serverProcess.running) {
+                            console.log("[ServiceManga] Backend not found, starting process...")
+                            serverProcess.running = true
+                        }
+                    }
                 }
             }
             xhr.open("GET", root.apiUrl + "/health")
@@ -237,7 +250,7 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchByOrigin(origin, reset) {
-        if (root.isFetchingManga) return
+        if (!root.serverReady || root.isFetchingManga) return
         if (reset) { root.mangaList = []; root.currentOffset = 0; root.latestPage = 1 }
         root.currentOrigin = origin
         root.currentSearchText = ""
@@ -265,14 +278,14 @@ Singleton {
     }
 
     function searchManga(query, reset) {
-        if (root.isFetchingManga) return
+        if (!root.serverReady || root.isFetchingManga) return
         if (reset) { root.mangaList = []; root.currentOffset = 0 }
         root.currentSearchText = query
         _doSearch(query, _originType(root.currentOrigin), root.currentOffset, "Best Match")
     }
 
     function fetchNextMangaPage() {
-        if (!root.hasMoreManga || root.isFetchingManga) return
+        if (!root.serverReady || !root.hasMoreManga || root.isFetchingManga) return
         if (root.currentSearchText.length > 0) {
             _doSearch(root.currentSearchText, _originType(root.currentOrigin), root.currentOffset, "Best Match")
         } else if (root.currentOrigin === "latest") {
@@ -327,7 +340,7 @@ Singleton {
 
     // ── Manga detail ──────────────────────────────────────────────────────────
     function fetchMangaDetail(mangaId) {
-        if (root.isFetchingDetail) return
+        if (!root.serverReady || root.isFetchingDetail) return
         root.isFetchingDetail = true
         root.currentManga = null
         root.detailError = ""
@@ -370,7 +383,7 @@ Singleton {
 
     // ── Chapter pages ─────────────────────────────────────────────────────────
     function fetchChapterPages(chapterId) {
-        if (root.isFetchingPages) return
+        if (!root.serverReady || root.isFetchingPages) return
         root.isFetchingPages = true
         root.currentChapterId = chapterId
         root.chapterPages = []
@@ -383,7 +396,7 @@ Singleton {
     }
 
     function fetchOfflineChapterPages(chapterId) {
-        if (root.isFetchingPages) return
+        if (!root.serverReady || root.isFetchingPages) return
         root.isFetchingPages = true
         root.currentChapterId = chapterId
         root.chapterPages = []
@@ -424,7 +437,7 @@ Singleton {
 
     // ── Favorites ─────────────────────────────────────────────────────────────
     function fetchFavorites() {
-        if (root.isFetchingFavs) return
+        if (!root.serverReady || root.isFetchingFavs) return
         root.isFetchingFavs = true
         _get(root.apiUrl + "/favorites", function(err, body) {
             root.isFetchingFavs = false
@@ -440,6 +453,7 @@ Singleton {
     }
 
     function addFavorite(manga) {
+        if (!root.serverReady) return
         const rawUrl = _extractRawUrl(manga.coverUrl)
         _post(root.apiUrl + "/favorites/add",
             { id: manga.id, title: manga.title, imageUrl: rawUrl },
@@ -447,6 +461,7 @@ Singleton {
     }
 
     function removeFavorite(mangaId) {
+        if (!root.serverReady) return
         _post(root.apiUrl + "/favorites/remove", { id: mangaId },
                 function(err, body) { if (!err) fetchFavorites() })
     }
@@ -456,12 +471,14 @@ Singleton {
     }
 
     function markChapterSeen(mangaId, chapterId) {
+        if (!root.serverReady) return
         _post(root.apiUrl + "/favorites/mark-seen",
             { id: mangaId, chapterId: chapterId },
                 function(err, body) { if (!err) fetchFavorites() })
     }
 
     function checkFavoritesForUpdates() {
+        if (!root.serverReady) return
         _get(root.apiUrl + "/favorites/check", function(err, body) {
             if (err) { console.warn("[ServiceManga] fav check failed:", err); return }
             try {
@@ -473,6 +490,7 @@ Singleton {
 
     // ── Downloads ─────────────────────────────────────────────────────────────
     function fetchDownloads() {
+        if (!root.serverReady) return
         _get(root.apiUrl + "/dl/list", function(err, body) {
             if (err) { console.warn("[ServiceManga] dl/list failed:", err); return }
             try { root.downloadsList = JSON.parse(body) }
@@ -481,6 +499,7 @@ Singleton {
     }
 
     function startDownload(chapter, manga) {
+        if (!root.serverReady) return
         const rawCover = _extractRawUrl(manga.coverUrl)
         var dp = Object.assign({}, root.downloadProgress)
         dp[chapter.id] = { status: "pending", total: 0, done: 0 }
@@ -503,6 +522,7 @@ Singleton {
     }
 
     function _pollOne(chapterId) {
+        if (!root.serverReady) return
         _get(root.apiUrl + "/dl/progress?chapterId=" + encodeURIComponent(chapterId),
                 function(err, body) {
                 if (err) return
@@ -521,6 +541,7 @@ Singleton {
     }
 
     function deleteDownload(chapterId) {
+        if (!root.serverReady) return
         _post(root.apiUrl + "/dl/delete", { chapterId: chapterId },
                 function(err, body) { if (!err) fetchDownloads() })
     }
@@ -534,7 +555,7 @@ Singleton {
     function downloadMorePages(upTo) {}
 
     function refreshChapterPages() {
-        if (root.currentChapterId.length === 0) return
+        if (!root.serverReady || root.currentChapterId.length === 0) return
         root.chapterPages = []
         fetchChapterPages(root.currentChapterId)
     }

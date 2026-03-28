@@ -4,6 +4,8 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services
+import "../../../components"
+import "../../../components/controls"
 
 Item {
     id: browseView
@@ -25,107 +27,48 @@ Item {
         // ── Header ──────────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            height: 60
+            height: 64
             color: c.m3surfaceContainerLow
             z: 2
 
-            Rectangle {
-                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                height: 1
-                color: c.m3outlineVariant
-                opacity: 0.5
-            }
-
             RowLayout {
-                anchors { fill: parent; leftMargin: 18; rightMargin: 12 }
-                spacing: 10
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.md }
+                spacing: Appearance.spacing.md
 
                 // Wordmark
-                Row {
-                    spacing: 0
+                RowLayout {
+                    spacing: Appearance.spacing.xs
                     visible: !searchBar.visible
                     Layout.fillWidth: true
 
-                    Text {
-                        text: "M"
-                        font.family: browseView.fontDisplay
-                        font.pixelSize: 24
-                        font.letterSpacing: 1
+                    MaterialIcon {
+                        text: "auto_stories"
                         color: c.m3primary
+                        font.pointSize: Appearance.font.size.headlineLarge
                     }
-                    Text {
-                        text: "anga"
-                        font.family: browseView.fontDisplay
-                        font.pixelSize: 24
-                        font.letterSpacing: 1
+
+                    StyledText {
+                        text: qsTr("Manga")
+                        font.pointSize: Appearance.font.size.titleMedium
+                        font.weight: Font.Bold
                         color: c.m3onSurface
-                        opacity: 0.85
                     }
                 }
 
                 // Search bar
-                Rectangle {
+                StyledInputField {
                     id: searchBar
                     Layout.fillWidth: true
-                    height: 38
-                    radius: 19
-                    color: c.m3surfaceContainer
                     visible: false
-                    border.color: searchField.activeFocus ? c.m3primary : c.m3outlineVariant
-                    border.width: searchField.activeFocus ? 1.5 : 1
-                    Behavior on border.width { NumberAnimation { duration: 120 } }
-
-                    TextInput {
-                        id: searchField
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            left: parent.left; right: clearBtn.left
-                            leftMargin: 16; rightMargin: 6
-                        }
-                        color: c.m3onSurface
-                        font.family: browseView.fontBody
-                        font.pixelSize: 13
-                        clip: true
-                        onTextChanged: searchDebounce.restart()
-                        Keys.onEscapePressed: {
-                            searchBar.visible = false
-                            text = ""
-                            Manga.fetchByOrigin(browseView.currentTagId, true)
-                        }
-                    }
-
-                    Text {
-                        anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 16 }
-                        text: "Search titles…"
-                        color: c.m3onSurfaceVariant
-                        font.family: browseView.fontBody
-                        font.pixelSize: 13
-                        visible: searchField.text.length === 0
-                        opacity: 0.6
-                    }
-
-                    // Clear button
-                    Item {
-                        id: clearBtn
-                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 10 }
-                        width: 22; height: 22
-                        visible: searchField.text.length > 0
-                        opacity: visible ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 100 } }
-
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 18; height: 18; radius: 9
-                            color: c.m3surfaceContainerHighest
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            text: "✕"
-                            color: c.m3onSurfaceVariant
-                            font.pixelSize: 9
-                            font.bold: true
-                        }
-                        MouseArea { anchors.fill: parent; onClicked: searchField.text = "" }
+                    text: ""
+                    horizontalAlignment: TextInput.AlignLeft
+                    
+                    onTextEdited: searchDebounce.restart()
+                    
+                    Keys.onEscapePressed: {
+                        visible = false
+                        text = ""
+                        Manga.fetchByOrigin(browseView.currentTagId, true)
                     }
                 }
 
@@ -133,117 +76,70 @@ Item {
                     id: searchDebounce
                     interval: 350
                     onTriggered: {
-                        if (searchField.text.trim().length > 0)
-                            Manga.searchManga(searchField.text.trim(), true)
+                        if (searchBar.text.trim().length > 0)
+                            Manga.searchManga(searchBar.text.trim(), true)
                         else
                             Manga.fetchByOrigin(browseView.currentTagId, true)
                     }
                 }
 
-                // Search toggle button
-                Item {
-                    width: 40; height: 40
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 34; height: 34; radius: 17
-                        color: searchBar.visible ? c.m3primaryContainer : "transparent"
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        text: "⌕"
-                        font.pixelSize: 19
-                        color: searchBar.visible ? c.m3onPrimaryContainer : c.m3onSurfaceVariant
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            searchBar.visible = !searchBar.visible
-                            if (searchBar.visible) {
-                                searchField.forceActiveFocus()
-                            } else {
-                                searchField.text = ""
-                                Manga.fetchByOrigin(browseView.currentTagId, true)
-                            }
+                IconButton {
+                    id: searchToggle
+                    type: IconButton.Tonal
+                    icon: searchBar.visible ? "close" : "search"
+                    onClicked: {
+                        searchBar.visible = !searchBar.visible
+                        if (searchBar.visible) {
+                            searchBar.forceActiveFocus()
+                        } else {
+                            searchBar.text = ""
+                            Manga.fetchByOrigin(browseView.currentTagId, true)
                         }
                     }
                 }
+            }
+
+            Rectangle {
+                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                height: 1
+                color: c.m3outlineVariant
+                opacity: 0.5
             }
         }
 
         // ── Tag filter chips ─────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            height: 48
+            height: 56
             color: c.m3surfaceContainerLow
             clip: true
 
-            Rectangle {
-                anchors { top: parent.top; left: parent.left; right: parent.right }
-                height: 1
-                color: c.m3outlineVariant
-                opacity: 0.25
-            }
-
             ListView {
                 id: tagList
-                anchors { fill: parent; leftMargin: 14; rightMargin: 14 }
+                anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.md }
                 orientation: ListView.Horizontal
-                spacing: 7
+                spacing: Appearance.spacing.sm
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
                 model: ListModel {
-                    ListElement { label: "Hot";     tagId: ""       }
-                    ListElement { label: "Latest";  tagId: "latest" }
-                    ListElement { label: "Manga";   tagId: "ja"     }
-                    ListElement { label: "Manhwa";  tagId: "ko"     }
-                    ListElement { label: "Manhua";  tagId: "zh"     }
+                    ListElement { label: qsTr("Hot");     tagId: "";       icon: "local_fire_department" }
+                    ListElement { label: qsTr("Latest");  tagId: "latest"; icon: "new_releases" }
+                    ListElement { label: qsTr("Manga");   tagId: "ja";     icon: "menu_book" }
+                    ListElement { label: qsTr("Manhwa");  tagId: "ko";     icon: "auto_stories" }
+                    ListElement { label: qsTr("Manhua");  tagId: "zh";     icon: "import_contacts" }
                 }
 
-                delegate: Item {
-                    width: chip.implicitWidth + 28
-                    height: tagList.height
-
-                    Rectangle {
-                        id: chip
-                        anchors.centerIn: parent
-                        implicitWidth: chipLabel.implicitWidth + 28
-                        height: 30
-                        radius: 15
-                        color: browseView.currentTagId === tagId
-                            ? c.m3primary
-                            : c.m3surfaceContainer
-                        border.color: browseView.currentTagId === tagId
-                            ? c.m3primary
-                            : c.m3outlineVariant
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: 180 } }
-
-                        Text {
-                            id: chipLabel
-                            anchors.centerIn: parent
-                            text: label
-                            font.family: browseView.fontBody
-                            font.pixelSize: 12
-                            font.letterSpacing: 0.6
-                            color: browseView.currentTagId === tagId
-                                ? c.m3onPrimary
-                                : c.m3onSurfaceVariant
-                            Behavior on color { ColorAnimation { duration: 180 } }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            browseView.currentTagId = tagId
-                            searchField.text = ""
-                            searchBar.visible = false
-                            Manga.fetchByOrigin(tagId, true)
-                        }
+                delegate: Chip {
+                    text: label
+                    icon: model.icon
+                    selected: browseView.currentTagId === tagId
+                    
+                    onClicked: {
+                        browseView.currentTagId = tagId
+                        searchBar.text = ""
+                        searchBar.visible = false
+                        Manga.fetchByOrigin(tagId, true)
                     }
                 }
             }
@@ -268,30 +164,19 @@ Item {
                 visible: Manga.isFetchingManga && Manga.mangaList.length === 0
                 z: 10
 
-                Column {
+                ColumnLayout {
                     anchors.centerIn: parent
-                    spacing: 16
+                    spacing: Appearance.spacing.md
 
-                    Rectangle {
-                        width: 36; height: 36; radius: 18
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: "transparent"
-                        border.color: c.m3primary
-                        border.width: 2.5
-                        RotationAnimator on rotation {
-                            from: 0; to: 360; duration: 800
-                            loops: Animation.Infinite
-                            running: parent.visible
-                            easing.type: Easing.Linear
-                        }
+                    StyledBusyIndicator {
+                        Layout.alignment: Qt.AlignHCenter
+                        running: parent.visible
                     }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "loading"
+                    
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Loading titles...")
                         color: c.m3onSurfaceVariant
-                        font.family: browseView.fontBody
-                        font.pixelSize: 11
-                        font.letterSpacing: 2.5
                         opacity: 0.7
                     }
                 }
@@ -304,25 +189,30 @@ Item {
                 visible: Manga.mangaError.length > 0 && !Manga.isFetchingManga
                 z: 9
 
-                Column {
+                ColumnLayout {
                     anchors.centerIn: parent
-                    spacing: 10
-                    Text {
-                        text: "⚠"
-                        font.pixelSize: 32
+                    spacing: Appearance.spacing.md
+                    
+                    MaterialIcon {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "error"
+                        font.pointSize: 48
                         color: c.m3error
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        opacity: 0.8
                     }
-                    Text {
+                    
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
                         text: Manga.mangaError
                         color: c.m3onSurfaceVariant
-                        font.pixelSize: 12
-                        font.family: browseView.fontBody
                         wrapMode: Text.Wrap
-                        width: 260
+                        Layout.preferredWidth: 300
                         horizontalAlignment: Text.AlignHCenter
-                        lineHeight: 1.4
+                    }
+                    
+                    TextButton {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("Retry")
+                        onClicked: Manga.fetchByOrigin(browseView.currentTagId, true)
                     }
                 }
             }
@@ -331,22 +221,14 @@ Item {
             GridView {
                 id: mangaGrid
                 anchors.fill: parent
-                anchors.margins: 10
-                cellWidth: (width - 10) / 4
-                cellHeight: cellWidth * 1.58
+                anchors.margins: Appearance.padding.md
+                cellWidth: width / 3
+                cellHeight: cellWidth * 1.6
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 model: Manga.mangaList
 
-                ScrollBar.vertical: ScrollBar {
-                    policy: ScrollBar.AsNeeded
-                    contentItem: Rectangle {
-                        implicitWidth: 3
-                        color: c.m3primary
-                        opacity: 0.45
-                        radius: 2
-                    }
-                }
+                ScrollBar.vertical: StyledScrollBar {}
 
                 onContentYChanged: {
                     if (contentY + height > contentHeight - cellHeight * 2)
@@ -357,123 +239,91 @@ Item {
                     width: mangaGrid.cellWidth
                     height: mangaGrid.cellHeight
 
-                    Rectangle {
+                    Card {
                         id: card
-                        anchors { fill: parent; margins: 5 }
-                        radius: 12
-                        color: c.m3surfaceContainer
+                        anchors { fill: parent; margins: Appearance.spacing.sm }
+                        variant: Card.Variant.Filled
                         clip: true
 
-                        // Cover image
-                        Image {
-                            id: coverImg
-                            anchors { top: parent.top; left: parent.left; right: parent.right }
-                            height: parent.height - titleBar.height
-                            source: modelData.thumbUrl || ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            cache: true
-                            opacity: status === Image.Ready ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: 300 } }
-
-                            // Placeholder shimmer
-                            Rectangle {
-                                anchors.fill: parent
-                                color: c.m3surfaceContainerHigh
-                                visible: coverImg.status !== Image.Ready
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "◫"
-                                    font.pixelSize: 32
-                                    color: c.m3outline
-                                    opacity: 0.25
-                                }
-                            }
-
-                            // Type badge
-                            Rectangle {
-                                visible: modelData.type && modelData.type.length > 0
-                                anchors { top: parent.top; right: parent.right; topMargin: 8; rightMargin: 8 }
-                                height: 20
-                                radius: 10
-                                width: typeText.implicitWidth + 14
-                                color: Qt.rgba(0, 0, 0, 0.7)
-
-                                Text {
-                                    id: typeText
-                                    anchors.centerIn: parent
-                                    text: (modelData.type || "").toUpperCase()
-                                    font.family: browseView.fontBody
-                                    font.pixelSize: 8
-                                    font.letterSpacing: 1
-                                    font.bold: true
-                                    color: c.m3primaryFixedDim
-                                }
-                            }
-
-                            // Gradient vignette at bottom of cover
-                            Rectangle {
-                                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                                height: 56
-                                gradient: Gradient {
-                                    GradientStop { position: 0.0; color: "transparent" }
-                                    GradientStop { position: 1.0; color: c.m3surfaceContainer }
-                                }
-                            }
-                        }
-
-                        // Title bar
-                        Rectangle {
-                            id: titleBar
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: titleText.implicitHeight + 18
-                            color: c.m3surfaceContainer
-                            radius: 12
-
-                            Text {
-                                id: titleText
-                                anchors {
-                                    left: parent.left; right: parent.right
-                                    verticalCenter: parent.verticalCenter
-                                    leftMargin: 10; rightMargin: 10
-                                }
-                                text: modelData.title || ""
-                                font.family: browseView.fontBody
-                                font.pixelSize: 11
-                                font.letterSpacing: 0.2
-                                color: c.m3onSurface
-                                wrapMode: Text.Wrap
-                                maximumLineCount: 2
-                                elide: Text.ElideRight
-                                lineHeight: 1.3
-                            }
-                        }
-
-                        // Hover + press overlay
-                        Rectangle {
+                        ColumnLayout {
                             anchors.fill: parent
-                            radius: 12
-                            color: c.m3primary
-                            opacity: cardArea.pressed
-                                ? 0.16
-                                : (cardArea.containsMouse ? 0.07 : 0)
-                            Behavior on opacity { NumberAnimation { duration: 130 } }
+                            spacing: 0
+
+                            // Cover image
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                clip: true
+
+                                Image {
+                                    id: coverImg
+                                    anchors.fill: parent
+                                    source: modelData.thumbUrl || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: true
+                                    opacity: status === Image.Ready ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 300 } }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: c.m3surfaceContainerHigh
+                                    visible: coverImg.status !== Image.Ready
+                                    
+                                    MaterialIcon {
+                                        anchors.centerIn: parent
+                                        text: "image"
+                                        font.pointSize: 32
+                                        color: c.m3outline
+                                        opacity: 0.3
+                                    }
+                                }
+
+                                // Type badge
+                                StyledRect {
+                                    visible: modelData.type && modelData.type.length > 0
+                                    anchors { top: parent.top; right: parent.right; topMargin: 8; rightMargin: 8 }
+                                    height: 20
+                                    radius: Appearance.rounding.extraSmall
+                                    width: typeText.implicitWidth + 12
+                                    color: Qt.alpha(c.m3surfaceContainerLowest, 0.8)
+
+                                    StyledText {
+                                        id: typeText
+                                        anchors.centerIn: parent
+                                        text: (modelData.type || "").toUpperCase()
+                                        font.pointSize: Appearance.font.size.labelSmall
+                                        font.weight: Font.Bold
+                                        color: c.m3primary
+                                    }
+                                }
+                            }
+
+                            // Title bar
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: titleText.implicitHeight + Appearance.padding.md
+
+                                StyledText {
+                                    id: titleText
+                                    anchors {
+                                        left: parent.left; right: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        leftMargin: Appearance.padding.sm; rightMargin: Appearance.padding.sm
+                                    }
+                                    text: modelData.title || ""
+                                    font.weight: Font.Medium
+                                    color: c.m3onSurface
+                                    wrapMode: Text.Wrap
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                }
+                            }
                         }
 
-                        // Scale effect on hover
-                        transform: Scale {
-                            origin.x: card.width / 2
-                            origin.y: card.height / 2
-                            xScale: cardArea.pressed ? 0.97 : 1.0
-                            yScale: cardArea.pressed ? 0.97 : 1.0
-                            Behavior on xScale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                            Behavior on yScale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                        }
-
-                        MouseArea {
-                            id: cardArea
+                        StateLayer {
                             anchors.fill: parent
-                            hoverEnabled: true
                             onClicked: {
                                 Manga.fetchMangaDetail(modelData.id)
                                 browseView.mangaSelected(modelData.id)

@@ -100,4 +100,20 @@ Scope {
             }
         }
     }
+
+    IpcHandler {
+        target: "mangaReader"
+        function toggle(): void {
+            const visibilities = Visibilities.getForActive()
+            visibilities.manga = !visibilities.manga
+        }
+    }
+
+    IpcHandler {
+        target: "novelReader"
+        function toggle(): void {
+            const visibilities = Visibilities.getForActive()
+            visibilities.novel = !visibilities.novel
+        }
+    }
 }

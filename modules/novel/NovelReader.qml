@@ -4,6 +4,8 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services
+import "../../components"
+import "../../components/controls"
 import "./components"
 
 Item {
@@ -24,15 +26,15 @@ Item {
     property int browseStack:  0
     property int libraryStack: 0
 
-    Rectangle { anchors.fill: parent; color: c.m3background }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
         Rectangle {
-            Layout.fillWidth: true; height: 44
-            color: c.m3surfaceContainerLow; z: 10
+            Layout.fillWidth: true
+            height: 48
+            color: c.m3surfaceContainerLow
+            z: 10
 
             Rectangle {
                 anchors { bottom: parent.bottom; right: parent.right; left: parent.left }
@@ -44,37 +46,42 @@ Item {
 
                 Repeater {
                     model: [
-                        { label: "Browse",  icon: "⊞" },
-                        { label: "Library", icon: "⊟" }
+                        { label: qsTr("Browse"),  icon: "explore" },
+                        { label: qsTr("Library"), icon: "library_books" }
                     ]
 
                     delegate: Item {
                         width: root.width / 2; height: parent.height
                         readonly property bool active: root.tabIndex === index
 
-                        Rectangle {
+                        StateLayer {
                             anchors.fill: parent
-                            color: tabTap.containsMouse && !active
-                                ? Qt.rgba(c.m3primary.r, c.m3primary.g, c.m3primary.b, 0.05)
-                                : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            color: active ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                            opacity: active ? 0.12 : 0
+                            
+                            function onClicked(): void {
+                                root.tabIndex = index
+                            }
                         }
 
-                        Column {
-                            anchors.centerIn: parent; spacing: 2
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: modelData.icon; font.pixelSize: 13
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: Appearance.spacing.sm
+
+                            MaterialIcon {
+                                text: modelData.icon
+                                font.pointSize: Appearance.font.size.bodyLarge
                                 color: active ? c.m3primary : c.m3onSurfaceVariant
-                                opacity: active ? 1 : 0.5
+                                opacity: active ? 1 : 0.7
                                 Behavior on color { ColorAnimation { duration: 180 } }
                             }
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: modelData.label; font.family: root.fontBody
-                                font.pixelSize: 10; font.letterSpacing: 0.6
+                            
+                            StyledText {
+                                text: modelData.label
+                                font.pointSize: Appearance.font.size.labelLarge
+                                font.weight: active ? Font.Bold : Font.Normal
                                 color: active ? c.m3primary : c.m3onSurfaceVariant
-                                opacity: active ? 1 : 0.5
+                                opacity: active ? 1 : 0.7
                                 Behavior on color { ColorAnimation { duration: 180 } }
                             }
                         }
@@ -82,13 +89,8 @@ Item {
                         // Active indicator
                         Rectangle {
                             anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
-                            width: active ? 28 : 0; height: 2; radius: 1; color: c.m3primary
+                            width: active ? parent.width * 0.6 : 0; height: 3; radius: 1.5; color: c.m3primary
                             Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        }
-
-                        MouseArea {
-                            id: tabTap; anchors.fill: parent; hoverEnabled: true
-                            onClicked: root.tabIndex = index
                         }
                     }
                 }
