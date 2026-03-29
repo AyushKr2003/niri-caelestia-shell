@@ -69,6 +69,8 @@ if ! WALLPAPER_PATH=$(validate_path "$WALLPAPER_PATH" "wallpaper"); then
     fi
 fi
 
+echo "[sddm-apply] Applying wallpaper: $WALLPAPER_PATH"
+
 # --- Determine type and extension ---
 WALLPAPER_BASENAME="$(basename "$WALLPAPER_PATH")"
 WALLPAPER_EXT="${WALLPAPER_BASENAME##*.}"

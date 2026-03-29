@@ -47,15 +47,20 @@ command -v sddm-greeter-qt6 &>/dev/null || die "sddm-greeter-qt6 not found. Plea
 
 # ── Auto-detect wallpaper ─────────────────────────────────────────────────
 if [[ -z "$WALLPAPER" ]]; then
-    # Try theme config hint
+    # Try theme config hint (Integrated mode uses line 5)
     WP_HINT="$HOME/.config/niri-caelestia-sddm/Colors.qml"
     if [[ -f "$WP_HINT" ]]; then
+        # Try both line 5 (integrated) and standard grep (manual)
         WALLPAPER=$(sed -n '5p' "$WP_HINT" | sed 's/^\/\/\s*//' | xargs)
+        if [[ ! -f "${WALLPAPER/#\~/$HOME}" ]]; then
+             # Fallback to grep for manual mode
+             WALLPAPER=$(grep "wallpaperPath:" "$HOME/.config/niri-caelestia-sddm/Settings.qml" | cut -d'"' -f2 || echo "")
+        fi
         WALLPAPER="${WALLPAPER/#\~/$HOME}"
     fi
 fi
 
-if [[ -z "$WALLPAPER" ]]; then
+if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
     # Fallback search
     for dir in "$HOME/Pictures/Wallpapers" "$HOME/Pictures" "$HOME/.local/share/wallpapers" "/usr/share/backgrounds"; do
         [[ -d "$dir" ]] && WALLPAPER=$(find "$dir" -maxdepth 2 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | head -1) && [[ -n "$WALLPAPER" ]] && break
@@ -75,8 +80,14 @@ if [[ -d "$CONFIG_DIR" ]]; then
 fi
 
 # ── Set defaults for testing ─────────────────────────────────────────────
-WP_REL="assets/background.jpg"
-info "Using theme default assets (no search)."
+if [[ -n "$WALLPAPER" && -f "$WALLPAPER" ]]; then
+    info "Using detected wallpaper: $WALLPAPER"
+    cp "$WALLPAPER" "$TMP_THEME/Backgrounds/wallpaper.jpg"
+    WP_REL="Backgrounds/wallpaper.jpg"
+else
+    WP_REL="assets/background.jpg"
+    info "Using theme default assets (no search)."
+fi
 
 # Patch theme.conf in the temporary directory
 sed -i "s|background=.*|background=$WP_REL|" "$TMP_THEME/theme.conf"

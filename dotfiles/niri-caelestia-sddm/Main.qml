@@ -47,10 +47,25 @@ Rectangle {
 
     // ── Config ────────────────────────────────────────────────────────────
     readonly property string rawWallpaperPath: (typeof config !== "undefined" && config.background) || ""
-    readonly property string wallpaperPath: rawWallpaperPath === "" ? "" :
-        (rawWallpaperPath.indexOf("/") === 0 || rawWallpaperPath.indexOf("file://") === 0) ?
-            (rawWallpaperPath.indexOf("file://") === 0 ? rawWallpaperPath : "file://" + rawWallpaperPath) :
-            rawWallpaperPath
+    readonly property string wallpaperPath: {
+        let path = rawWallpaperPath;
+        // Fallback to settings if theme.conf is empty
+        if (path === "" && settings && settings.wallpaperPath) {
+            path = settings.wallpaperPath;
+        }
+        
+        if (path === "") return "";
+        
+        // Ensure absolute paths or URLs are handled
+        if (path.indexOf("/") === 0 || path.indexOf("file://") === 0) {
+            return (path.indexOf("file://") === 0) ? path : "file://" + path;
+        }
+        
+        // Relative paths (like Backgrounds/wallpaper.jpg) need to be resolved
+        return Qt.resolvedUrl(path);
+    }
+
+    onWallpaperPathChanged: console.log("[sddm-caelestia] Wallpaper path resolved to:", wallpaperPath)
 
     readonly property bool blurWallpaper: (settings && settings.blurWallpaper !== undefined) ? settings.blurWallpaper : true
     readonly property int blurRadius: (settings && settings.blurRadius) || 64
@@ -228,6 +243,10 @@ Rectangle {
         asynchronous: true
         cache: false
         visible: false
+        onStatusChanged: {
+            if (status === Image.Ready) console.log("[sddm-caelestia] Wallpaper loaded successfully")
+            else if (status === Image.Error) console.warn("[sddm-caelestia] Failed to load wallpaper from:", source)
+        }
     }
 
     MultiEffect {

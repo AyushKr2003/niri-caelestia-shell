@@ -49,5 +49,10 @@ if [[ -n "$PYTHON_VENV" ]]; then
         source "$venv_path/bin/activate"
     fi
 fi
-kde-material-you-colors "$mode_flag" --color "$color" -sv "$sv_num"
+
+# Run the patched version of the script to avoid crashes when KWin is not present
+# and to avoid noisy stty warnings that occur in non-interactive shells.
+# We redirect stderr to stdout (2>&1) so Quickshell logs these as DEBUG instead of WARN.
+python3 "$SCRIPT_DIR/kde/patched-kmyc.py" "$mode_flag" --color "$color" -sv "$sv_num" 2>&1
+
 deactivate 2>/dev/null || true

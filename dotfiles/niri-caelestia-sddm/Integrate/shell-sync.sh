@@ -28,12 +28,24 @@ if [ ! -f "$SCHEME_JSON" ]; then
     exit 1
 fi
 
-echo "[caelestia-sddm] Syncing colors from $SCHEME_JSON..."
+echo "[sddm-sync] Syncing colors from $SCHEME_JSON..."
 
 # --- Get wallpaper path ---
 WALL_PATH=""
 if [ -f "$WALLPAPER_TXT" ]; then
     WALL_PATH=$(cat "$WALLPAPER_TXT")
+    
+    # If it's a video, use the extracted frame PNG
+    if [[ "$WALL_PATH" =~ \.(mp4|mkv|webm|mov|avi|m4v)$ ]]; then
+        echo "[sddm-sync] Video detected, looking for extracted frame..."
+        # Replicate Qt.md5 logic
+        HASH=$(printf "%s" "$WALL_PATH" | md5sum | cut -d' ' -f1)
+        FRAME_PATH="$STATE_DIR/generated/video_frames/${HASH}.png"
+        if [ -f "$FRAME_PATH" ]; then
+            echo "[sddm-sync] Using video frame: $FRAME_PATH"
+            WALL_PATH="$FRAME_PATH"
+        fi
+    fi
 fi
 
 # --- Use jq to extract colors ---
@@ -58,6 +70,7 @@ cat > "$OUTPUT_QML" << EOF
 // Colors.qml — Integrated from shell state
 import QtQuick
 
+//
 // ${WALL_PATH}
 
 QtObject {
