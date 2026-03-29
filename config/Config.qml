@@ -447,7 +447,25 @@ Singleton {
         onTriggered: root.recentlySaved = false
     }
 
-
+    Process {
+        id: configInitializer
+        command: ["mkdir", "-p", Paths.config]
+        running: false
+        
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                console.log("Config: Directory created/exists:", Paths.config);
+                const defaultConfig = JSON.stringify(root.serializeConfig(), null, 2);
+                configFile.watchChanges = false;
+                configFile.setText(defaultConfig);
+                configFile.watchChanges = true;
+                // Since it failed before, we should reload it now.
+                configFile.reload();
+            } else {
+                console.error("Config: Failed to create directory:", Paths.config, "Exit code:", exitCode);
+            }
+        }
+    }
 
     FileView {
         id: configFile
@@ -482,7 +500,10 @@ Singleton {
         }
         
         onLoadFailed: err => {
-            if (err !== FileViewError.FileNotFound) {
+            if (err === FileViewError.FileNotFound) {
+                console.log("Config: Config file not found, initializing default...");
+                configInitializer.running = true;
+            } else {
                 console.error("Config: Failed to read config file:", err);
                 root.configError(`Failed to read: ${FileViewError[err] || err}`);
             }
