@@ -17,6 +17,7 @@ Rectangle {
     Loader {
         id: paletteLoader
         source: "Components/Colors.qml"
+        onLoaded: console.log("[sddm-caelestia] Palette loaded. Background color:", item.background)
     }
     Loader {
         id: settingsLoader
@@ -29,15 +30,15 @@ Rectangle {
     // ── Material You color tokens ─────────────────────────────────────────
     readonly property color m3background: (palette && palette.background) || "#111118"
     readonly property color m3surface: (palette && palette.surface) || "#1c1b1f"
-    readonly property color m3surfaceContainer: (palette && palette.surfaceVariant) || "#211f26"
-    readonly property color m3surfaceContainerHigh: (palette && palette.surfaceVariant) || "#2b2930"
-    readonly property color m3surfaceContainerHighest: (palette && palette.surfaceVariant) || "#36343b"
+    readonly property color m3surfaceContainer: (palette && palette.surfaceContainer) || (palette && palette.surfaceVariant) || "#211f26"
+    readonly property color m3surfaceContainerHigh: (palette && palette.surfaceContainerHigh) || (palette && palette.surfaceVariant) || "#2b2930"
+    readonly property color m3surfaceContainerHighest: (palette && palette.surfaceContainerHighest) || (palette && palette.surfaceVariant) || "#36343b"
     readonly property color m3primary: (palette && palette.primary) || "#d0bcff"
     readonly property color m3onPrimary: (palette && palette.colPrimary) || "#21005d"
     readonly property color m3primaryContainer: (palette && palette.primaryContainer) || "#4f378b"
     readonly property color m3secondary: (palette && palette.secondary) || "#cbc2db"
-    readonly property color m3secondaryContainer: (palette && palette.surfaceVariant) || "#4a4458"
-    readonly property color m3onSecondaryContainer: (palette && palette.colSecondary) || "#e8def8"
+    readonly property color m3secondaryContainer: (palette && palette.secondaryContainer) || (palette && palette.surfaceVariant) || "#4a4458"
+    readonly property color m3onSecondaryContainer: (palette && (palette.colSecondaryContainer || palette.colSecondary)) || "#e8def8"
     readonly property color m3onSurface: (palette && palette.colSurface) || "#e6e1e5"
     readonly property color m3onSurfaceVariant: (palette && palette.colSurfaceVariant) || "#cac4d0"
     readonly property color m3outlineVariant: (palette && palette.outlineVariant) || "#49454f"
@@ -316,7 +317,7 @@ Rectangle {
             id: lockBg
             anchors.fill: parent
             radius: root.panelRadius
-            color: Qt.rgba(root.m3surfaceContainer.r, root.m3surfaceContainer.g, root.m3surfaceContainer.b, 0.85)
+            color: root.m3surfaceContainer
             layer.enabled: true
             layer.effect: MultiEffect {
                 shadowEnabled: true
@@ -643,7 +644,7 @@ Rectangle {
                 height: 32
                 radius: 16
                 width: sessionCombo.width + 16
-                color: Qt.rgba(root.m3surfaceContainer.r, root.m3surfaceContainer.g, root.m3surfaceContainer.b, 0.75)
+                color: root.m3surfaceContainer
                 border {
                     width: 1
                     color: Qt.rgba(root.m3outlineVariant.r, root.m3outlineVariant.g, root.m3outlineVariant.b, 0.40)
@@ -667,7 +668,7 @@ Rectangle {
                 radius: 16
                 visible: (typeof keyboardModel !== "undefined") && keyboardModel.count > 0
                 width: visible ? (keyboardCombo.width + 16) : 0
-                color: Qt.rgba(root.m3surfaceContainer.r, root.m3surfaceContainer.g, root.m3surfaceContainer.b, 0.75)
+                color: root.m3surfaceContainer
                 border {
                     width: 1
                     color: Qt.rgba(root.m3outlineVariant.r, root.m3outlineVariant.g, root.m3outlineVariant.b, 0.40)
@@ -707,7 +708,7 @@ Rectangle {
             height: 32
             radius: 16
             width: 112
-            color: Qt.rgba(root.m3surfaceContainer.r, root.m3surfaceContainer.g, root.m3surfaceContainer.b, 0.75)
+            color: root.m3surfaceContainer
             border {
                 width: 1
                 color: Qt.rgba(root.m3outlineVariant.r, root.m3outlineVariant.g, root.m3outlineVariant.b, 0.40)

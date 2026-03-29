@@ -232,6 +232,13 @@ Searcher {
             }
         }
 
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim() !== "")
+                    console.log("Color gen:", data.trim());
+            }
+        }
+
         stderr: SplitParser {
             onRead: data => {
                 // Suppress successful theme update messages that are sent to stderr

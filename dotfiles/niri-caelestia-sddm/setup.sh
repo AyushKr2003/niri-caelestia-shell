@@ -28,6 +28,7 @@ echo ""
 info "Checking dependencies..."
 MISSING=()
 command -v sddm-greeter-qt6 &>/dev/null || MISSING+=("sddm")
+command -v jq &>/dev/null || MISSING+=("jq")
 if command -v pacman &>/dev/null; then
     for pkg in qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffects; do
         pacman -Q "$pkg" &>/dev/null || MISSING+=("$pkg")
@@ -44,10 +45,11 @@ ok "Dependencies OK"
 # ── Integration mode ──────────────────────────────────────────────────────
 echo ""
 echo "Select integration mode:"
-echo "  1) Matugen — colors auto-sync when wallpaper changes (recommended)"
-echo "  2) Manual  — edit Colors.qml yourself"
+echo "  1) Shell Integrate — pull colors directly from niri-caelestia-shell state (recommended)"
+echo "  2) Matugen — colors auto-sync when wallpaper changes"
+echo "  3) Manual  — edit Colors.qml yourself"
 echo ""
-read -rp "Choice [1/2]: " MODE_CHOICE
+read -rp "Choice [1/2/3]: " MODE_CHOICE
 
 # ── Install theme files ───────────────────────────────────────────────────
 info "Installing theme to $THEME_INSTALL_DIR ..."
@@ -73,6 +75,29 @@ ok "Theme files installed"
 sudo -u "$REAL_USER" mkdir -p "$CONFIG_DIR"
 
 if [[ "$MODE_CHOICE" == "1" ]]; then
+    # ── Shell Integrate mode ──────────────────────────────────────────────
+    sudo -u "$REAL_USER" bash -c "
+        cp    '$SCRIPT_DIR/Integrate/shell-sync.sh'     '$CONFIG_DIR/shell-sync.sh'
+        cp    '$SCRIPT_DIR/Matugen/sddm-theme-apply.sh' '$CONFIG_DIR/sddm-theme-apply.sh'
+        cp -n '$SCRIPT_DIR/Components/Settings.qml'    '$CONFIG_DIR/Settings.qml'
+        chmod +x '$CONFIG_DIR/shell-sync.sh'
+        chmod +x '$CONFIG_DIR/sddm-theme-apply.sh'
+    "
+
+    # Set up passwordless sudo for both sync and apply scripts
+    SUDOERS_FILE="/etc/sudoers.d/${THEME_NAME}-${REAL_USER}"
+    {
+        echo "$REAL_USER ALL=(ALL) NOPASSWD: $CONFIG_DIR/sddm-theme-apply.sh"
+        echo "$REAL_USER ALL=(ALL) NOPASSWD: $CONFIG_DIR/shell-sync.sh"
+    } | sudo tee "$SUDOERS_FILE" > /dev/null
+    sudo chmod 0440 "$SUDOERS_FILE"
+    ok "Passwordless sudo configured"
+
+    info "Applying initial colors from shell..."
+    sudo -u "$REAL_USER" "$CONFIG_DIR/shell-sync.sh" || \
+        warn "Sync script failed — check if shell scheme exists at ~/.local/state/caelestia/scheme.json"
+
+elif [[ "$MODE_CHOICE" == "2" ]]; then
     # ── Matugen mode ──────────────────────────────────────────────────────
     sudo -u "$REAL_USER" bash -c "
         cp    '$SCRIPT_DIR/Matugen/SddmColors.qml'     '$CONFIG_DIR/SddmColors.qml'
