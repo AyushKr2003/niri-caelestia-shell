@@ -47,7 +47,7 @@ Item {
                 // Wordmark
                 RowLayout {
                     spacing: Appearance.spacing.md
-                    visible: !searchBar.visible
+                    visible: !searchBar.isSearchActive
                     Layout.fillWidth: true
 
                     MaterialIcon {
@@ -78,7 +78,7 @@ Item {
                     Behavior on border.color { CAnim {} }
 
                     RowLayout {
-                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.xs }
+                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.sm }
                         spacing: Appearance.spacing.sm
 
                         MaterialIcon {
@@ -96,7 +96,7 @@ Item {
                             placeholderText: qsTr("Search titles...")
                             text: ""
                             
-                            onTextChanged: if (searchBar.isSearchActive) searchDebounce.restart()
+                            onTextChanged: if (isSearchActive) searchDebounce.restart()
                             
                             Keys.onEscapePressed: {
                                 isSearchActive = false
@@ -106,8 +106,10 @@ Item {
                         }
 
                         IconButton {
-                            type: IconButton.Ghost
+                            type: IconButton.Text
                             icon: "close"
+                            font.pointSize: 18
+                            padding: Appearance.padding.xs
                             onClicked: {
                                 searchBar.isSearchActive = false
                                 searchBar.text = ""
@@ -178,7 +180,7 @@ Item {
                         onClicked: {
                             browseView.currentTagId = modelData.tagId
                             searchBar.text = ""
-                            searchBar.visible = false
+                            searchBar.isSearchActive = false
                             Manga.fetchByOrigin(modelData.tagId, true)
                         }
                     }

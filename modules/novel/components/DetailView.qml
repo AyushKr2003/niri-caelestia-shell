@@ -71,7 +71,7 @@ Item {
             z: 2
 
             RowLayout {
-                anchors { fill: parent; leftMargin: Appearance.padding.sm; rightMargin: Appearance.padding.md }
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.lg }
                 spacing: Appearance.spacing.sm
 
                 IconButton {
@@ -263,7 +263,13 @@ Item {
             visible: Novel.currentNovel !== null
 
             RowLayout {
-                anchors { fill: parent; margins: Appearance.padding.md }
+                anchors {
+                    fill: parent
+                    leftMargin: Appearance.padding.lg
+                    rightMargin: Appearance.padding.lg
+                    topMargin: Appearance.padding.md
+                    bottomMargin: Appearance.padding.md
+                }
                 spacing: Appearance.spacing.md
 
                 StyledRect {
@@ -277,7 +283,7 @@ Item {
                     Behavior on border.color { CAnim {} }
 
                     RowLayout {
-                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.xs }
+                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.sm }
                         spacing: Appearance.spacing.sm
 
                         MaterialIcon {
@@ -298,8 +304,10 @@ Item {
 
                         IconButton {
                             visible: detailView._chapterFilter !== ""
-                            type: IconButton.Ghost
+                            type: IconButton.Text
                             icon: "close"
+                            font.pointSize: 18
+                            padding: Appearance.padding.xs
                             onClicked: {
                                 detailView._chapterFilter = ""
                                 chapterSearch.text = ""

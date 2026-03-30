@@ -13,7 +13,7 @@ TextField {
     placeholderTextColor: Colours.palette.m3outline
     font.family: Appearance.font.family.sans
     font.pointSize: Appearance.font.size.bodySmall
-    renderType: TextField.NativeRendering
+    renderType: Text.QtRendering
     cursorVisible: !readOnly
 
     background: null

@@ -49,7 +49,7 @@ Item {
             z: 2
 
             RowLayout {
-                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.md }
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.lg }
                 spacing: Appearance.spacing.md
 
                 // Title (hidden while search bar is open)
@@ -86,7 +86,7 @@ Item {
                     Behavior on border.color { CAnim {} }
 
                     RowLayout {
-                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.xs }
+                        anchors { fill: parent; leftMargin: Appearance.padding.md; rightMargin: Appearance.padding.sm }
                         spacing: Appearance.spacing.sm
 
                         MaterialIcon {
@@ -115,8 +115,10 @@ Item {
                         }
 
                         IconButton {
-                            type: IconButton.Ghost
+                            type: IconButton.Text
                             icon: "close"
+                            font.pointSize: 18
+                            padding: Appearance.padding.xs
                             onClicked: {
                                 searchBar.isSearchActive = false
                                 searchBar.text = ""
@@ -249,9 +251,9 @@ Item {
             Layout.fillWidth: true; height: 56
             color: c.m3surfaceContainerLow; clip: true
 
-            Row {
-                anchors.centerIn: parent
-                spacing: Appearance.spacing.md
+            RowLayout {
+                anchors { fill: parent; leftMargin: Appearance.padding.lg; rightMargin: Appearance.padding.lg }
+                spacing: Appearance.spacing.sm
 
                 Chip {
                     text: qsTr("Hot")
