@@ -36,12 +36,12 @@ env/
 ENV/
 .env
 
-# Downloaded wallpapers (don't commit images)
-wallpapers/
-*.jpg
-*.jpeg
-*.png
-*.webp
+# # Downloaded wallpapers (don't commit images)
+# wallpapers/
+# *.jpg
+# *.jpeg
+# *.png
+# *.webp
 
 # IDE / Editor
 .idea/
