@@ -88,7 +88,7 @@
     };
 
     nativeBuildInputs = [cmake ninja pkg-config];
-    buildInputs = [qt6.qtbase qt6.qtdeclarative fftw qt6.qtmultimedia libqalculate pipewire aubio libcava kdePackages.networkmanager-qt];
+    buildInputs = [qt6.qtbase qt6.qtdeclarative qt6.qt5compat fftw qt6.qtmultimedia libqalculate pipewire aubio libcava kdePackages.networkmanager-qt];
 
     dontWrapQtApps = true;
     cmakeFlags =
@@ -131,6 +131,7 @@ in
     postInstall = ''
       makeWrapper ${quickshell}/bin/qs $out/bin/caelestia-shell \
       	--prefix PATH : "${lib.makeBinPath runtimeDeps}" \
+        --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath qt6.qtbase.qtQmlPrefix [qt6.qtdeclarative qt6.qt5compat qt6.qtmultimedia plugin]}" \
       	--set FONTCONFIG_FILE "${fontconfig}" \
       	--set CAELESTIA_LIB_DIR ${extras}/lib \
         --set CAELESTIA_XKB_RULES_PATH ${xkeyboard-config}/share/xkeyboard-config-2/rules/base.lst \
