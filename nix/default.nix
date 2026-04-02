@@ -126,8 +126,6 @@ in
         --replace-fail pam_fprintd.so /run/current-system/sw/lib/security/pam_fprintd.so
       substituteInPlace shell.qml \
         --replace-fail 'ShellRoot {' 'ShellRoot {  settings.watchFiles: false'
-      sed -i '1c#!/usr/bin/env python3' scripts/colors/generate_colors_material.py
-      patchShebangs scripts/
     '';
 
     postInstall = ''
