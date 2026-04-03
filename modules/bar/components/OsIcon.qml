@@ -22,7 +22,7 @@ Item {
 
     Loader {
         anchors.centerIn: parent
-        sourceComponent: SysInfo.isDefaultLogo ? caelestiaLogo : distroIcon
+        sourceComponent: Config.general.isDistLogo ? distroIcon : caelestiaLogo
     }
 
     Component {
@@ -38,7 +38,7 @@ Item {
         id: distroIcon
 
         ColouredIcon {
-            source: SysInfo.osLogo
+            source:  SysInfo.osLogo
             implicitSize: Math.round(Appearance.font.size.large * 1.2)
             colour: Colours.palette.m3tertiary
         }

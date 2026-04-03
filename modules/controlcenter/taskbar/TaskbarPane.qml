@@ -46,9 +46,9 @@ Item {
     property bool scrollWorkspaces: Config.bar.scrollActions.workspaces ?? true
     property bool scrollVolume: Config.bar.scrollActions.volume ?? true
     property bool scrollBrightness: Config.bar.scrollActions.brightness ?? true
-    property bool popoutActiveWindow: Config.bar.popouts.activeWindow ?? true
     property bool popoutTray: Config.bar.popouts.tray ?? true
     property bool popoutStatusIcons: Config.bar.popouts.statusIcons ?? true
+    property bool isDistLogo: Config.general.isDistLogo ?? false
 
     anchors.fill: parent
 
@@ -93,9 +93,9 @@ Item {
         Config.bar.scrollActions.workspaces = root.scrollWorkspaces;
         Config.bar.scrollActions.volume = root.scrollVolume;
         Config.bar.scrollActions.brightness = root.scrollBrightness;
-        Config.bar.popouts.activeWindow = root.popoutActiveWindow;
         Config.bar.popouts.tray = root.popoutTray;
         Config.bar.popouts.statusIcons = root.popoutStatusIcons;
+        Config.general.isDistLogo = root.isDistLogo;
 
         const entries = [];
         for (let i = 0; i < entriesModel.count; i++) {
@@ -266,6 +266,25 @@ Item {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
                         spacing: Appearance.spacing.lg
+
+                        SectionContainer {
+                            Layout.fillWidth: true
+                            alignTop: true
+
+                            StyledText {
+                                text: qsTr("Icon")
+                                font.pointSize: Appearance.font.size.bodyMedium
+                            }
+
+                            SwitchRow {
+                                label: qsTr("Use distro logo")
+                                checked: root.isDistLogo
+                                onToggled: checked => {
+                                    root.isDistLogo = checked;
+                                    root.saveConfig();
+                                }
+                            }
+                        }
 
                         SectionContainer {
                             Layout.fillWidth: true
@@ -597,15 +616,6 @@ Item {
                             StyledText {
                                 text: qsTr("Popouts")
                                 font.pointSize: Appearance.font.size.bodyMedium
-                            }
-
-                            SwitchRow {
-                                label: qsTr("Active window")
-                                checked: root.popoutActiveWindow
-                                onToggled: checked => {
-                                    root.popoutActiveWindow = checked;
-                                    root.saveConfig();
-                                }
                             }
 
                             SwitchRow {

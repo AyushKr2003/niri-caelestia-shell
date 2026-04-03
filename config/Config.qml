@@ -128,7 +128,7 @@ Singleton {
 
     function serializeGeneral(): var {
         return {
-            logo: general.logo,
+            isDistLogo: general.isDistLogo,
             apps: {
                 terminal: general.apps.terminal,
                 audio: general.apps.audio,
@@ -230,7 +230,6 @@ Singleton {
                 showIcon: bar.clock.showIcon
             },
             popouts: {
-                activeWindow: bar.popouts.activeWindow,
                 tray: bar.popouts.tray,
                 statusIcons: bar.popouts.statusIcons
             },
@@ -447,6 +446,23 @@ Singleton {
         onTriggered: root.recentlySaved = false
     }
 
+    property int fileNotFoundRetries: 0
+
+    Timer {
+        id: reloadDebounce
+        interval: 120
+        onTriggered: configFile.reload()
+    }
+
+    Timer {
+        id: fileNotFoundRetry
+        interval: 250
+        onTriggered: {
+            root.loadStartTime = Date.now();
+            configFile.reload();
+        }
+    }
+
     Process {
         id: configInitializer
         command: ["mkdir", "-p", Paths.config]
@@ -475,7 +491,7 @@ Singleton {
         
         onFileChanged: {
             root.loadStartTime = Date.now();
-            reload();
+            reloadDebounce.restart();
         }
         
         onLoaded: {
@@ -492,6 +508,7 @@ Singleton {
                 
                 root.initialLoadComplete = true;
                 root.loadStartTime = null;
+                root.fileNotFoundRetries = 0;
                 
             } catch (e) {
                 console.error("Config: Failed to parse config:", e.message);
@@ -501,7 +518,15 @@ Singleton {
         
         onLoadFailed: err => {
             if (err === FileViewError.FileNotFound) {
-                console.log("Config: Config file not found, initializing default...");
+                if (root.fileNotFoundRetries < 3) {
+                    root.fileNotFoundRetries++;
+                    console.log(`Config: Config file missing, retrying (${root.fileNotFoundRetries}/3)...`);
+                    fileNotFoundRetry.restart();
+                    return;
+                }
+
+                root.fileNotFoundRetries = 0;
+                console.log("Config: Config file not found after retries, initializing default...");
                 configInitializer.running = true;
             } else {
                 console.error("Config: Failed to read config file:", err);
