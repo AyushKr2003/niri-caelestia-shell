@@ -4,9 +4,18 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.utils
+import Caelestia
 
 Singleton {
     id: root
+
+    function _checkEnabled() {
+        if (!Config.extra.novel) {
+            Toaster.toast(qsTr("Novel feature disabled"), qsTr("Enable it in the Control Center settings"), "book", Toast.Warning)
+            return false
+        }
+        return true
+    }
 
     readonly property string apiUrl: "http://127.0.0.1:5151"
 
@@ -50,6 +59,7 @@ Singleton {
     ]
 
     function switchProvider(name, force) {
+        if (!root._checkEnabled()) return
         if (!force && (name === root.activeProvider || root.isSwitchingProvider)) return
         root.isSwitchingProvider = true
         _post(root.apiUrl + "/provider/switch", { provider: name }, function(err, body) {
@@ -102,6 +112,7 @@ Singleton {
     }
 
     function addToLibrary(novel) {
+        if (!root._checkEnabled()) return
         if (isInLibrary(novel.id)) return
         var entry = {
             id:                 novel.id,
@@ -117,6 +128,7 @@ Singleton {
     }
 
     function removeFromLibrary(novelId) {
+        if (!root._checkEnabled()) return
         root.libraryList = root.libraryList.filter(function(e) { return e.id !== novelId })
         _saveLibrary()
         console.log("[ServiceNovel] Removed from library:", novelId)
@@ -127,6 +139,7 @@ Singleton {
     }
 
     function updateLastRead(novelId, chapterId, chapterNum) {
+        if (!root._checkEnabled()) return
         root.libraryList = root.libraryList.map(function(e) {
             if (e.id !== novelId) return e
             return Object.assign({}, e, {
@@ -178,6 +191,15 @@ Singleton {
         repeat: true
         running: true
         onTriggered: {
+            if (!Config.extra.novel) {
+                if (serverProcess.running) {
+                    console.log("[ServiceNovel] Novel feature disabled, stopping backend...")
+                    serverProcess.running = false
+                }
+                root.serverReady = false
+                return
+            }
+
             var xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
@@ -201,7 +223,7 @@ Singleton {
                         }
                     } else {
                         root.serverReady = false
-                        if (!serverProcess.running) {
+                        if (!serverProcess.running && Config.extra.novel) {
                             console.log("[ServiceNovel] Backend not found, starting process...")
                             serverProcess.running = true
                         }
@@ -239,6 +261,7 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchHot() {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         root.isFetchingNovel = false // Force reset state
         root.novelError = ""
@@ -255,6 +278,7 @@ Singleton {
     }
 
     function fetchLatest(reset) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         if (reset) {
             root.isFetchingNovel = false
@@ -276,6 +300,7 @@ Singleton {
     }
 
     function searchNovels(query, genre, status, reset) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingNovel) return
         if (reset) { root.novelList = []; root.currentOffset = 0 }
         root.currentSearchText = query
@@ -295,6 +320,7 @@ Singleton {
     }
 
     function fetchNextPage() {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || !root.hasMoreNovels || root.isFetchingNovel) return
         const reqId = ++root._activeRequestId
         if (root.currentSearchText.length > 0) {
@@ -346,6 +372,7 @@ Singleton {
 
     // ── Novel detail ──────────────────────────────────────────────────────────
     function fetchNovelDetail(novelId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingDetail) return
         root.isFetchingDetail = true
         root.currentNovel = null
@@ -387,6 +414,7 @@ Singleton {
 
     // ── Chapter reading ───────────────────────────────────────────────────────
     function fetchChapter(chapterId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingChapter) return
         root.isFetchingChapter = true
         root.currentChapterId = chapterId
@@ -420,11 +448,13 @@ Singleton {
     }
 
     function fetchPrevChapter() {
+        if (!root._checkEnabled()) return
         if (!root.currentChapter || root.currentChapter.prevId === "") return
         fetchChapter(root.currentChapter.prevId)
     }
 
     function fetchNextChapter() {
+        if (!root._checkEnabled()) return
         if (!root.currentChapter || root.currentChapter.nextId === "") return
         fetchChapter(root.currentChapter.nextId)
     }
@@ -448,5 +478,16 @@ Singleton {
     function clearDetail() {
         root.currentNovel = null
         root.detailError = ""
+    }
+
+    Connections {
+        target: Config.extra
+        function onNovelChanged() {
+            if (!Config.extra.novel && serverProcess.running) {
+                console.log("[ServiceNovel] [DEBUG] Novel feature disabled: stopping backend process immediately.")
+                serverProcess.running = false
+                root.serverReady = false
+            }
+        }
     }
 }

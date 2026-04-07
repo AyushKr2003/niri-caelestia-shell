@@ -88,6 +88,14 @@ QtObject {
             readonly property string icon: "power_settings_new"
             readonly property string component: "session/SessionPane.qml"
             readonly property string category: "security"
+        },
+        // --- Extra ---
+        QtObject {
+            readonly property string id: "extra"
+            readonly property string label: "extra"
+            readonly property string icon: "more_horiz"
+            readonly property string component: "extra/ExtraPane.qml"
+            readonly property string category: "extra"
         }
     ]
 
@@ -98,7 +106,8 @@ QtObject {
         { id: "appearance", label: "Appearance" },
         { id: "apps", label: "Apps" },
         { id: "alerts", label: "Notifications" },
-        { id: "security", label: "System" }
+        { id: "security", label: "System" },
+        { id: "extra", label: "Extra" }
     ]
 
     // Returns the category label for the pane at given index

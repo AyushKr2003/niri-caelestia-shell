@@ -4,9 +4,18 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.utils
+import Caelestia
 
 Singleton {
     id: root
+
+    function _checkEnabled() {
+        if (!Config.extra.manga) {
+            Toaster.toast(qsTr("Manga feature disabled"), qsTr("Enable it in the Control Center settings"), "manga", Toast.Warning)
+            return false
+        }
+        return true
+    }
 
     readonly property string apiUrl: "http://127.0.0.1:5150"
 
@@ -165,6 +174,15 @@ Singleton {
         repeat: true
         running: true
         onTriggered: {
+            if (!Config.extra.manga) {
+                if (serverProcess.running) {
+                    console.log("[ServiceManga] Manga feature disabled, stopping backend...")
+                    serverProcess.running = false
+                }
+                root.serverReady = false
+                return
+            }
+
             var xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
@@ -178,7 +196,7 @@ Singleton {
                         }
                     } else {
                         root.serverReady = false
-                        if (!serverProcess.running) {
+                        if (!serverProcess.running && Config.extra.manga) {
                             console.log("[ServiceManga] Backend not found, starting process...")
                             serverProcess.running = true
                         }
@@ -253,6 +271,7 @@ Singleton {
 
     // ── Browse / Search ───────────────────────────────────────────────────────
     function fetchByOrigin(origin, reset) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         if (reset) {
             root.isFetchingManga = false
@@ -292,6 +311,7 @@ Singleton {
     }
 
     function searchManga(query, reset) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingManga) return
         if (reset) { root.mangaList = []; root.currentOffset = 0 }
         root.currentSearchText = query
@@ -300,6 +320,7 @@ Singleton {
     }
 
     function fetchNextMangaPage() {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || !root.hasMoreManga || root.isFetchingManga) return
         const reqId = ++root._activeRequestId
         if (root.currentSearchText.length > 0) {
@@ -357,6 +378,7 @@ Singleton {
 
     // ── Manga detail ──────────────────────────────────────────────────────────
     function fetchMangaDetail(mangaId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingDetail) return
         root.isFetchingDetail = true
         root.currentManga = null
@@ -400,6 +422,7 @@ Singleton {
 
     // ── Chapter pages ─────────────────────────────────────────────────────────
     function fetchChapterPages(chapterId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingPages) return
         root.isFetchingPages = true
         root.currentChapterId = chapterId
@@ -413,6 +436,7 @@ Singleton {
     }
 
     function fetchOfflineChapterPages(chapterId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady || root.isFetchingPages) return
         root.isFetchingPages = true
         root.currentChapterId = chapterId
@@ -470,6 +494,7 @@ Singleton {
     }
 
     function addFavorite(manga) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         const rawUrl = _extractRawUrl(manga.coverUrl)
         _post(root.apiUrl + "/favorites/add",
@@ -478,6 +503,7 @@ Singleton {
     }
 
     function removeFavorite(mangaId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         _post(root.apiUrl + "/favorites/remove", { id: mangaId },
                 function(err, body) { if (!err) fetchFavorites() })
@@ -488,6 +514,7 @@ Singleton {
     }
 
     function markChapterSeen(mangaId, chapterId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         _post(root.apiUrl + "/favorites/mark-seen",
             { id: mangaId, chapterId: chapterId },
@@ -516,6 +543,7 @@ Singleton {
     }
 
     function startDownload(chapter, manga) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         const rawCover = _extractRawUrl(manga.coverUrl)
         var dp = Object.assign({}, root.downloadProgress)
@@ -558,6 +586,7 @@ Singleton {
     }
 
     function deleteDownload(chapterId) {
+        if (!root._checkEnabled()) return
         if (!root.serverReady) return
         _post(root.apiUrl + "/dl/delete", { chapterId: chapterId },
                 function(err, body) { if (!err) fetchDownloads() })
@@ -595,5 +624,16 @@ Singleton {
         root.currentOffset = 0
         root.latestPage = 1
         root.mangaError = ""
+    }
+
+    Connections {
+        target: Config.extra
+        function onMangaChanged() {
+            if (!Config.extra.manga && serverProcess.running) {
+                console.log("[ServiceManga] [DEBUG] Manga feature disabled: stopping backend process immediately.")
+                serverProcess.running = false
+                root.serverReady = false
+            }
+        }
     }
 }
