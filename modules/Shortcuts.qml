@@ -108,6 +108,12 @@ Scope {
                 visibilities.launcher = true
             }
         }
+
+        function clear(): void {
+            Quickshell.execDetached(["cliphist", "wipe"]);
+            Quickshell.execDetached(["wl-copy", "--clear"]);
+            Toaster.toast(qsTr("Clipboard cleared"), qsTr("The clipboard history has been wiped."), "content_paste_off");
+        }
     }
 
     IpcHandler {
