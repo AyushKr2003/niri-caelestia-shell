@@ -102,46 +102,48 @@ Item {
     Component {
         id: appearanceRightContentComponent
 
-        Item {
+        StyledFlickable {
             id: rightAppearanceFlickable
+            anchors.fill: parent
+            contentHeight: contentLayout.height
+            flickableDirection: Flickable.VerticalFlick
+
+            StyledScrollBar.vertical: StyledScrollBar {
+                flickable: rightAppearanceFlickable
+            }
 
             ColumnLayout {
                 id: contentLayout
-
-                anchors.fill: parent
-                spacing: 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                spacing: Appearance.spacing.lg
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: Appearance.spacing.lg
+                    Layout.topMargin: Appearance.padding.xl
                     text: qsTr("Wallpaper")
                     font.pointSize: Appearance.font.size.headlineLarge
                     font.weight: 600
                 }
 
-                Loader {
-                    id: wallpaperLoader
-
+                CollapsibleSection {
+                    title: qsTr("Web Wallpapers")
+                    expanded: false
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.bottomMargin: -Appearance.padding.xl * 2
 
-                    active: {
-                        const isActive = root.session.activeIndex === 3;
-                        const isAdjacent = Math.abs(root.session.activeIndex - 3) === 1;
-                        const splitLayout = root.children[0];
-                        const loader = splitLayout && splitLayout.rightLoader ? splitLayout.rightLoader : null;
-                        const shouldActivate = loader && loader.item !== null && (isActive || isAdjacent);
-                        return shouldActivate;
+                    WebWallpaperGrid {
+                        Layout.fillWidth: true
+                        session: root.session
                     }
+                }
 
-                    onStatusChanged: {
-                        if (status === Loader.Error) {
-                            console.error("[AppearancePane] Wallpaper loader error!");
-                        }
-                    }
+                CollapsibleSection {
+                    title: qsTr("Local Wallpapers")
+                    expanded: true
+                    Layout.fillWidth: true
 
-                    sourceComponent: WallpaperGrid {
+                    WallpaperGrid {
+                        Layout.fillWidth: true
                         session: root.session
                     }
                 }

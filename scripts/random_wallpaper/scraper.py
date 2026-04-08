@@ -41,6 +41,7 @@ URLs directly from the slug using the confirmed suffix pattern above.
 This avoids the need for an extra HTTP request per image.
 """
 
+import sys
 import re
 import random
 import requests
@@ -96,48 +97,52 @@ def get_page(url: str) -> Optional[BeautifulSoup]:
         resp.raise_for_status()
         return BeautifulSoup(resp.text, "html.parser")
     except requests.RequestException as e:
-        print(f"[ERROR] Failed to fetch {url}: {e}")
+        print(f"[ERROR] Failed to fetch {url}: {e}", file=sys.stderr)
         return None
 
 
 def extract_slugs_from_page(soup: BeautifulSoup) -> list[str]:
     """
     Extract all image slugs from a parsed listing/homepage.
-
-    Two formats exist on the site:
-      Old:  <img src="https://img.uhdpaper.com/wallpaper/<slug>-thumb.jpg?dl">
-      New:  <img src="https://img.uhdpaper.com/wallpaper/<slug>">  (no extension, no thumb suffix)
-
-    Both are handled here.
     """
     slugs = []
     seen = set()
 
     for img in soup.find_all("img"):
         src = img.get("src", "")
-        if "img.uhdpaper.com/wallpaper/" not in src:
+        # Check both src and data-src for some lazy-loading cases
+        if not src:
+            src = img.get("data-src", "")
+            
+        if not src or "img.uhdpaper.com/wallpaper/" not in src:
+            continue
+
+        # Clean whitespace and avoid any potential search URLs that might sneak in
+        src = src.strip()
+        if "/search?" in src or "{ " in src or " }" in src:
             continue
 
         # Pattern 1: old format with -thumb.jpg suffix
         match = re.search(r"/wallpaper/(.+?)-thumb\.jpg", src)
         if match:
-            slug = match.group(1)
-            if slug not in seen:
+            # Aggressively remove all whitespace
+            slug = "".join(match.group(1).split())
+            # Valid slugs on this site usually follow a specific pattern with @
+            if slug and slug not in seen and "@" in slug and "{" not in slug:
                 seen.add(slug)
                 slugs.append(slug)
             continue
 
         # Pattern 2: new format — raw slug, no extension
-        # e.g. https://img.uhdpaper.com/wallpaper/anime-girl-blue-hair-894@5@m
         match = re.search(r"/wallpaper/([^\"'\s?#]+)$", src)
         if match:
-            slug = match.group(1)
-            # Skip asset files like ripple-horiz.svg, desktop.svg, etc.
-            if "." not in slug or slug.endswith(".jpg") or slug.endswith(".png"):
-                clean = slug.rstrip(".jpg").rstrip(".png")
-                if clean not in seen:
-                    seen.add(clean)
-                    slugs.append(clean)
+            # Aggressively remove all whitespace
+            slug = "".join(match.group(1).split())
+            # Skip asset files and non-wallpaper slugs
+            if slug and "." not in slug and "@" in slug and "{" not in slug:
+                if slug not in seen:
+                    seen.add(slug)
+                    slugs.append(slug)
 
     return slugs
 
@@ -145,30 +150,24 @@ def extract_slugs_from_page(soup: BeautifulSoup) -> list[str]:
 def slug_to_urls(slug: str) -> dict:
     """
     Given a slug, return all download URLs for this wallpaper.
-
-    Full-res URL pattern confirmed from individual post pages:
-      slug + '-pc-4k.jpg'   → 3840x2160
-      slug + '-pc-2k.jpg'   → 2560x1440
-      slug + '-pc-hd.jpg'   → 1920x1080
-      slug + '-thumb.jpg'   → thumbnail only (~400px)
     """
     return {
         "slug":       slug,
         "url_4k":     f"{CDN_BASE}/{slug}-pc-4k.jpg",
         "url_2k":     f"{CDN_BASE}/{slug}-pc-2k.jpg",
         "url_1080p":  f"{CDN_BASE}/{slug}-pc-hd.jpg",
-        "url_thumb":  f"{CDN_BASE}/{slug}-thumb.jpg?dl",
+        "url_thumb":  f"{CDN_BASE}/{slug}-thumb.jpg",
     }
 
 
 def fetch_homepage_slugs() -> list[str]:
     """Fetch all image slugs from the homepage."""
-    print("[INFO] Fetching homepage...")
+    print("[INFO] Fetching homepage...", file=sys.stderr)
     soup = get_page(BASE_URL)
     if not soup:
         return []
     slugs = extract_slugs_from_page(soup)
-    print(f"[INFO] Found {len(slugs)} images on homepage.")
+    print(f"[INFO] Found {len(slugs)} images on homepage.", file=sys.stderr)
     return slugs
 
 
@@ -185,14 +184,14 @@ def fetch_search_slugs(keyword: str, max_pages: int = 1) -> list[str]:
     url = f"{BASE_URL}/search?q={quote_plus(query)}&by-date=true"
 
     for page_num in range(max_pages):
-        print(f"[INFO] Fetching search page {page_num + 1}: {url}")
+        print(f"[INFO] Fetching search page {page_num + 1}: {url}", file=sys.stderr)
         soup = get_page(url)
         if not soup:
             break
 
         slugs = extract_slugs_from_page(soup)
         all_slugs.extend(slugs)
-        print(f"[INFO] Page {page_num + 1}: {len(slugs)} images found.")
+        print(f"[INFO] Page {page_num + 1}: {len(slugs)} images found.", file=sys.stderr)
 
         if page_num + 1 < max_pages:
             next_link = soup.find("a", string=re.compile(r"Next", re.I))
@@ -201,7 +200,7 @@ def fetch_search_slugs(keyword: str, max_pages: int = 1) -> list[str]:
                 if not url.startswith("http"):
                     url = BASE_URL + url
             else:
-                print("[INFO] No more pages found.")
+                print("[INFO] No more pages found.", file=sys.stderr)
                 break
 
     return all_slugs
@@ -216,12 +215,12 @@ def get_random_wallpaper(keyword: Optional[str] = None) -> Optional[dict]:
     slugs = fetch_search_slugs(keyword, max_pages=1) if keyword else fetch_homepage_slugs()
 
     if not slugs:
-        print("[ERROR] No wallpapers found.")
+        print("[ERROR] No wallpapers found.", file=sys.stderr)
         return None
 
     slug = random.choice(slugs)
     result = slug_to_urls(slug)
-    print(f"[INFO] Selected: {slug}")
+    print(f"[INFO] Selected: {slug}", file=sys.stderr)
     return result
 
 

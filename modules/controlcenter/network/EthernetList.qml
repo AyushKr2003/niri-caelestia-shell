@@ -15,7 +15,7 @@ DeviceList {
 
     required property Session session
 
-    title: qsTr("Devices (%1)").arg(Nmcli.ethernetDevices.length)
+    title: qsTr("Devices (%1)").arg(Nmcli.ethernetDevices ? Nmcli.ethernetDevices.length : 0)
     description: qsTr("All available ethernet devices")
     activeItem: session.ethernet.active
 

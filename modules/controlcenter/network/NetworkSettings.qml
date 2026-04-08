@@ -35,13 +35,13 @@ ColumnLayout {
 
         PropertyRow {
             label: qsTr("Total devices")
-            value: qsTr("%1").arg(Nmcli.ethernetDevices.length)
+            value: qsTr("%1").arg(Nmcli.ethernetDevices ? Nmcli.ethernetDevices.length : 0)
         }
 
         PropertyRow {
             showTopMargin: true
             label: qsTr("Connected devices")
-            value: qsTr("%1").arg(Nmcli.ethernetDevices.filter(d => d.connected).length)
+            value: qsTr("%1").arg(Nmcli.ethernetDevices ? Nmcli.ethernetDevices.filter(d => d.connected).length : 0)
         }
     }
 

@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 </div>
 
 
-<div align=center> <h2>  Screenshots </h2>
+<div align=center> <h2>  Screenshots (OLD)</h2>
 
 | App Launcher | Clipboard |
 |:---:|:---:|

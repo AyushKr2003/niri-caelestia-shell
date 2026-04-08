@@ -32,6 +32,7 @@ Singleton {
     property string activeInterface: ""
     property list<string> savedConnections: []
     property list<string> savedConnectionSsids: []
+    property var ethernetDevices: []
 
     signal connectionFailed(string ssid)
 
