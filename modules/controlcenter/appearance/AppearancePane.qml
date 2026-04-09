@@ -37,8 +37,8 @@ Item {
     property real borderThickness: Config.border.thickness ?? 1
 
     property bool desktopClockEnabled: Config.background.desktopClock.enabled ?? false
+    property string desktopClockVersion: Config.background.desktopClock.version ?? "v2"
     property real desktopClockScale: Config.background.desktopClock.scale ?? 1
-    property string desktopClockPosition: Config.background.desktopClock.position ?? "bottom-right"
     property bool desktopClockShadowEnabled: Config.background.desktopClock.shadow.enabled ?? true
     property real desktopClockShadowOpacity: Config.background.desktopClock.shadow.opacity ?? 0.7
     property real desktopClockShadowBlur: Config.background.desktopClock.shadow.blur ?? 0.4
@@ -73,9 +73,9 @@ Item {
         Config.appearance.transparency.reduceTransparency = root.reduceTransparency;
 
         Config.background.desktopClock.enabled = root.desktopClockEnabled;
+        Config.background.desktopClock.version = root.desktopClockVersion;
         Config.background.enabled = root.backgroundEnabled;
         Config.background.desktopClock.scale = root.desktopClockScale;
-        Config.background.desktopClock.position = root.desktopClockPosition;
         Config.background.desktopClock.shadow.enabled = root.desktopClockShadowEnabled;
         Config.background.desktopClock.shadow.opacity = root.desktopClockShadowOpacity;
         Config.background.desktopClock.shadow.blur = root.desktopClockShadowBlur;

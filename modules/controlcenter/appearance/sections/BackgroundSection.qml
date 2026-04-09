@@ -56,91 +56,33 @@ CollapsibleSection {
         }
     }
 
-    SectionContainer {
-        id: posContainer
+    SplitButtonRow {
+        label: qsTr("Clock Version")
+        enabled: rootPane.desktopClockEnabled
 
-        contentSpacing: Appearance.spacing.sm
-        z: 1
+        menuItems: [
+            MenuItem {
+                text: qsTr("Version 1 (Classic)")
+                icon: "timer"
+                property string val: "v1"
+            },
+            MenuItem {
+                text: qsTr("Version 2 (Stacked)")
+                icon: "layers"
+                property string val: "v2"
+            }
+        ]
 
-        readonly property var pos: (rootPane.desktopClockPosition || "top-left").split('-')
-        readonly property string currentV: pos[0]
-        readonly property string currentH: pos[1]
+        Component.onCompleted: {
+            for (let i = 0; i < menuItems.length; i++) {
+                if (menuItems[i].val === rootPane.desktopClockVersion)
+                    active = menuItems[i];
+            }
+        }
 
-        function updateClockPos(v, h) {
-            rootPane.desktopClockPosition = v + "-" + h;
+        onSelected: item => {
+            rootPane.desktopClockVersion = item.val;
             rootPane.saveConfig();
-        }
-
-        StyledText {
-            text: qsTr("Positioning")
-            font.pointSize: Appearance.font.size.bodyLarge
-            font.weight: 500
-        }
-
-        SplitButtonRow {
-            label: qsTr("Vertical Position")
-            enabled: rootPane.desktopClockEnabled
-
-            menuItems: [
-                MenuItem {
-                    text: qsTr("Top")
-                    icon: "vertical_align_top"
-                    property string val: "top"
-                },
-                MenuItem {
-                    text: qsTr("Middle")
-                    icon: "vertical_align_center"
-                    property string val: "middle"
-                },
-                MenuItem {
-                    text: qsTr("Bottom")
-                    icon: "vertical_align_bottom"
-                    property string val: "bottom"
-                }
-            ]
-
-            Component.onCompleted: {
-                for (let i = 0; i < menuItems.length; i++) {
-                    if (menuItems[i].val === posContainer.currentV)
-                        active = menuItems[i];
-                }
-            }
-
-            // The signal from SplitButtonRow
-            onSelected: item => posContainer.updateClockPos(item.val, posContainer.currentH)
-        }
-
-        SplitButtonRow {
-            label: qsTr("Horizontal Position")
-            enabled: rootPane.desktopClockEnabled
-            expandedZ: 99
-
-            menuItems: [
-                MenuItem {
-                    text: qsTr("Left")
-                    icon: "align_horizontal_left"
-                    property string val: "left"
-                },
-                MenuItem {
-                    text: qsTr("Center")
-                    icon: "align_horizontal_center"
-                    property string val: "center"
-                },
-                MenuItem {
-                    text: qsTr("Right")
-                    icon: "align_horizontal_right"
-                    property string val: "right"
-                }
-            ]
-
-            Component.onCompleted: {
-                for (let i = 0; i < menuItems.length; i++) {
-                    if (menuItems[i].val === posContainer.currentH)
-                        active = menuItems[i];
-                }
-            }
-
-            onSelected: item => posContainer.updateClockPos(posContainer.currentV, item.val)
         }
     }
 

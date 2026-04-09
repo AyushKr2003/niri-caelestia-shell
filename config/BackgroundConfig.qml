@@ -8,8 +8,10 @@ JsonObject {
 
     component DesktopClock: JsonObject {
         property bool enabled: false
+        property string version: "v2"
         property real scale: 1.0
-        property string position: "bottom-right"
+        property real xOffset: 0
+        property real yOffset: 0
         property bool invertColors: false
         property DesktopClockBackground background: DesktopClockBackground {}
         property DesktopClockShadow shadow: DesktopClockShadow {}

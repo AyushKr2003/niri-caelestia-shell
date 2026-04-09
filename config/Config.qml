@@ -151,8 +151,8 @@ Singleton {
             wallpaperEnabled: background.wallpaperEnabled,
             desktopClock: {
                 enabled: background.desktopClock.enabled,
+                version: background.desktopClock.version,
                 scale: background.desktopClock.scale,
-                position: background.desktopClock.position,
                 invertColors: background.desktopClock.invertColors,
                 background: {
                     enabled: background.desktopClock.background.enabled,
