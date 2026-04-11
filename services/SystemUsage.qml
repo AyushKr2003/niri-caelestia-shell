@@ -16,7 +16,7 @@ Singleton {
 
     // GPU properties
     readonly property string gpuType: Config.services.gpuType.toUpperCase() || SysMonitor.gpu.type || "NONE"
-    property string gpuName: SysMonitor.gpu.name || ""
+    property string gpuName: cleanGpuName(SysMonitor.gpu.name || "")
     property real gpuPerc: SysMonitor.gpu.utilization || 0
     property real gpuTemp: SysMonitor.gpu.temperature || 0
 
@@ -45,11 +45,36 @@ Singleton {
     property int refCount
 
     function cleanCpuName(name: string): string {
-        return name.replace(/\(R\)/gi, "").replace(/\(TM\)/gi, "").replace(/CPU/gi, "").replace(/\d+th Gen /gi, "").replace(/\d+nd Gen /gi, "").replace(/\d+rd Gen /gi, "").replace(/\d+st Gen /gi, "").replace(/Core /gi, "").replace(/Processor/gi, "").replace(/\s+/g, " ").trim();
+        if (!name) return "";
+        let cleaned = name.replace(/\(R\)/gi, "").replace(/\(TM\)/gi, "").replace(/CPU/gi, "").replace(/\d+th Gen /gi, "").replace(/\d+nd Gen /gi, "").replace(/\d+rd Gen /gi, "").replace(/\d+st Gen /gi, "").replace(/Core /gi, "").replace(/Processor/gi, "").replace(/\s+/g, " ").trim();
+
+        if (cleaned.length > 25) {
+            cleaned = cleaned.substring(0, 22) + "...";
+        }
+        return cleaned;
     }
 
     function cleanGpuName(name: string): string {
-        return name.replace(/NVIDIA GeForce /gi, "").replace(/NVIDIA /gi, "").replace(/AMD Radeon /gi, "").replace(/AMD /gi, "").replace(/Intel /gi, "").replace(/\(R\)/gi, "").replace(/\(TM\)/gi, "").replace(/Graphics/gi, "").replace(/\s+/g, " ").trim();
+        if (!name) return "";
+        let cleaned = name.replace(/NVIDIA GeForce /gi, "")
+                          .replace(/NVIDIA /gi, "")
+                          .replace(/AMD Radeon /gi, "")
+                          .replace(/AMD /gi, "")
+                          .replace(/Intel\(R\) /gi, "")
+                          .replace(/Intel /gi, "")
+                          .replace(/\(R\)/gi, "")
+                          .replace(/\(TM\)/gi, "")
+                          .replace(/Graphics/gi, "")
+                          .replace(/ Laptop GPU/gi, "")
+                          .replace(/ Mobile/gi, "")
+                          .replace(/ Desktop/gi, "")
+                          .replace(/\s+/g, " ")
+                          .trim();
+
+        if (cleaned.length > 25) {
+            cleaned = cleaned.substring(0, 22) + "...";
+        }
+        return cleaned;
     }
 
     function formatKib(kib: real): var {

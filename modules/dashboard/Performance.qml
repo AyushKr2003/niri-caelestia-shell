@@ -293,7 +293,9 @@ Item {
         StyledText {
             Layout.fillWidth: true
             text: parent.title
-            font.pointSize: Appearance.font.size.bodyMedium
+            font.pointSize: Appearance.font.size.bodySmall
+            font.weight: Font.Medium
+            color: Colours.palette.m3onSurface
             elide: Text.ElideRight
         }
     }
@@ -364,7 +366,7 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.leftMargin: Appearance.padding.xl
-            anchors.rightMargin: Appearance.padding.xl
+            anchors.rightMargin: 140
             anchors.topMargin: Appearance.padding.md
             anchors.bottomMargin: Appearance.padding.md
             spacing: Appearance.spacing.sm

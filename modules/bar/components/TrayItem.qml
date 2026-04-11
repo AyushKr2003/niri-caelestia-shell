@@ -12,8 +12,8 @@ MouseArea {
     required property SystemTrayItem modelData
 
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    implicitWidth: Appearance.font.size.labelLarge * 2
-    implicitHeight: Appearance.font.size.labelLarge * 2
+    implicitWidth: Config.bar.tray.compact ? Appearance.font.size.labelLarge * 1.5 : Appearance.font.size.labelLarge * 1.8
+    implicitHeight: implicitWidth
 
     onClicked: event => {
         if (event.button === Qt.LeftButton)
@@ -26,6 +26,7 @@ MouseArea {
         id: icon
 
         anchors.fill: parent
+        anchors.margins: Appearance.padding.xs
         source: {
             let icon = root.modelData.icon;
             if (icon.includes("?path=")) {
@@ -35,6 +36,6 @@ MouseArea {
             return icon;
         }
         colour: Colours.palette.m3secondary
-        layer.enabled: Config.bar.tray.recolour
+        layer.enabled: Config.bar.tray.recolour && status === Image.Ready
     }
 }
