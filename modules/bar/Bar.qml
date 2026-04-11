@@ -217,7 +217,6 @@ ColumnLayout {
     Component.onCompleted: updateEnabledCache()
 
     component WrappedLoader: Loader {
-        required property bool enabled
         required property string id
         required property int index
 

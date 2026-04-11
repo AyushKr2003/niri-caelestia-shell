@@ -183,6 +183,7 @@ Singleton {
                 console.warn("[ServiceNovel] Server exited with code", code)
             }
         }
+        Component.onDestruction: running = false
     }
 
     Timer {

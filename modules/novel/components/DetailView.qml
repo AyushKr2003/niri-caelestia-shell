@@ -303,6 +303,7 @@ Item {
                         }
 
                         IconButton {
+                            id: clearFilterBtn
                             visible: detailView._chapterFilter !== ""
                             type: IconButton.Text
                             icon: "close"
@@ -312,17 +313,18 @@ Item {
                                 detailView._chapterFilter = ""
                                 chapterSearch.text = ""
                             }
-                            Tooltip { target: parent; text: qsTr("Clear filter") }
+                            Tooltip { target: clearFilterBtn; text: qsTr("Clear filter") }
                         }
                     }
                 }
 
                 IconButton {
+                    id: sortBtn
                     type: IconButton.Tonal
                     icon: detailView._sortAscending ? "arrow_upward" : "arrow_downward"
                     onClicked: detailView._sortAscending = !detailView._sortAscending
                     Tooltip {
-                        target: parent
+                        target: sortBtn
                         text: detailView._sortAscending ? qsTr("Sort: Ascending") : qsTr("Sort: Descending")
                     }
                 }

@@ -8,7 +8,6 @@ Loader {
     id: root
 
     // Required properties that must be bound by parent
-    required property bool enabled
     required property string id
     required property int index
 

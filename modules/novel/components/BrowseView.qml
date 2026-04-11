@@ -115,6 +115,7 @@ Item {
                         }
 
                         IconButton {
+                            id: closeSearchBtn
                             type: IconButton.Text
                             icon: "close"
                             font.pointSize: 18
@@ -125,7 +126,7 @@ Item {
                                 browseView.currentFilter = "hot"
                                 Novel.fetchHot()
                             }
-                            Tooltip { target: parent; text: qsTr("Close search") }
+                            Tooltip { target: closeSearchBtn; text: qsTr("Close search") }
                         }
                     }
                 }

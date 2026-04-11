@@ -22,6 +22,8 @@ StyledRect {
     property alias font: label.font
     property int type: IconTextButton.Filled
 
+    readonly property bool hovered: stateLayer.containsMouse
+
     property alias stateLayer: stateLayer
     property alias iconLabel: iconLabel
     property alias label: label

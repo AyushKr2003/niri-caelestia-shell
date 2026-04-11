@@ -106,6 +106,7 @@ Item {
                         }
 
                         IconButton {
+                            id: closeSearchBtn
                             type: IconButton.Text
                             icon: "close"
                             font.pointSize: 18
@@ -115,7 +116,7 @@ Item {
                                 searchBar.text = ""
                                 Manga.fetchByOrigin(browseView.currentTagId, true)
                             }
-                            Tooltip { target: parent; text: qsTr("Close search") }
+                            Tooltip { target: closeSearchBtn; text: qsTr("Close search") }
                         }
                     }
                 }

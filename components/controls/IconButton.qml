@@ -20,6 +20,8 @@ StyledRect {
     property int type: IconButton.Filled
     property bool disabled
 
+    readonly property bool hovered: stateLayer.containsMouse
+
     property alias stateLayer: stateLayer
     property alias label: label
     property alias radiusAnim: radiusAnim
