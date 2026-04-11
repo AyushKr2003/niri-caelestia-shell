@@ -82,7 +82,7 @@ You need both runtime dependencies and development headers.
 
 | Category | Packages |
 |---|---|
-| Core | `quickshell-git`, `networkmanager`, `fish`, `glibc`, `qt6-declarative`, `gcc-libs` |
+| Core | `quickshell-git`, `networkmanager`, `networkmanager-qt`, `fish`, `glibc`, `qt6-declarative`, `gcc-libs` |
 | Audio & Visual | `cava`, `libcava`, `aubio`, `libpipewire`, `ddcutil`, `brightnessctl`, `materialyoucolor` |
 | Fonts | `ttf-material-icons-git`, `ttf-jetbrains-mono` |
 | Screenshot & Utils | `grim`, `swappy`, `app2unit`, `libqalculate`, `tesseract`, `tesseract-data-eng`, `curl` |

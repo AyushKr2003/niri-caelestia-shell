@@ -92,7 +92,7 @@ install_system_deps() {
         brightnessctl ddcutil geoclue
 
         # KDE/Qt integration
-        bluedevil gnome-keyring networkmanager plasma-nm polkit-kde-agent
+        bluedevil gnome-keyring networkmanager networkmanager-qt plasma-nm polkit-kde-agent
         dolphin systemsettings breeze
 
         # Desktop portals

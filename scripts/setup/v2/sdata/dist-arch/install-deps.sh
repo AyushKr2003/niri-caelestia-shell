@@ -33,7 +33,7 @@ official_pkgs=(
   # SDDM & Qt6 Modules (Required by theme)
   sddm qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffects
   # System Tools
-  bluedevil gnome-keyring networkmanager plasma-nm polkit-kde-agent dolphin upower wtype ydotool
+  bluedevil gnome-keyring networkmanager networkmanager-qt plasma-nm polkit-kde-agent dolphin upower wtype ydotool
   imagemagick hypridle hyprlock hyprpicker translate-shell libqalculate cliphist
   # Python & App Build Deps
   gtk4 libadwaita libsoup3 libportal-gtk4 gobject-introspection systemsettings tesseract tesseract-data-eng wf-recorder slurp swappy
