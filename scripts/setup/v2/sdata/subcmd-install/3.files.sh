@@ -64,4 +64,7 @@ install_google_sans_flex(){
 }
 install_google_sans_flex
 
+# Return to the original setup directory
+cd - > /dev/null
+
 echo -e "${STY_GREEN}Installation, Build, and Backup complete!${STY_RST}"
