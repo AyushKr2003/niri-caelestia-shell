@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
+set(VERSION "2.0.0")
+set(GIT_REVISION "unknown")
 
 if(NOT DEFINED VERSION)
     execute_process(COMMAND git describe --tags --abbrev=0
