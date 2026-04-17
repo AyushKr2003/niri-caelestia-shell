@@ -31,7 +31,7 @@ official_pkgs=(
   # Theming & Fonts
   noto-fonts-emoji papirus-icon-theme breeze fontconfig
   # SDDM & Qt6 Modules (Required by theme)
-  sddm qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffects
+  sddm qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffectmaker
   # System Tools
   bluedevil gnome-keyring networkmanager networkmanager-qt plasma-nm polkit-kde-agent dolphin upower wtype ydotool
   imagemagick hypridle hyprlock hyprpicker translate-shell libqalculate cliphist
@@ -58,6 +58,10 @@ aur_pkgs=(
   ttf-rubik-vf
   ttf-twemoji
   otf-space-grotesk
+  libcava-git
+  ttf-material-icons-git
+  app2unit
+  python-materialyoucolor
 )
 
 echo -e "${STY_BLUE}Installing AUR packages...${STY_RST}"
