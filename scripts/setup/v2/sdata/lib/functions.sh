@@ -24,6 +24,12 @@ function x(){
     esac
   fi
 }
+function showfun() {
+  echo -e "${STY_BLUE}The definition of function \"$1\" is as follows:${STY_RST}"
+  echo -e "${STY_GREEN}"
+  type -a "$1"
+  echo -e "${STY_RST}"
+}
 function pause(){
   if [[ "$ask" != "false" ]]; then
     read -p "(Enter to continue, Ctrl-C to abort)"
