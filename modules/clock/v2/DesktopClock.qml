@@ -15,31 +15,40 @@ Item {
     property real absY
 
     property real mScale: Config.background.desktopClock.scale
+    readonly property bool invertColors: Config.background.desktopClock.invertColors
+    readonly property bool useLightSet: Colours.light ? !invertColors : invertColors
 
-    readonly property color accentColor: "#F5C518"
-    readonly property color bgDateColor: "#AA1800"
+    // ── Dynamic colors from your M3 scheme ──
+    readonly property color colorDate:    useLightSet ? Colours.palette.m3primaryContainer    : Colours.palette.m3primary
+    readonly property color colorMonth:   useLightSet ? Colours.palette.m3tertiaryContainer   : Colours.palette.m3tertiary
+    readonly property color colorTime:    useLightSet ? Colours.palette.m3primaryContainer    : Colours.palette.m3primary
+    readonly property color colorWeekday: useLightSet ? Colours.palette.m3onSurface           : Colours.palette.m3onSurfaceVariant
+    readonly property color colorDivider: useLightSet ? Colours.palette.m3outlineVariant      : Colours.palette.m3outline
 
     implicitWidth: 420 * root.mScale
     implicitHeight: 420 * root.mScale
 
-    // ── Step 1: The big date text — hidden, MultiEffect renders it ──
+    // ── Big background date ──
     Text {
         id: backgroundDay
         anchors.centerIn: parent
         text: Time.format("dd")
-        font.pixelSize: 520 * root.mScale
+        font.pixelSize: 700 * root.mScale
         font.weight: Font.Black
         font.family: Appearance.font.family.sans
-        color: root.bgDateColor
+        font.letterSpacing: -20 * root.mScale
+        color: root.colorDate
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        renderType: Text.QtRendering
+        renderType: Text.NativeRendering
         visible: false
         layer.enabled: true
+        layer.smooth: true
+        layer.samples: 8
+        layer.textureSize: Qt.size(backgroundDay.width * 2, backgroundDay.height * 2)
     }
 
-    // ── Step 2: Mask — MUST be Item wrapper with layer.enabled, gradient child ──
-    // Alpha channel drives MultiEffect: opaque = show, transparent = hide
+    // ── Gradient mask: solid top → transparent bottom ──
     Item {
         id: gradientMask
         width: backgroundDay.width
@@ -47,27 +56,27 @@ Item {
         anchors.centerIn: parent
         visible: false
         layer.enabled: true
-        layer.smooth: true   // required for smooth gradient edges
+        layer.smooth: true
 
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
                 orientation: Gradient.Vertical
-                GradientStop { position: 0.0;  color: "#ff000000" }  // opaque black = SHOW
-                GradientStop { position: 0.5;  color: "#ff000000" }  // stays visible
-                GradientStop { position: 1.0;  color: "#00000000" }  // transparent = HIDE
+                GradientStop { position: 0.0;  color: "#ff000000" }
+                GradientStop { position: 0.50; color: "#dc000000" }
+                GradientStop { position: 0.85; color: "#01000000" }
+                GradientStop { position: 1.0;  color: "#00000000" }
             }
         }
     }
 
-    // ── Step 3: MultiEffect — applies gradient mask to date text ──
     MultiEffect {
         source: backgroundDay
         anchors.fill: backgroundDay
         maskEnabled: true
         maskSource: gradientMask
-        maskThresholdMin: 0.5   // per Qt forum: needed for smooth gradient
-        maskSpreadAtMin: 1.0    // per Qt forum: needed for smooth gradient
+        maskThresholdMin: 0.5
+        maskSpreadAtMin: 1.0
         z: 0
     }
 
@@ -78,6 +87,7 @@ Item {
         spacing: 0
         z: 1
 
+        // Month — tertiary color
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: Time.format("MMMM").toUpperCase()
@@ -85,9 +95,11 @@ Item {
             font.weight: Font.Black
             font.family: Appearance.font.family.sans
             font.letterSpacing: 4 * root.mScale
-            color: root.accentColor
+            renderType: Text.NativeRendering
+            color: root.colorMonth
         }
 
+        // Time — primary color
         Text {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 8 * root.mScale
@@ -95,18 +107,21 @@ Item {
             font.pixelSize: 38 * root.mScale
             font.weight: Font.Bold
             font.family: Appearance.font.family.sans
-            color: root.accentColor
+            renderType: Text.NativeRendering
+            color: root.colorTime
         }
 
+        // Divider
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 8 * root.mScale
             Layout.preferredWidth: 180 * root.mScale
             Layout.preferredHeight: 2 * root.mScale
-            color: root.accentColor
+            color: root.colorDivider
             radius: 1
         }
 
+        // Weekday — onSurfaceVariant
         Text {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 10 * root.mScale
@@ -115,11 +130,12 @@ Item {
             font.weight: Font.Medium
             font.family: Appearance.font.family.sans
             font.letterSpacing: 10 * root.mScale
-            color: root.accentColor
+            renderType: Text.NativeRendering
+            color: root.colorWeekday
         }
     }
 
-    // ── Drag to reposition ──
+    // ── Drag ──
     MouseArea {
         anchors.fill: parent
         cursorShape: containsMouse ? (pressed ? Qt.SizeAllCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
@@ -147,12 +163,17 @@ Item {
     }
 
     Behavior on mScale {
-        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        Anim {
+            duration: Appearance.anim.durations.expressiveDefaultSpatial
+            easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+        }
     }
+
     Behavior on implicitWidth {
-        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        Anim { duration: Appearance.anim.durations.small }
     }
+
     Behavior on implicitHeight {
-        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        Anim { duration: Appearance.anim.durations.small }
     }
 }
