@@ -90,7 +90,11 @@ StyledListView {
 
     spacing: Appearance.spacing.sm
     orientation: Qt.Vertical
-    implicitHeight: (Config.launcher.sizes.itemHeight + spacing) * Math.min(Config.launcher.maxShown, count) - spacing
+    implicitHeight: {
+        if (state === "emoji")
+            return Math.min(Config.launcher.maxShown * Config.launcher.sizes.itemHeight, 400);
+        return (Config.launcher.sizes.itemHeight + spacing) * Math.min(Config.launcher.maxShown, count) - spacing;
+    }
 
     highlightMoveDuration: Appearance.anim.durations.normal
     highlightResizeDuration: 0
@@ -105,7 +109,7 @@ StyledListView {
         const text = _debouncedText;
         const prefix = Config.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
-            for (const action of ["calc", "scheme", "variant", "clip", "web"])
+            for (const action of ["calc", "scheme", "variant", "clip", "emoji", "web"])
                 if (text.startsWith(`${prefix}${action} `))
                     return action;
 
@@ -169,6 +173,14 @@ StyledListView {
             PropertyChanges {
                 model.values: root._clipFilteredValues
                 root.delegate: clipItem
+            }
+        },
+        State {
+            name: "emoji"
+
+            PropertyChanges {
+                model.values: [0]
+                root.delegate: emojiItem
             }
         },
         State {
@@ -329,6 +341,15 @@ StyledListView {
 
         ClipItem {
             list: root
+        }
+    }
+
+    Component {
+        id: emojiItem
+
+        EmojiList {
+            search: root.search
+            visibilities: root.visibilities
         }
     }
 

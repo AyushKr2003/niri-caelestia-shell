@@ -76,6 +76,7 @@ Item {
                     case "scheme": return "palette";
                     case "variant": return "format_paint";
                     case "wallpapers": return "wallpaper";
+                    case "emoji": return "mood";
                     default: return "search";
                     }
                 }
@@ -94,6 +95,7 @@ Item {
                     case "scheme": return qsTr("Colour Scheme");
                     case "variant": return qsTr("Variant");
                     case "wallpapers": return qsTr("Wallpapers");
+                    case "emoji": return qsTr("Emoji Picker");
                     default: return "";
                     }
                 }
@@ -162,6 +164,8 @@ Item {
                             currentItem.onClicked();
                         else if (text.startsWith(`${Config.launcher.actionPrefix}web `))
                             currentItem.onClicked();
+                        else if (text.startsWith(`${Config.launcher.actionPrefix}emoji `))
+                             currentItem.currentItem?.onClicked();
                         else
                             currentItem.modelData.onClicked(list.currentList);
                     } else {
@@ -171,27 +175,74 @@ Item {
                 }
             }
 
-            Keys.onUpPressed: list.currentList?.decrementCurrentIndex()
-            Keys.onDownPressed: list.currentList?.incrementCurrentIndex()
+            Keys.onUpPressed: {
+                if (list.activeMode === "emoji")
+                    list.currentList.currentItem?.moveUp();
+                else
+                    list.currentList?.decrementCurrentIndex();
+            }
+            Keys.onDownPressed: {
+                if (list.activeMode === "emoji")
+                    list.currentList.currentItem?.moveDown();
+                else
+                    list.currentList?.incrementCurrentIndex();
+            }
+            Keys.onLeftPressed: {
+                if (list.activeMode === "emoji")
+                    list.currentList.currentItem?.moveLeft();
+                else
+                    event.accepted = false;
+            }
+            Keys.onRightPressed: {
+                if (list.activeMode === "emoji")
+                    list.currentList.currentItem?.moveRight();
+                else
+                    event.accepted = false;
+            }
             Keys.onEscapePressed: root.visibilities.launcher = false
 
             Keys.onPressed: event => {
-                // ...existing code...
+                // Ignore events if we're not focused
+                if (!search.focus)
                     return;
+
+                if (list.activeMode === "emoji") {
+                    if (event.key === Qt.Key_PageUp) {
+                        list.currentList.currentItem?.prevCategory();
+                        event.accepted = true;
+                        return;
+                    } else if (event.key === Qt.Key_PageDown) {
+                        list.currentList.currentItem?.nextCategory();
+                        event.accepted = true;
+                        return;
+                    }
+                }
 
                 if (event.modifiers & Qt.ControlModifier) {
                     if (event.key === Qt.Key_J) {
-                        list.currentList?.incrementCurrentIndex();
+                        if (list.activeMode === "emoji")
+                            list.currentList.currentItem?.incrementCurrentIndex();
+                        else
+                            list.currentList?.incrementCurrentIndex();
                         event.accepted = true;
                     } else if (event.key === Qt.Key_K) {
-                        list.currentList?.decrementCurrentIndex();
+                        if (list.activeMode === "emoji")
+                            list.currentList.currentItem?.decrementCurrentIndex();
+                        else
+                            list.currentList?.decrementCurrentIndex();
                         event.accepted = true;
                     }
                 } else if (event.key === Qt.Key_Tab) {
-                    list.currentList?.incrementCurrentIndex();
+                    if (list.activeMode === "emoji")
+                        list.currentList.currentItem?.incrementCurrentIndex();
+                    else
+                        list.currentList?.incrementCurrentIndex();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))) {
-                    list.currentList?.decrementCurrentIndex();
+                    if (list.activeMode === "emoji")
+                        list.currentList.currentItem?.decrementCurrentIndex();
+                    else
+                        list.currentList?.decrementCurrentIndex();
                     event.accepted = true;
                 }
             }

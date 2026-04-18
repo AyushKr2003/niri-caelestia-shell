@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "items"
 import qs.components
 import qs.services
 import qs.config
@@ -7,6 +8,7 @@ import qs.utils
 import Quickshell
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     id: root
@@ -22,6 +24,8 @@ Item {
     readonly property Item currentList: showWallpapers ? wallpaperList.item : appList.item
     readonly property string activeMode: showWallpapers ? "wallpapers" : (appList.item?.state ?? "apps")
 
+    readonly property bool showClipPreview: activeMode === "clip" && Boolean(currentList?.currentItem?.modelData)
+
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
 
@@ -33,8 +37,8 @@ Item {
             name: "apps"
 
             PropertyChanges {
-                root.implicitWidth: Config.launcher.sizes.itemWidth
-                root.implicitHeight: appList.implicitHeight > 0 ? appList.implicitHeight : empty.implicitHeight
+                root.implicitWidth: Config.launcher.sizes.itemWidth + (showClipPreview ? 300 + Appearance.spacing.lg : 0)
+                root.implicitHeight: Math.max(appList.implicitHeight > 0 ? appList.implicitHeight : empty.implicitHeight, showClipPreview ? 400 : 0)
                 appList.active: true
             }
 
@@ -74,18 +78,33 @@ Item {
         }
     }
 
-    Loader {
-        id: appList
+    Row {
+        id: mainRow
+        anchors.fill: parent
+        spacing: Appearance.spacing.lg
 
-        active: false
-        asynchronous: true
+        Loader {
+            id: appList
 
-        anchors.left: parent.left
-        anchors.right: parent.right
+            active: false
+            asynchronous: true
 
-        sourceComponent: AppList {
-            search: root.search
-            visibilities: root.visibilities
+            height: parent.height
+            width: Config.launcher.sizes.itemWidth
+
+            sourceComponent: AppList {
+                search: root.search
+                visibilities: root.visibilities
+            }
+        }
+
+        ClipPreview {
+            id: clipPreview
+            visible: root.showClipPreview
+            modelData: root.currentList?.currentItem?.modelData
+            list: appList.item
+            height: parent.height
+            width: 300
         }
     }
 

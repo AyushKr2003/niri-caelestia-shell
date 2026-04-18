@@ -133,8 +133,9 @@ Popup {
     // Monitor hover state
     Connections {
         target: root.target
+        ignoreUnknownSignals: true
         function onHoveredChanged() {
-            if (target.hovered) {
+            if (root.target && root.target.hovered) {
                 showTimer.start();
                 if (timeout > 0) {
                     hideTimer.stop();

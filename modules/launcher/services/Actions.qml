@@ -77,6 +77,15 @@ Searcher {
             }
         },
         Action {
+            name: qsTr("Emoji")
+            desc: qsTr("Search and copy emojis")
+            icon: "mood"
+
+            function onClicked(list: AppList): void {
+                root.autocomplete(list, "emoji");
+            }
+        },
+        Action {
             name: qsTr("OCR")
             desc: qsTr("Extract text from a screen region")
             icon: "document_scanner"
