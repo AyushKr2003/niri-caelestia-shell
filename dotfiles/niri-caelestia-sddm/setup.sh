@@ -30,7 +30,7 @@ MISSING=()
 command -v sddm-greeter-qt6 &>/dev/null || MISSING+=("sddm")
 command -v jq &>/dev/null || MISSING+=("jq")
 if command -v pacman &>/dev/null; then
-    for pkg in qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffects; do
+    for pkg in qt6-svg qt6-declarative qt6-multimedia-ffmpeg qt6-quickeffectmaker; do
         pacman -Q "$pkg" &>/dev/null || MISSING+=("$pkg")
     done
 fi

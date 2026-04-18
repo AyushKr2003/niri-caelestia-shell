@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.19)
 
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    set(VERSION "2.0.0")
+    set(GIT_REVISION "unknown")
+endif()
+
 if(NOT DEFINED VERSION)
     execute_process(COMMAND git describe --tags --abbrev=0
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
