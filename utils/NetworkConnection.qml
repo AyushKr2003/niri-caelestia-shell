@@ -70,7 +70,31 @@ QtObject {
             const hasSavedProfile = Nmcli.hasSavedProfile(network.ssid);
 
             if (hasSavedProfile) {
-                Nmcli.connectToNetwork(network.ssid, "", network.bssid, null);
+                // Try connecting with saved profile, but handle failure
+                Nmcli.connectToNetwork(network.ssid, "", network.bssid, result => {
+                    if (result && result.success) {
+                        // Connected successfully with saved profile
+                    } else {
+                        // Saved profile failed - delete it and ask for password
+                        Nmcli.forgetNetwork(network.ssid);
+
+                        // Clear pending connection state
+                        if (Nmcli.pendingConnection) {
+                            Nmcli.connectionCheckTimer.stop();
+                            Nmcli.immediateCheckTimer.stop();
+                            Nmcli.immediateCheckTimer.checkCount = 0;
+                            Nmcli.pendingConnection = null;
+                        }
+
+                        // Show password dialog
+                        if (session && session.network) {
+                            session.network.showPasswordDialog = true;
+                            session.network.pendingNetwork = network;
+                        } else if (onPasswordNeeded) {
+                            onPasswordNeeded(network);
+                        }
+                    }
+                });
             } else {
                 // Use password check with callback
                 Nmcli.connectToNetworkWithPasswordCheck(network.ssid, network.isSecure, result => {

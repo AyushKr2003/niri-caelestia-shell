@@ -8,10 +8,8 @@ qml_module(caelestia-services
         audioprovider.hpp audioprovider.cpp
         cavaprovider.hpp cavaprovider.cpp
         sysmonitor.hpp sysmonitor.cpp
-        networkmanager.hpp networkmanager.cpp
     LIBRARIES
         PkgConfig::Pipewire
         PkgConfig::Aubio
         PkgConfig::Cava
-        KF6::NetworkManagerQt
 )

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Qml Gui Quick Concurrent Multimedia Network Sql DBus)
-find_package(KF6NetworkManagerQt REQUIRED)
+
 
 if(QT_KNOWN_POLICY_QTP0001)
     qt_policy(SET QTP0001 NEW)

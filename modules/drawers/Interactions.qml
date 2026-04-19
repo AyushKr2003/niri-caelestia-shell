@@ -99,7 +99,7 @@ CustomMouseArea {
             if (!isShortcutActive("quicktoggles"))
                 visibilities.quicktoggles = false;
 
-            if (!popouts.currentName.startsWith("traymenu"))
+            if (!popouts.currentName.startsWith("traymenu") && popouts.currentName !== "wirelesspassword")
                 popouts.hasCurrent = false;
 
             if (Config.bar.showOnHover)
@@ -207,7 +207,7 @@ CustomMouseArea {
         // Show popouts on hover
         if (x < bar.implicitWidth)
             bar.checkPopout(y);
-        else if (!popouts.currentName.startsWith("traymenu") && !inLeftPanel(panels.popouts, x, y))
+        else if (!popouts.currentName.startsWith("traymenu") && popouts.currentName !== "wirelesspassword" && !inLeftPanel(panels.popouts, x, y))
             popouts.hasCurrent = false;
     }
 

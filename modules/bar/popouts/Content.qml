@@ -16,6 +16,9 @@ Item {
     implicitWidth: (content.children.find(c => c.shouldBeActive)?.implicitWidth ?? 0) + Appearance.padding.xl * 2
     implicitHeight: (content.children.find(c => c.shouldBeActive)?.implicitHeight ?? 0) + Appearance.padding.xl * 2
 
+    // Persistent storage for the password network - survives network popout deactivation
+    property var pendingPasswordNetwork: null
+
     Item {
         id: content
 
@@ -30,8 +33,29 @@ Item {
         }
 
         Popout {
+            id: networkPopout
+
             name: "network"
-            sourceComponent: Network {}
+            sourceComponent: Network {
+                wrapper: root.wrapper
+                onPasswordNetworkChanged: {
+                    // Capture network to persistent storage whenever it changes
+                    if (passwordNetwork) {
+                        root.pendingPasswordNetwork = passwordNetwork;
+                    }
+                }
+            }
+        }
+
+        Popout {
+            id: passwordPopout
+
+            name: "wirelesspassword"
+            sourceComponent: WirelessPassword {
+                wrapper: root.wrapper
+                // Use the persistent copy, not a binding to the network popout's item
+                network: root.pendingPasswordNetwork
+            }
         }
 
         Popout {

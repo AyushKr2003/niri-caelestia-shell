@@ -15,7 +15,7 @@
   fftw,
   bash,
   ffmpeg,
-  kdePackages,
+
   gst_all_1,
   material-symbols,
   rubik,
@@ -88,7 +88,7 @@
     };
 
     nativeBuildInputs = [cmake ninja pkg-config];
-    buildInputs = [qt6.qtbase qt6.qtdeclarative qt6.qt5compat fftw qt6.qtmultimedia libqalculate pipewire aubio libcava kdePackages.networkmanager-qt];
+    buildInputs = [qt6.qtbase qt6.qtdeclarative qt6.qt5compat fftw qt6.qtmultimedia libqalculate pipewire aubio libcava];
 
     dontWrapQtApps = true;
     cmakeFlags =
