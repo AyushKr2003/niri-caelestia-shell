@@ -12,11 +12,12 @@ Item {
     required property ShellScreen screen
     required property PersistentProperties visibilities
     required property BarPopouts.Wrapper popouts
+    required property bool fullscreen
 
     readonly property int padding: Math.max(Appearance.padding.sm, Config.border.thickness)
     readonly property int contentWidth: Config.bar.sizes.innerWidth + padding * 2
     readonly property int exclusiveZone: Config.bar.persistent || visibilities.bar ? contentWidth : Config.border.thickness
-    readonly property bool shouldBeVisible: Config.bar.persistent || visibilities.bar || isHovered
+    readonly property bool shouldBeVisible: !fullscreen && (Config.bar.persistent || visibilities.bar || isHovered)
     property bool isHovered
 
     function checkPopout(y: real): void {
@@ -27,8 +28,9 @@ Item {
         content.item?.handleWheel(y, angleDelta);
     }
 
+    clip: true
     visible: width > Config.border.thickness
-    implicitWidth: Config.border.thickness
+    implicitWidth: fullscreen ? 0 : Config.border.thickness
 
     states: State {
         name: "visible"
@@ -78,6 +80,7 @@ Item {
             screen: root.screen
             visibilities: root.visibilities
             popouts: root.popouts
+            fullscreen: root.fullscreen
         }
     }
 }

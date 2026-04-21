@@ -2,6 +2,8 @@ import Quickshell.Io
 
 JsonObject {
     property bool expire: true
+    property string fullscreen: "on"
+    property bool openExpanded: false
     property int defaultExpireTimeout: 5000
     /** Fallback popup duration (ms) when the server sends expireTimeout = -1. */
     property int popupTimeout: 7000

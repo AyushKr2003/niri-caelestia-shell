@@ -10,9 +10,11 @@ Item {
     id: root
 
     required property Item bar
+    required property real borderThickness
+    required property real borderRounding
 
     anchors.fill: parent
-    visible: Config.border.thickness > 0
+    visible: root.borderThickness > 0
 
     StyledRect {
         anchors.fill: parent
@@ -37,9 +39,9 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Config.border.thickness
+            anchors.margins: root.borderThickness
             anchors.leftMargin: root.bar.implicitWidth
-            radius: Config.border.rounding
+            radius: root.borderRounding
         }
     }
 }

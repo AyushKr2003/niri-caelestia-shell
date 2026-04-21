@@ -19,6 +19,7 @@ Item {
     required property ShellScreen screen
     required property PersistentProperties visibilities
     required property Item bar
+    required property real borderThickness
 
     readonly property Osd.Wrapper osd: osd
     readonly property Notifications.Wrapper notifications: notifications
@@ -32,8 +33,24 @@ Item {
     readonly property NovelModule.Wrapper novel: novel
 
     anchors.fill: parent
-    anchors.margins: Config.border.thickness
+    anchors.margins: root.borderThickness
     anchors.leftMargin: bar.implicitWidth
+
+    Behavior on anchors.margins {
+        NumberAnimation {
+            duration: Appearance.anim.durations.expressiveDefaultSpatial
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+        }
+    }
+
+    Behavior on anchors.leftMargin {
+        NumberAnimation {
+            duration: Appearance.anim.durations.expressiveDefaultSpatial
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+        }
+    }
 
     MangaModule.Wrapper {
         id: manga

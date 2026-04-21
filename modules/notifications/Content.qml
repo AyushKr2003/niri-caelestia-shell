@@ -60,7 +60,7 @@ Item {
             }
         }
 
-        return Math.min((QsWindow.window?.screen?.height ?? 0) - Config.border.thickness * 2, h + padding * 2);
+        return Math.min(panel.height, h + padding * 2);
     }
 
     ClippingWrapperRectangle {

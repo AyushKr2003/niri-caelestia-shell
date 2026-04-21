@@ -1,0 +1,600 @@
+--- modules/controlcenter/notifications/NotificationsPane.qml
++++ modules/controlcenter/notifications/NotificationsPane.qml
+@@ -105,7 +105,7 @@ Item {
+                 flickable: notificationsFlickable
+             }
+ 
+-            ColumnLayout {
++            RowLayout {
+                 id: notificationsLayout
+ 
+                 anchors.left: parent.left
+@@ -113,34 +113,21 @@ Item {
+                 anchors.top: parent.top
+                 spacing: Appearance.spacing.normal
+ 
+-                RowLayout {
+-                    spacing: Appearance.spacing.smaller
+-
+-                    StyledText {
+-                        text: qsTr("Notifications")
+-                        font.pointSize: Appearance.font.size.large
+-                        font.weight: 500
+-                    }
+-                }
++                ColumnLayout {
++                    Layout.fillWidth: true
++                    Layout.maximumWidth: 500
++                    Layout.alignment: Qt.AlignTop
++                    spacing: Appearance.spacing.normal
+ 
+-                SectionContainer {
++                    SectionContainer {
+                     Layout.fillWidth: true
+                     alignTop: true
+ 
+                     StyledText {
+-                        text: qsTr("Popup notifications")
++                        text: qsTr("Notifications")
+                         font.pointSize: Appearance.font.size.normal
+                     }
+ 
+-                    SwitchRow {
+-                        label: qsTr("Expire automatically")
+-                        checked: root.notificationsExpire
+-                        onToggled: checked => {
+-                            root.notificationsExpire = checked;
+-                            root.saveConfig();
+-                        }
+-                    }
+-
+                     SplitButtonRow {
+                         id: notificationsFullscreenSelector
+ 
+@@ -228,26 +224,28 @@ Item {
+                             root.saveConfig();
+                         }
+                     }
++                    }
+                 }
+ 
+-                SectionContainer {
++                ColumnLayout {
+                     Layout.fillWidth: true
+-                    alignTop: true
++                    Layout.alignment: Qt.AlignTop
++                    spacing: Appearance.spacing.normal
+ 
+-                    StyledText {
+-                        text: qsTr("Toasts")
+-                        font.pointSize: Appearance.font.size.normal
+-                    }
+-
+-                    RowLayout {
++                    SectionContainer {
+                         Layout.fillWidth: true
+-                        spacing: Appearance.spacing.normal
+-                        z: toastFullscreenSelector.expanded ? 100 : 0
++                        alignTop: true
++
++                        StyledText {
++                            text: qsTr("Toast settings")
++                            font.pointSize: Appearance.font.size.normal
++                        }
+ 
+                         SplitButtonRow {
+                             id: toastFullscreenSelector
+ 
+                             Layout.fillWidth: true
++                            z: expanded ? 100 : 0
+                             label: qsTr("Show in fullscreen")
+                             menuItems: [
+                                 toastFullscreenOffItem,
+@@ -325,111 +323,111 @@ Item {
+                                 root.saveConfig();
+                             }
+                         }
+-                    }
+ 
+-                    GridLayout {
+-                        Layout.fillWidth: true
+-                        columns: 3
+-                        columnSpacing: Appearance.spacing.normal
+-                        rowSpacing: Appearance.spacing.normal
+-
+-                        SwitchRow {
++                        GridLayout {
+                             Layout.fillWidth: true
+-                            label: qsTr("Charging changes")
+-                            checked: root.chargingChanged
+-                            onToggled: checked => {
+-                                root.chargingChanged = checked;
+-                                root.saveConfig();
++                            columns: 2
++                            columnSpacing: Appearance.spacing.normal
++                            rowSpacing: Appearance.spacing.normal
++
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Charging changes")
++                                checked: root.chargingChanged
++                                onToggled: checked => {
++                                    root.chargingChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Game mode changes")
+-                            checked: root.gameModeChanged
+-                            onToggled: checked => {
+-                                root.gameModeChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Game mode changes")
++                                checked: root.gameModeChanged
++                                onToggled: checked => {
++                                    root.gameModeChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Do not disturb")
+-                            checked: root.dndChanged
+-                            onToggled: checked => {
+-                                root.dndChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Do not disturb")
++                                checked: root.dndChanged
++                                onToggled: checked => {
++                                    root.dndChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Audio output changes")
+-                            checked: root.audioOutputChanged
+-                            onToggled: checked => {
+-                                root.audioOutputChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Audio output changes")
++                                checked: root.audioOutputChanged
++                                onToggled: checked => {
++                                    root.audioOutputChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Audio input changes")
+-                            checked: root.audioInputChanged
+-                            onToggled: checked => {
+-                                root.audioInputChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Audio input changes")
++                                checked: root.audioInputChanged
++                                onToggled: checked => {
++                                    root.audioInputChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Caps lock changes")
+-                            checked: root.capsLockChanged
+-                            onToggled: checked => {
+-                                root.capsLockChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Caps lock changes")
++                                checked: root.capsLockChanged
++                                onToggled: checked => {
++                                    root.capsLockChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Num lock changes")
+-                            checked: root.numLockChanged
+-                            onToggled: checked => {
+-                                root.numLockChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Num lock changes")
++                                checked: root.numLockChanged
++                                onToggled: checked => {
++                                    root.numLockChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Keyboard layout changes")
+-                            checked: root.kbLayoutChanged
+-                            onToggled: checked => {
+-                                root.kbLayoutChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Keyboard layout changes")
++                                checked: root.kbLayoutChanged
++                                onToggled: checked => {
++                                    root.kbLayoutChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("VPN changes")
+-                            checked: root.vpnChanged
+-                            onToggled: checked => {
+-                                root.vpnChanged = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("VPN changes")
++                                checked: root.vpnChanged
++                                onToggled: checked => {
++                                    root.vpnChanged = checked;
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        SwitchRow {
+-                            Layout.fillWidth: true
+-                            label: qsTr("Now playing")
+-                            checked: root.nowPlaying
+-                            onToggled: checked => {
+-                                root.nowPlaying = checked;
+-                                root.saveConfig();
++                            SwitchRow {
++                                Layout.fillWidth: true
++                                label: qsTr("Now playing")
++                                checked: root.nowPlaying
++                                onToggled: checked => {
++                                    root.nowPlaying = checked;
++                                    root.saveConfig();
++                                }
+                             }
+                         }
+                     }
+--- modules/controlcenter/notifications/NotificationsPane.qml
++++ modules/controlcenter/notifications/NotificationsPane.qml
+@@ -120,102 +120,99 @@ Item {
+                     spacing: Appearance.spacing.normal
+ 
+                     SectionContainer {
+-                    Layout.fillWidth: true
+-                    alignTop: true
++                        Layout.fillWidth: true
++                        alignTop: true
+ 
+-                    StyledText {
+-                        text: qsTr("Notifications")
+-                        font.pointSize: Appearance.font.size.normal
+-                    }
++                        StyledText {
++                            text: qsTr("Notifications")
++                            font.pointSize: Appearance.font.size.normal
++                        }
+ 
+-                    SplitButtonRow {
+-                        id: notificationsFullscreenSelector
++                        SplitButtonRow {
++                            id: notificationsFullscreenSelector
+ 
+-                        label: qsTr("Show in fullscreen")
+-                        menuItems: [
+-                            notificationsFullscreenOffItem,
+-                            notificationsFullscreenOnItem
+-                        ]
++                            label: qsTr("Show in fullscreen")
++                            menuItems: [notificationsFullscreenOffItem, notificationsFullscreenOnItem]
+ 
+-                        function syncActiveItem(): void {
+-                            active = root.notificationsFullscreen === "off" ? notificationsFullscreenOffItem : notificationsFullscreenOnItem;
+-                        }
++                            function syncActiveItem(): void {
++                                active = root.notificationsFullscreen === "off" ? notificationsFullscreenOffItem : notificationsFullscreenOnItem;
++                            }
+ 
+-                        Component.onCompleted: syncActiveItem()
++                            Component.onCompleted: syncActiveItem()
+ 
+-                        Connections {
+-                            target: root
++                            Connections {
++                                target: root
+ 
+-                            function onNotificationsFullscreenChanged(): void {
+-                                notificationsFullscreenSelector.syncActiveItem();
++                                function onNotificationsFullscreenChanged(): void {
++                                    notificationsFullscreenSelector.syncActiveItem();
++                                }
+                             }
+-                        }
+ 
+-                        MenuItem {
+-                            id: notificationsFullscreenOffItem
+-                            text: qsTr("Off")
+-                            icon: "notifications_off"
+-                            activeText: qsTr("Off")
+-                            onClicked: {
+-                                root.notificationsFullscreen = "off";
+-                                root.saveConfig();
++                            MenuItem {
++                                id: notificationsFullscreenOffItem
++                                text: qsTr("Off")
++                                icon: "notifications_off"
++                                activeText: qsTr("Off")
++                                onClicked: {
++                                    root.notificationsFullscreen = "off";
++                                    root.saveConfig();
++                                }
+                             }
+-                        }
+ 
+-                        MenuItem {
+-                            id: notificationsFullscreenOnItem
+-                            text: qsTr("On")
+-                            icon: "notifications"
+-                            activeText: qsTr("On")
+-                            onClicked: {
+-                                root.notificationsFullscreen = "on";
+-                                root.saveConfig();
++                            MenuItem {
++                                id: notificationsFullscreenOnItem
++                                text: qsTr("On")
++                                icon: "notifications"
++                                activeText: qsTr("On")
++                                onClicked: {
++                                    root.notificationsFullscreen = "on";
++                                    root.saveConfig();
++                                }
+                             }
+                         }
+-                    }
+ 
+-                    SwitchRow {
+-                        label: qsTr("Expire automatically")
+-                        checked: root.notificationsExpire
+-                        onToggled: checked => {
+-                            root.notificationsExpire = checked;
+-                            root.saveConfig();
++                        SwitchRow {
++                            label: qsTr("Expire automatically")
++                            checked: root.notificationsExpire
++                            onToggled: checked => {
++                                root.notificationsExpire = checked;
++                                root.saveConfig();
++                            }
+                         }
+-                    }
+ 
+-                    SwitchRow {
+-                        label: qsTr("Open expanded")
+-                        checked: root.notificationsOpenExpanded
+-                        onToggled: checked => {
+-                            root.notificationsOpenExpanded = checked;
+-                            root.saveConfig();
++                        SwitchRow {
++                            label: qsTr("Open expanded")
++                            checked: root.notificationsOpenExpanded
++                            onToggled: checked => {
++                                root.notificationsOpenExpanded = checked;
++                                root.saveConfig();
++                            }
+                         }
+-                    }
+ 
+-                    SpinBoxRow {
+-                        label: qsTr("Default timeout")
+-                        value: root.notificationsDefaultExpireTimeout
+-                        min: 1000
+-                        max: 60000
+-                        step: 500
+-                        onValueModified: value => {
+-                            root.notificationsDefaultExpireTimeout = value;
+-                            root.saveConfig();
++                        SpinBoxRow {
++                            label: qsTr("Default timeout")
++                            value: root.notificationsDefaultExpireTimeout
++                            min: 1000
++                            max: 60000
++                            step: 500
++                            onValueModified: value => {
++                                root.notificationsDefaultExpireTimeout = value;
++                                root.saveConfig();
++                            }
+                         }
+-                    }
+ 
+-                    SpinBoxRow {
+-                        label: qsTr("Group preview count")
+-                        value: root.notificationsGroupPreviewNum
+-                        min: 1
+-                        max: 10
+-                        step: 1
+-                        onValueModified: value => {
+-                            root.notificationsGroupPreviewNum = value;
+-                            root.saveConfig();
++                        SpinBoxRow {
++                            label: qsTr("Group preview count")
++                            value: root.notificationsGroupPreviewNum
++                            min: 1
++                            max: 10
++                            step: 1
++                            onValueModified: value => {
++                                root.notificationsGroupPreviewNum = value;
++                                root.saveConfig();
++                            }
+                         }
+                     }
+-                    }
+                 }
+ 
+                 ColumnLayout {
+@@ -238,11 +235,7 @@ Item {
+                             Layout.fillWidth: true
+                             z: expanded ? 100 : 0
+                             label: qsTr("Show in fullscreen")
+-                            menuItems: [
+-                                toastFullscreenOffItem,
+-                                toastFullscreenImportantItem,
+-                                toastFullscreenAllItem
+-                            ]
++                            menuItems: [toastFullscreenOffItem, toastFullscreenImportantItem, toastFullscreenAllItem]
+ 
+                             function syncActiveItem(): void {
+                                 if (root.toastsFullscreen === "all") {
+--- modules/controlcenter/notifications/NotificationsPane.qml
++++ modules/controlcenter/notifications/NotificationsPane.qml
+@@ -37,8 +37,6 @@ Item {
+     property bool vpnChanged: Config.utilities.toasts.vpnChanged ?? true
+     property bool nowPlaying: Config.utilities.toasts.nowPlaying ?? false
+ 
+-    anchors.fill: parent
+-
+     function saveConfig(): void {
+         Config.notifs.expire = root.notificationsExpire;
+         Config.notifs.fullscreen = root.notificationsFullscreen;
+@@ -133,13 +133,13 @@ Item {
+                         SplitButtonRow {
+                             id: notificationsFullscreenSelector
+ 
+-                            label: qsTr("Show in fullscreen")
+-                            menuItems: [notificationsFullscreenOffItem, notificationsFullscreenOnItem]
+-
+                             function syncActiveItem(): void {
+                                 active = root.notificationsFullscreen === "off" ? notificationsFullscreenOffItem : notificationsFullscreenOnItem;
+                             }
+ 
++                            label: qsTr("Show in fullscreen")
++                            menuItems: [notificationsFullscreenOffItem, notificationsFullscreenOnItem]
++
+                             Component.onCompleted: syncActiveItem()
+ 
+                             Connections {
+@@ -152,6 +152,7 @@ Item {
+ 
+                             MenuItem {
+                                 id: notificationsFullscreenOffItem
++
+                                 text: qsTr("Off")
+                                 icon: "notifications_off"
+                                 activeText: qsTr("Off")
+@@ -163,6 +164,7 @@ Item {
+ 
+                             MenuItem {
+                                 id: notificationsFullscreenOnItem
++
+                                 text: qsTr("On")
+                                 icon: "notifications"
+                                 activeText: qsTr("On")
+@@ -234,11 +236,6 @@ Item {
+                         SplitButtonRow {
+                             id: toastFullscreenSelector
+ 
+-                            Layout.fillWidth: true
+-                            z: expanded ? 100 : 0
+-                            label: qsTr("Show in fullscreen")
+-                            menuItems: [toastFullscreenOffItem, toastFullscreenImportantItem, toastFullscreenAllItem]
+-
+                             function syncActiveItem(): void {
+                                 if (root.toastsFullscreen === "all") {
+                                     active = toastFullscreenAllItem;
+@@ -253,6 +250,11 @@ Item {
+                                 active = toastFullscreenOffItem;
+                             }
+ 
++                            Layout.fillWidth: true
++                            z: expanded ? 100 : 0
++                            label: qsTr("Show in fullscreen")
++                            menuItems: [toastFullscreenOffItem, toastFullscreenImportantItem, toastFullscreenAllItem]
++
+                             Component.onCompleted: syncActiveItem()
+ 
+                             Connections {
+@@ -265,6 +267,7 @@ Item {
+ 
+                             MenuItem {
+                                 id: toastFullscreenOffItem
++
+                                 text: qsTr("Off")
+                                 icon: "notifications_off"
+                                 activeText: qsTr("Off")
+@@ -276,6 +279,7 @@ Item {
+ 
+                             MenuItem {
+                                 id: toastFullscreenImportantItem
++
+                                 text: qsTr("Important")
+                                 icon: "priority_high"
+                                 activeText: qsTr("Important")
+@@ -287,6 +291,7 @@ Item {
+ 
+                             MenuItem {
+                                 id: toastFullscreenAllItem
++
+                                 text: qsTr("On")
+                                 icon: "notifications"
+                                 activeText: qsTr("On")
+--- modules/controlcenter/notifications/NotificationsPane.qml
++++ modules/controlcenter/notifications/NotificationsPane.qml
+@@ -141,11 +141,11 @@ Item {
+                             Component.onCompleted: syncActiveItem()
+ 
+                             Connections {
+-                                target: root
+-
+                                 function onNotificationsFullscreenChanged(): void {
+                                     notificationsFullscreenSelector.syncActiveItem();
+                                 }
++
++                                target: root
+                             }
+ 
+                             MenuItem {
+@@ -256,11 +256,11 @@ Item {
+                             Component.onCompleted: syncActiveItem()
+ 
+                             Connections {
+-                                target: root
+-
+                                 function onToastsFullscreenChanged(): void {
+                                     toastFullscreenSelector.syncActiveItem();
+                                 }
++
++                                target: root
+                             }
+ 
+                             MenuItem {

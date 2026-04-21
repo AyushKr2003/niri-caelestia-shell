@@ -13,6 +13,16 @@ Item {
     readonly property int spacing: Appearance.spacing.sm
     property bool flag
 
+    function shouldShowToast(toast: var): bool {
+        if (!Notifs.hasFullscreen())
+            return true;
+        if (Config.utilities.toasts.fullscreen === "all")
+            return true;
+        if (Config.utilities.toasts.fullscreen === "important")
+            return toast.type === Toast.Warning || toast.type === Toast.Error;
+        return false;
+    }
+
     implicitWidth: Config.utilities.sizes.toastWidth - Appearance.padding.md * 2
     implicitHeight: {
         let h = -spacing;
@@ -32,6 +42,8 @@ Item {
                 const toasts = [];
                 let count = 0;
                 for (const toast of Toaster.toasts) {
+                    if (!root.shouldShowToast(toast))
+                        continue;
                     toasts.push(toast);
                     if (!toast.closed) {
                         count++;

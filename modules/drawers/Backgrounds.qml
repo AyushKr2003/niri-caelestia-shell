@@ -18,14 +18,17 @@ Shape {
 
     required property Panels panels
     required property Item bar
+    required property real borderThickness
+    required property real borderRounding
 
     anchors.fill: parent
-    anchors.margins: Config.border.thickness
+    anchors.margins: root.borderThickness
     anchors.leftMargin: bar.implicitWidth
     preferredRendererType: Shape.CurveRenderer
 
     Osd.Background {
         wrapper: root.panels.osd
+        rounding: root.borderRounding
 
         startX: root.width - root.panels.session.width
         startY: (root.height - wrapper.height) / 2 - rounding
@@ -33,6 +36,7 @@ Shape {
 
     Notifications.Background {
         wrapper: root.panels.notifications
+        rounding: root.borderRounding
 
         startX: root.width
         startY: 0
@@ -83,6 +87,7 @@ Shape {
 
     Utilities.Background {
         wrapper: root.panels.utilities
+        rounding: root.borderRounding
 
         startX: root.width
         startY: root.height

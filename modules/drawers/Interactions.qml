@@ -14,6 +14,7 @@ CustomMouseArea {
     required property PersistentProperties visibilities
     required property Panels panels
     required property Item bar
+    required property bool fullscreen
 
     property bool osdHovered
     property point dragStart
@@ -74,6 +75,9 @@ CustomMouseArea {
     hoverEnabled: true
 
     onPressed: event => {
+        if (root.fullscreen)
+            return;
+
         dragStart = Qt.point(event.x, event.y);
         draggingBar = dragStart.x < bar.implicitWidth;
     }
@@ -83,6 +87,9 @@ CustomMouseArea {
     }
 
     onContainsMouseChanged: {
+        if (root.fullscreen)
+            return;
+
         if (!containsMouse) {
             // Only hide panels not activated by shortcut
             if (!isShortcutActive("osd")) {
@@ -109,7 +116,7 @@ CustomMouseArea {
     }
 
     onPositionChanged: event => {
-        if (popouts.isDetached)
+        if (popouts.isDetached || root.fullscreen)
             return;
 
         const x = event.x;

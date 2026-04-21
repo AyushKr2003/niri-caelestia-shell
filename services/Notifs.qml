@@ -98,6 +98,27 @@ Singleton {
         reloadableId: "notifs"
     }
 
+    // ── Fullscreen ────────────────────────────────────────────────────────────
+
+    function hasFullscreen(): bool {
+        if (!Niri) return false;
+        const currentWorkspace = Niri.allWorkspaces.find(w => w.is_active);
+        return currentWorkspace ? Niri.windows.some(w => w.workspace_id === currentWorkspace.id && w.is_fullscreen) : false;
+    }
+
+    function shouldShowPopup(notification: var): bool {
+        if (root.popupInhibited)
+            return false;
+
+        if (!hasFullscreen())
+            return true;
+
+        if (Config.notifs.fullscreen === "off")
+            return false;
+
+        return true;
+    }
+
     // ── Notification server ───────────────────────────────────────────────────
 
     NotificationServer {
@@ -126,7 +147,7 @@ Singleton {
             root._onListChanged();
 
             // Only show popup when not inhibited
-            if (!root.popupInhibited) {
+            if (root.shouldShowPopup(notification)) {
                 newNotif.popup = true;
                 root.unread++;
 

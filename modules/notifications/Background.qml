@@ -9,7 +9,7 @@ ShapePath {
     id: root
 
     required property Wrapper wrapper
-    readonly property real rounding: Config.border.rounding
+    required property real rounding
     readonly property bool flatten: wrapper.height < rounding * 2
     readonly property real roundingY: flatten ? wrapper.height / 2 : rounding
     property real fullHeightRounding: wrapper.height >= QsWindow.window?.height - Config.border.thickness * 2 ? -rounding : rounding

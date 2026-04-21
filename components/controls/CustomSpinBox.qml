@@ -12,6 +12,7 @@ RowLayout {
     property int value
     property real max: Infinity
     property real min: -Infinity
+    property real step: 1
     property alias repeatRate: timer.interval
 
     signal valueModified(value: int)
@@ -50,7 +51,7 @@ RowLayout {
             onReleased: timer.stop()
 
             function onClicked(): void {
-                root.valueModified(Math.min(root.max, root.value + 1));
+                root.valueModified(Math.min(root.max, root.value + root.step));
             }
         }
 
@@ -79,7 +80,7 @@ RowLayout {
             onReleased: timer.stop()
 
             function onClicked(): void {
-                root.valueModified(Math.max(root.min, root.value - 1));
+                root.valueModified(Math.max(root.min, root.value - root.step));
             }
         }
 

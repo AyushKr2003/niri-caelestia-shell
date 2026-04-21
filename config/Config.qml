@@ -329,11 +329,13 @@ Singleton {
     function serializeNotifs(): var {
         return {
             expire: notifs.expire,
+            fullscreen: notifs.fullscreen,
             defaultExpireTimeout: notifs.defaultExpireTimeout,
             clearThreshold: notifs.clearThreshold,
             expandThreshold: notifs.expandThreshold,
             actionOnClick: notifs.actionOnClick,
             groupPreviewNum: notifs.groupPreviewNum,
+            openExpanded: notifs.openExpanded,
             sizes: {
                 width: notifs.sizes.width,
                 image: notifs.sizes.image,
@@ -396,6 +398,7 @@ Singleton {
             },
             toasts: {
                 configLoaded: utilities.toasts.configLoaded,
+                fullscreen: utilities.toasts.fullscreen,
                 chargingChanged: utilities.toasts.chargingChanged,
                 gameModeChanged: utilities.toasts.gameModeChanged,
                 dndChanged: utilities.toasts.dndChanged,

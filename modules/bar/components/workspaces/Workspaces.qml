@@ -11,6 +11,7 @@ import "context"
 StyledRect {
     id: root
 
+    required property bool fullscreen
     // required property ShellScreen screen
 
     readonly property int activeWsId: Niri.focusedWorkspaceIndex + 1
@@ -124,6 +125,7 @@ StyledRect {
             workspaces: workspaces
             mask: layout
             groupOffset: root.groupOffset
+            fullscreen: root.fullscreen
         }
     }
 

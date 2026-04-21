@@ -15,6 +15,7 @@ ColumnLayout {
     required property ShellScreen screen
     required property PersistentProperties visibilities
     required property BarPopouts.Wrapper popouts
+    required property bool fullscreen
     readonly property int vPadding: Appearance.padding.xl
 
     // Handle Workspace Popouts for Niri
@@ -133,6 +134,7 @@ ColumnLayout {
                 roleValue: "workspaces"
                 delegate: WrappedLoader {
                     sourceComponent: Workspaces {
+                        fullscreen: root.fullscreen
 
                         property var anchorItem: Niri.wsContextAnchor && Niri.wsContextType !== "none" ? Niri.wsContextAnchor : null
 

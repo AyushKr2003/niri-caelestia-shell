@@ -12,6 +12,7 @@ StyledRect {
     required property Repeater workspaces
     required property Item mask
     required property int groupOffset
+    required property bool fullscreen
 
     readonly property int currentWsIdx: {
         let i = activeWsId - 1;
@@ -70,28 +71,28 @@ StyledRect {
 
     // Trail animations
     Behavior on leading {
-        enabled: Config.bar.workspaces.activeTrail
+        enabled: Config.bar.workspaces.activeTrail && !root.fullscreen
         Anim {}
     }
     Behavior on trailing {
-        enabled: Config.bar.workspaces.activeTrail
+        enabled: Config.bar.workspaces.activeTrail && !root.fullscreen
 
         EAnim {
             duration: Appearance.anim.durations.normal * 2
         }
     }
     Behavior on currentSize {
-        enabled: Config.bar.workspaces.activeTrail
+        enabled: Config.bar.workspaces.activeTrail && !root.fullscreen
 
         EAnim {}
     }
     Behavior on offset {
-        enabled: !Config.bar.workspaces.activeTrail
+        enabled: !Config.bar.workspaces.activeTrail && !root.fullscreen
 
         EAnim {}
     }
     Behavior on size {
-        enabled: !Config.bar.workspaces.activeTrail
+        enabled: !Config.bar.workspaces.activeTrail && !root.fullscreen
 
         EAnim {}
     }

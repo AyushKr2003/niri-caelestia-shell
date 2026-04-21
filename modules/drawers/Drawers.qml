@@ -21,6 +21,7 @@ Variants {
         Exclusions {
             screen: scope.modelData
             bar: bar
+            borderThickness: win.borderThickness
         }
 
         StyledWindow {
@@ -30,12 +31,36 @@ Variants {
             name: "drawers"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session || visibilities.keybinds || visibilities.editingWeatherLocation || visibilities.dashboard || visibilities.manga || visibilities.novel || panels.popouts.isDetached ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.layer: hasFullscreen ? WlrLayer.Overlay : WlrLayer.Top
+
+            readonly property var currentWorkspace: Niri.allWorkspaces.find(w => w.output === screen.name && w.is_active)
+            readonly property bool hasFullscreen: currentWorkspace ? Niri.windows.some(w => w.workspace_id === currentWorkspace.id && w.is_fullscreen) : false
+            property real borderThickness: hasFullscreen ? 0 : Config.border.thickness
+            readonly property real borderLayoutThickness: hasFullscreen ? 0 : Config.border.thickness
+            property real borderRounding: hasFullscreen ? 0 : Config.border.rounding
+            property real shadowOpacity: hasFullscreen ? 0 : 0.7
+
+            Behavior on borderRounding {
+                NumberAnimation {
+                    duration: Appearance.anim.durations.expressiveDefaultSpatial
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+                }
+            }
+
+            Behavior on shadowOpacity {
+                NumberAnimation {
+                    duration: Appearance.anim.durations.expressiveDefaultSpatial
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
+                }
+            }
 
             mask: Region {
                 x: bar.implicitWidth
-                y: Config.border.thickness
-                width: win.width - bar.implicitWidth - Config.border.thickness
-                height: win.height - Config.border.thickness * 2
+                y: win.borderLayoutThickness
+                width: win.width - bar.implicitWidth - win.borderLayoutThickness
+                height: win.height - win.borderLayoutThickness * 2
                 intersection: Intersection.Xor
 
                 regions: regions.instances
@@ -55,7 +80,7 @@ Variants {
                     required property Item modelData
 
                     x: modelData.x + bar.implicitWidth
-                    y: modelData.y + Config.border.thickness
+                    y: modelData.y + win.borderLayoutThickness
                     width: modelData.width
                     height: modelData.height
                     intersection: Intersection.Subtract
@@ -81,16 +106,20 @@ Variants {
                 layer.effect: MultiEffect {
                     shadowEnabled: true
                     blurMax: 15
-                    shadowColor: Qt.alpha(Colours.palette.m3shadow, 0.7)
+                    shadowColor: Qt.alpha(Colours.palette.m3shadow, Math.max(0, win.shadowOpacity))
                 }
 
                 Border {
                     bar: bar
+                    borderThickness: win.borderThickness
+                    borderRounding: win.borderRounding
                 }
 
                 Backgrounds {
                     panels: panels
                     bar: bar
+                    borderThickness: win.borderThickness
+                    borderRounding: win.borderRounding
                 }
             }
 
@@ -120,6 +149,7 @@ Variants {
                 visibilities: visibilities
                 panels: panels
                 bar: bar
+                fullscreen: win.hasFullscreen
 
                 Panels {
                     id: panels
@@ -127,6 +157,7 @@ Variants {
                     screen: scope.modelData
                     visibilities: visibilities
                     bar: bar
+                    borderThickness: win.borderThickness
                 }
 
                 BarWrapper {
@@ -138,6 +169,7 @@ Variants {
                     screen: scope.modelData
                     visibilities: visibilities
                     popouts: panels.popouts
+                    fullscreen: win.hasFullscreen
 
                     Component.onCompleted: Visibilities.bars.set(scope.modelData, this)
                 }
