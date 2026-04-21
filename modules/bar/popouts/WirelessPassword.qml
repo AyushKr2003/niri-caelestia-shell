@@ -317,7 +317,7 @@ ColumnLayout {
 
                 StyledRect {
                     anchors.fill: parent
-                    // radius: Appearance.rounding.large
+                    radius: height / 2
                     color: passwordContainer.activeFocus ? Qt.lighter(Colours.tPalette.m3surfaceContainer, 1.05) : Colours.tPalette.m3surfaceContainer
                     border.width: passwordContainer.activeFocus || connectButton.hasError ? 4 : (root.shouldBeVisible ? 1 : 0)
                     border.color: {
@@ -344,6 +344,8 @@ ColumnLayout {
                 }
 
                 StateLayer {
+                    radius: height / 2
+                    showFocusRing: false
                     hoverEnabled: false
                     cursorShape: Qt.IBeamCursor
                     onClicked: passwordContainer.forceActiveFocus()
@@ -387,7 +389,7 @@ ColumnLayout {
                         implicitHeight: charList.implicitHeight
 
                         color: Colours.palette.m3onSurface
-                        radius: Appearance.rounding.xs / 2
+                        radius: implicitHeight / 2
 
                         opacity: 0
                         scale: 0
