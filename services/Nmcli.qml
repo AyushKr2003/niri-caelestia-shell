@@ -385,19 +385,30 @@ Singleton {
         }
         executeCommand(cmd, result => {
             if (result.needsPassword && callback) {
-                if (callback)
-                    callback(result);
+                callback(result);
                 return;
             }
 
-            if (!result.success && root.pendingConnection && retries < maxRetries) {
-                console.warn(lc, "Connection failed, retrying... (attempt " + (retries + 1) + "/" + maxRetries + ")");
-                Qt.callLater(() => {
-                    connectWireless(ssid, password, bssid, callback, retries + 1);
-                }, 1000);
-            } else if (!result.success && root.pendingConnection) {} else if (result.success && callback) {} else if (!result.success && !root.pendingConnection) {
-                if (callback)
+            if (!result.success) {
+                const shouldRetry = root.pendingConnection && retries < maxRetries;
+                if (shouldRetry) {
+                    console.warn(lc, "Connection failed, retrying... (attempt " + (retries + 1) + "/" + maxRetries + ")");
+                    Qt.callLater(() => {
+                        connectWireless(ssid, password, bssid, callback, retries + 1);
+                    }, 1000);
+                } else {
+                    if (root.pendingConnection) {
+                        root.pendingConnection = null;
+                    }
+                    root.connectionFailed(ssid);
+                    if (callback) {
+                        callback(result);
+                    }
+                }
+            } else {
+                if (callback) {
                     callback(result);
+                }
             }
         });
     }
@@ -1336,11 +1347,6 @@ Singleton {
                     }
 
                     const needsPassword = cmdIsConnection && root.detectPasswordRequired(error);
-
-                    if (!success && cmdIsConnection && root.pendingConnection) {
-                        const failedSsid = root.pendingConnection.ssid;
-                        root.connectionFailed(failedSsid);
-                    }
 
                     callbackCalled = true;
                     callback({
