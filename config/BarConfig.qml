@@ -102,6 +102,7 @@ JsonObject {
         property bool background: false
         property bool compact: false
         property bool recolour: false
+        property list<var> iconSubs: []
     }
 
     component Status: JsonObject {

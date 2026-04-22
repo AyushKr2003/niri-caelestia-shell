@@ -210,4 +210,19 @@ Singleton {
             return "battery_full";
         return "battery_alert";
     }
+
+    function getTrayIcon(id: string, icon: string, iconSubs: var): string {
+        const subs = iconSubs || [];
+        for (const sub of subs)
+            if (sub.id === id)
+                return sub.image ? Qt.resolvedUrl(sub.image) : Quickshell.iconPath(sub.icon);
+
+        if (icon.includes("?path=")) {
+            const [name, path] = icon.split("?path=");
+            icon = `file://${path}/${name.slice(name.lastIndexOf("/") + 1)}`;
+        } else if (icon !== "" && !icon.startsWith("/") && !icon.startsWith("file://") && !icon.startsWith("image://")) {
+            icon = Quickshell.iconPath(icon);
+        }
+        return icon;
+    }
 }

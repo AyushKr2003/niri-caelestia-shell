@@ -214,7 +214,8 @@ Singleton {
             tray: {
                 background: bar.tray.background,
                 compact: bar.tray.compact,
-                recolour: bar.tray.recolour
+                recolour: bar.tray.recolour,
+                iconSubs: bar.tray.iconSubs
             },
             status: {
                 showAudio: bar.status.showAudio,
