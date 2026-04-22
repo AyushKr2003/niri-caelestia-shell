@@ -294,9 +294,9 @@ Rectangle {
     function doLogin() {
         if (pwInput.text.length === 0 || root.loggingIn) return
         root.loggingIn = true
-        var u = (typeof userModel !== "undefined" && userModel.lastUser !== "") ? userModel.lastUser : "user"
+        var u = userCombo.currentText || "user"
         if (typeof sddm !== "undefined") {
-            sddm.login(u, pwInput.text, (typeof sessionModel !== "undefined" ? sessionModel.lastIndex : 0))
+            sddm.login(u, pwInput.text, sessionCombo.currentIndex)
         }
     }
 
@@ -492,7 +492,7 @@ Rectangle {
                     Image {
                         id: faceImg
                         anchors.fill: parent
-                        source: (typeof userModel !== "undefined" && userModel.lastUser !== "") ? "file:///home/" + userModel.lastUser + "/.face" : ""
+                        source: (userCombo.currentText !== "") ? "file:///home/" + userCombo.currentText + "/.face" : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         visible: status === Image.Ready
@@ -513,7 +513,7 @@ Rectangle {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: Math.round(8 * root.panelScale)
-                text: (typeof userModel !== "undefined" && userModel.lastUser !== "") ? userModel.lastUser : "user"
+                text: (userCombo.currentText !== "") ? userCombo.currentText : "user"
                 font {
                     family: root.fontMono
                     pixelSize: Math.round(13 * root.panelScale)
@@ -659,6 +659,24 @@ Rectangle {
                 verticalCenter: parent.verticalCenter
             }
             spacing: 12
+            Rectangle {
+                height: 32
+                radius: 16
+                width: userCombo.width + 16
+                color: root.m3surfaceContainer
+                border {
+                    width: 1
+                    color: Qt.rgba(root.m3outlineVariant.r, root.m3outlineVariant.g, root.m3outlineVariant.b, 0.40)
+                }
+                PillComboBox {
+                    id: userCombo
+                    anchors.centerIn: parent
+                    width: 130
+                    model: (typeof userModel !== "undefined") ? userModel : []
+                    currentIndex: (typeof userModel !== "undefined") ? Math.max(0, userModel.lastIndex) : 0
+                    textRole: "name"
+                }
+            }
             Rectangle {
                 height: 32
                 radius: 16
