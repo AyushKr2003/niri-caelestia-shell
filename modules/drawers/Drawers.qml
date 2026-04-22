@@ -5,6 +5,9 @@ import qs.components.containers
 import qs.services
 import qs.config
 import qs.modules.bar
+import qs.modules.osd as Osd
+import qs.modules.notifications as Notifications
+import qs.modules.utilities.toasts as Toasts
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -175,6 +178,55 @@ Variants {
                 }
             }
         }
+
+        StyledWindow {
+            id: overlayWin
+
+            screen: scope.modelData
+            name: "overlays"
+            WlrLayershell.exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            WlrLayershell.layer: WlrLayer.Overlay
+            
+            anchors.top: true
+            anchors.bottom: true
+            anchors.left: true
+            anchors.right: true
+            color: "transparent"
+
+            Item {
+                anchors.fill: parent
+                anchors.margins: win.borderThickness
+                anchors.leftMargin: bar.implicitWidth
+
+                Osd.Wrapper {
+                    id: osd
+                    clip: visibilities.session
+                    screen: scope.modelData
+                    visibilities: visibilities
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: panels.session ? panels.session.width : 0
+                }
+
+                Notifications.Wrapper {
+                    id: notifications
+                    visibilities: visibilities
+                    panel: win
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                }
+
+                Toasts.Toasts {
+                    id: toasts
+                    width: implicitWidth
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.margins: Appearance.padding.md
+                }
+            }
+        }
     }
+   
 
 }

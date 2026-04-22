@@ -21,8 +21,6 @@ Item {
     required property Item bar
     required property real borderThickness
 
-    readonly property Osd.Wrapper osd: osd
-    readonly property Notifications.Wrapper notifications: notifications
     readonly property Session.Wrapper session: session
     readonly property Launcher.Wrapper launcher: launcher
     readonly property Dashboard.Wrapper dashboard: dashboard
@@ -68,27 +66,9 @@ Item {
         anchors.bottom: parent.bottom
     }
 
-    Osd.Wrapper {
-        id: osd
 
-        clip: root.visibilities.session
-        screen: root.screen
-        visibilities: root.visibilities
 
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.right: parent.right
-        anchors.rightMargin: session.width
-    }
 
-    Notifications.Wrapper {
-        id: notifications
-
-        visibilities: root.visibilities
-        panel: root
-
-        anchors.top: parent.top
-        anchors.right: parent.right
-    }
 
     Session.Wrapper {
         id: session
@@ -155,12 +135,5 @@ Item {
         anchors.right: parent.right
     }
 
-    Toasts.Toasts {
-        id: toasts
 
-        width: implicitWidth
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.margins: Appearance.padding.md
-    }
 }
