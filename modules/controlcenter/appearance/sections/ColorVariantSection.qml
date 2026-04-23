@@ -34,22 +34,7 @@ CollapsibleSection {
 
                 StateLayer {
                     function onClicked(): void {
-                        const variant = modelData.variant;
-
-                        Schemes.currentVariant = variant;
-                        Quickshell.execDetached(["caelestia", "scheme", "set", "-v", variant]);
-
-                        Qt.callLater(() => {
-                            reloadTimer.restart();
-                        });
-                    }
-                }
-
-                Timer {
-                    id: reloadTimer
-                    interval: 300
-                    onTriggered: {
-                        Schemes.reload();
+                        M3Variants.setVariant(modelData.variant);
                     }
                 }
 
