@@ -290,13 +290,16 @@ All IPC commands can be called via `quickshell -c niri-caelestia-shell ipc call 
 
 </details>
 
-## If you want blur overview add this in your NIRI config
+## If you want blur in overview, add this to your Niri config
 ```kdl
 
 layer-rule {
     match namespace="quickshell:Backdrop"
     place-within-backdrop true
     opacity 1.0
+    background-effect {
+        blur true
+    }
 }
 ````
 
@@ -379,6 +382,9 @@ layer-rule {
     match namespace="quickshell:Backdrop"
     place-within-backdrop true
     opacity 1.0
+    background-effect {
+        blur true
+    }
 }
 ```
 

@@ -39,5 +39,7 @@ layer-rule {
     match namespace="quickshell:Backdrop"
     place-within-backdrop true
     opacity 1.0
+    background-effect {
+        blur true
+    }
 }
-
